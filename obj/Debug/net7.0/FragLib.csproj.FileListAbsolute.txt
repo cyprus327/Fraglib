@@ -1,0 +1,12 @@
+D:\Common\Repos\FragLib\bin\Debug\net7.0\FragLib.deps.json
+D:\Common\Repos\FragLib\bin\Debug\net7.0\FragLib.dll
+D:\Common\Repos\FragLib\bin\Debug\net7.0\FragLib.pdb
+D:\Common\Repos\FragLib\obj\Debug\net7.0\FragLib.csproj.AssemblyReference.cache
+D:\Common\Repos\FragLib\obj\Debug\net7.0\FragLib.GeneratedMSBuildEditorConfig.editorconfig
+D:\Common\Repos\FragLib\obj\Debug\net7.0\FragLib.AssemblyInfoInputs.cache
+D:\Common\Repos\FragLib\obj\Debug\net7.0\FragLib.AssemblyInfo.cs
+D:\Common\Repos\FragLib\obj\Debug\net7.0\FragLib.csproj.CoreCompileInputs.cache
+D:\Common\Repos\FragLib\obj\Debug\net7.0\FragLib.dll
+D:\Common\Repos\FragLib\obj\Debug\net7.0\refint\FragLib.dll
+D:\Common\Repos\FragLib\obj\Debug\net7.0\FragLib.pdb
+D:\Common\Repos\FragLib\obj\Debug\net7.0\ref\FragLib.dll
