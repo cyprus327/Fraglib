@@ -112,4 +112,24 @@ public static class FL {
 
         return e.ElapsedTime;
     }
+
+    private static uint randState = 0;
+
+    public static uint Rand() {
+        randState += 0xE120FC15;
+        ulong temp;
+        temp = (ulong)randState * 0x4A39B70D;
+        uint m1 = (uint)((temp >> 32) ^ temp);
+        temp = (ulong)m1 * 0x12FAD5C9;
+        uint m2 = (uint)((temp >> 32) ^ temp);
+        return m2;
+    }
+
+    public static int Rand(int min, int max) {
+        return (int)(Rand() % (max - min)) + min;
+    }
+
+    public static double Rand(double min, double max) {
+        return (double)Rand() / (double)uint.MaxValue * (max - min) + min;
+    }
 }
