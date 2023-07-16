@@ -3,6 +3,7 @@ namespace Fraglib;
 public static class FL {
     private static Engine? e = null;
 
+#region setup
     public static void Init(int width, int height, string title, Action program) {
         if (e is not null) {
             return;
@@ -34,7 +35,9 @@ public static class FL {
 
         e.Run();
     }
+#endregion setup
 
+#region setclear methods
     public static void SetPixel(int x, int y, uint color) {
         if (e is null) {
             return;
@@ -44,7 +47,11 @@ public static class FL {
             return;
         }
 
-        e.Screen[y * e.Width + x] = color;
+        if (e is not SetClearEngine s) {
+            return; 
+        }
+
+        s.SetPixel(x, y, color);
     }
 
     public static uint GetPixel(int x, int y) {
@@ -74,7 +81,9 @@ public static class FL {
 
         s.Clear(color);
     }
+#endregion setclear methods
 
+#region colors
     public static uint NewColor(byte r, byte g, byte b, byte a = 255) {
         return BitConverter.IsLittleEndian ?
             ((uint)a << 24) | ((uint)b << 16) | ((uint)g << 8) | r :
@@ -104,7 +113,9 @@ public static class FL {
             (byte)(color >> 24) : 
             (byte)color;
     }
+#endregion colors
 
+#region common
     public static float GetElapsedTime() {
         if (e is null) {
             return 0f;
@@ -132,4 +143,5 @@ public static class FL {
     public static double Rand(double min, double max) {
         return (double)Rand() / (double)uint.MaxValue * (max - min) + min;
     }
+#endregion common
 }
