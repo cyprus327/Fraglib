@@ -4,7 +4,10 @@ public static class FL {
     private static Engine? e = null;
 
 #region setup
-    public static void Init(int width, int height, string title, Action? program = null, int pixelSize = 1) {
+    public static uint PixelSize { get; set; } = 1;
+    public static bool VSync { get; set; } = true;
+
+    public static void Init(int width, int height, string title, Action? program = null) {
         if (e is not null) {
             return;
         }
@@ -13,17 +16,17 @@ public static class FL {
             return;
         }
 
-        if (pixelSize < 1 || pixelSize >= height || pixelSize >= width) {
-            pixelSize = 1;
+        if (PixelSize < 1 || PixelSize >= height || PixelSize >= width) {
+            PixelSize = 1;
         }
 
-        windowWidth = width / pixelSize;
-        windowHeight = height / pixelSize;
+        windowWidth = width / (int)PixelSize;
+        windowHeight = height / (int)PixelSize;
         program ??= () => {};
-        e = new SetClearEngine(pixelSize, width, height, title, program);
+        e = new SetClearEngine((int)PixelSize, width, height, title, program);
     }
 
-    public static void Init(int width, int height, string title, Func<int, int, PerPixelVars, uint> perPixel, int pixelSize = 1) {
+    public static void Init(int width, int height, string title, Func<int, int, PerPixelVars, uint> perPixel) {
         if (e is not null) {
             return;
         }
@@ -32,13 +35,13 @@ public static class FL {
             return;
         }
 
-        if (pixelSize < 1 || pixelSize >= height || pixelSize >= width) {
-            pixelSize = 1;
+        if (PixelSize < 1 || PixelSize >= height || PixelSize >= width) {
+            PixelSize = 1;
         }
 
-        windowWidth = width / pixelSize;
-        windowHeight = height / pixelSize;
-        e = new PerPixelEngine(pixelSize, width, height, title, perPixel);
+        windowWidth = width / (int)PixelSize;
+        windowHeight = height / (int)PixelSize;
+        e = new PerPixelEngine((int)PixelSize, width, height, title, perPixel);
     }
 
     public static void Run() {
@@ -46,6 +49,7 @@ public static class FL {
             return;
         }
 
+        e.VSyncEnabled = VSync;
         e.Run();
     }
 #endregion setup
@@ -144,6 +148,16 @@ public static class FL {
         SetPixel((int)(cx - oy), (int)(cy + ox), color);
         SetPixel((int)(cx + oy), (int)(cy - ox), color);
         SetPixel((int)(cx - oy), (int)(cy - ox), color);
+    }
+
+    public static void FillCircle(float centerX, float centerY, float radius, uint color) {
+        for (int x = (int)(centerX - radius); x <= centerX + radius; x++) {
+            for (int y = (int)(centerY - radius); y <= centerY + radius; y++) {
+                if (Math.Pow(x - centerX, 2) + Math.Pow(y - centerY, 2) <= Math.Pow(radius, 2)) {
+                    SetPixel(x, y, color);
+                }
+            }
+        }
     }
 #endregion setclear methods
 

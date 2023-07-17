@@ -1,15 +1,16 @@
 using Fraglib;
 
-internal sealed class Example {
+internal sealed class Tutorial {
     // variables for the ball
     private static float ballX = FL.Width / 2f;
     private static float ballY = FL.Height / 2f;
-    private static float ballRadius = 50f;
-    private static float ballSpeedX = 700f;
-    private static float ballSpeedY = 700f;
+    private static float ballRadius = 50f / FL.PixelSize;
+    private static float ballSpeedX = 700f / FL.PixelSize;
+    private static float ballSpeedY = 700f / FL.PixelSize;
     
     private static void Main() {
-        FL.Init(1280, 720, "Rainbow Ball", Program);
+        FL.PixelSize = 8;
+        FL.Init(1024, 768, "Rainbow Ball", Program);
         FL.Run();
     }
 
@@ -30,13 +31,6 @@ internal sealed class Example {
         }
 
         // draw the ball
-        uint ballColor = FL.Rainbow();
-        for (int x = (int)(ballX - ballRadius); x <= ballX + ballRadius; x++) {
-            for (int y = (int)(ballY - ballRadius); y <= ballY + ballRadius; y++) {
-                if (Math.Pow(x - ballX, 2) + Math.Pow(y - ballY, 2) <= Math.Pow(ballRadius, 2)) {
-                    FL.SetPixel(x, y, ballColor);
-                }
-            }
-        }
+        FL.FillCircle(ballX, ballY, ballRadius, FL.Rainbow());
     }
 }
