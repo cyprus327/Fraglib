@@ -5,7 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 namespace Fraglib;
 
 internal abstract class Engine : GameWindow {
-    public Engine(int pixelSize, int width, int height, string title, bool vsync = true) : base(
+    public Engine(int pixelSize, int width, int height, string title) : base(
         GameWindowSettings.Default,
         new NativeWindowSettings() {
             Size = (width, height),
@@ -14,7 +14,6 @@ internal abstract class Engine : GameWindow {
             StartFocused = true,
             MinimumSize = (width, height),
             MaximumSize = (width, height),
-            Vsync = vsync ? VSyncMode.On : VSyncMode.Off,
         }) {
         CenterWindow();
 
@@ -41,7 +40,8 @@ internal abstract class Engine : GameWindow {
 
     public float ElapsedTime { get; private set; } = 0f;
     public float DeltaTime { get; private set; } = 0f;
-    
+    public bool VSyncEnabled { get => VSync == VSyncMode.On; set => VSync = value ? VSyncMode.On : VSyncMode.Off; }
+
     protected override void OnLoad() {
         base.OnLoad();
 
