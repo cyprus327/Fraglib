@@ -4,13 +4,10 @@ An simple framework for using C# like a fragment shader.
 
 ## Some Features of Fraglib
 
-SetClear and PerPixel modes:
-- SetClear mode: You have individual control over every pixel on the window.
-- PerPixel mode: You make a perPixel function that runs for every pixel on the window.
-Arbitrary pixel sizes:
-- You can set the pixel size to be any number (>= 1) without making any other change to your program, Fraglib will handle everything.
-Helper functions:
-- There are many functions that you'd probably wind up making yourself (e.g. a deterministic random) to speed up development.
+SetClear mode: You have individual control over every pixel on the window.
+PerPixel mode: You make a perPixel function that runs for every pixel on the window.
+You can set the pixel size to be any number (>= 1) without making any other change to your program, Fraglib will handle everything.
+There are many functions that you'd probably wind up making yourself (e.g. a deterministic random) to speed up development.
 
 ## Getting Fraglib
 
@@ -19,9 +16,9 @@ Fraglib can be downloaded as a NuGet package
 dotnet add package Fraglib --version *
 ```
 
-## Examples: 
+## Examples:
 
-### Simple SetClear Example 
+### Simple SetClear Mode Example (tutorial [here](https://github.com/cyprus327/Fraglib/blob/main/SetClearTutorial.md))
 ```csharp
 using Fraglib;
 
@@ -46,7 +43,7 @@ internal sealed class Example {
 }
 ```
 
-## Simple PerPixel example
+### Simple PerPixel Mode Example (tutorial [here](https://github.com/cyprus327/Fraglib/blob/main/PerPixelTutorial.md))
 ```csharp
 using Fraglib;
 
