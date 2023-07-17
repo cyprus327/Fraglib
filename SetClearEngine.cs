@@ -15,6 +15,20 @@ internal sealed class SetClearEngine : Engine {
         Screen[y * Width + x] = c;
     }
 
+    public void SetVerticalSection(int x, int y0, int y1, uint c) {
+        if (y0 >= y1) {
+            return;
+        }
+
+        if (y1 >= Height) {
+            y1 = Height;
+        }
+
+        while (y0 < y1) {
+            SetPixel(x, y0++, c);
+        }
+    }
+
     public uint GetPixel(int x, int y) {
         return Screen[y * Width + x];
     }
