@@ -5,7 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 namespace Fraglib;
 
 internal abstract class Engine : GameWindow {
-    public Engine(int width, int height, string title) : base(
+    public Engine(int pixelSize, int width, int height, string title, bool vsync = true) : base(
         GameWindowSettings.Default,
         new NativeWindowSettings() {
             Size = (width, height),
@@ -13,19 +13,25 @@ internal abstract class Engine : GameWindow {
             StartVisible = false,
             StartFocused = true,
             MinimumSize = (width, height),
-            MaximumSize = (width, height)
+            MaximumSize = (width, height),
+            Vsync = vsync ? VSyncMode.On : VSyncMode.Off,
         }) {
         CenterWindow();
 
         Screen = new uint[width * height];
-        Height = height;
-        Width = width;
+        WindowHeight = height;
+        WindowWidth = width;
         WindowTitle = title;
+        PixelSize = pixelSize;
+        ScaledHeight = height / pixelSize;
+        ScaledWidth = width / pixelSize;
     }
     
-    public readonly int Height, Width;
+    public readonly int WindowHeight, WindowWidth;
     public readonly uint[] Screen;
     public readonly string WindowTitle;
+    public readonly int PixelSize;
+    public readonly int ScaledHeight, ScaledWidth;
 
     private int programHandle;
     private int vertexArrayHandle;
@@ -88,8 +94,7 @@ internal abstract class Engine : GameWindow {
             out vec4 fragColor;
 
             void main() {
-                vec4 textureColor = texture(textureSampler, gl_FragCoord.xy / textureSize(textureSampler, 0));
-                fragColor = textureColor;
+                fragColor = texture(textureSampler, gl_FragCoord.xy / textureSize(textureSampler, 0));
             }
         ";
         int vertexShader = CompileShader(ShaderType.VertexShader, vertexShaderSource);
@@ -158,7 +163,7 @@ internal abstract class Engine : GameWindow {
 
         Update(args);
 
-        Title = $"{WindowTitle} | FPS: {1 / args.Time:F0}";
+        Title = $"{WindowTitle} | FPS: {(1.0 / args.Time):F0}";
     }
 
     private int CompileShader(ShaderType type, string source) {

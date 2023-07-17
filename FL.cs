@@ -4,7 +4,7 @@ public static class FL {
     private static Engine? e = null;
 
 #region setup
-    public static void Init(int width, int height, string title, Action program) {
+    public static void Init(int width, int height, string title, Action program, int pixelSize = 1) {
         if (e is not null) {
             return;
         }
@@ -13,10 +13,16 @@ public static class FL {
             return;
         }
 
-        e = new SetClearEngine(width, height, title, program);
+        if (pixelSize < 1 || pixelSize >= height || pixelSize >= width) {
+            pixelSize = 1;
+        }
+
+        scaledWidth = width / pixelSize;
+        scaledHeight = height / pixelSize;
+        e = new SetClearEngine(pixelSize, width, height, title, program);
     }
 
-    public static void Init(int width, int height, string title, Func<int, int, PerPixelVars, uint> perPixel) {
+    public static void Init(int width, int height, string title, Func<int, int, PerPixelVars, uint> perPixel, int pixelSize = 1) {
         if (e is not null) {
             return;
         }
@@ -25,7 +31,13 @@ public static class FL {
             return;
         }
 
-        e = new PerPixelEngine(width, height, title, perPixel);
+        if (pixelSize < 1 || pixelSize >= height || pixelSize >= width) {
+            pixelSize = 1;
+        }
+
+        scaledWidth = width / pixelSize;
+        scaledHeight = height / pixelSize;
+        e = new PerPixelEngine(pixelSize, width, height, title, perPixel);
     }
 
     public static void Run() {
@@ -43,7 +55,7 @@ public static class FL {
             return;
         }
 
-        if (x < 0 || x >= e.Width || y < 0 || y >= e.Height) {
+        if (x < 0 || x >= e.ScaledWidth || y < 0 || y >= e.ScaledHeight) {
             return;
         }
 
@@ -51,7 +63,7 @@ public static class FL {
             return; 
         }
 
-        s.SetPixel(x, y, color);
+        s.SetPixel(x * e.PixelSize, y * e.PixelSize, color);
     }
 
     public static uint GetPixel(int x, int y) {
@@ -59,7 +71,7 @@ public static class FL {
             return 255;
         }
 
-        if (x < 0 || x >= e.Width || y < 0 || y >= e.Height) {
+        if (x < 0 || x >= e.WindowWidth || y < 0 || y >= e.WindowHeight) {
             return 255;
         }
 
@@ -87,7 +99,7 @@ public static class FL {
             return;
         }
 
-        if (x < 0 || x >= e.Width || y < 0 || y >= e.Height) {
+        if (x < 0 || x >= e.WindowWidth || y < 0 || y >= e.WindowHeight) {
             return;
         }
         
@@ -96,7 +108,7 @@ public static class FL {
         }
 
         for (int i = x; i < x + width; i++) {
-            if (i >= e.Width) {
+            if (i >= e.WindowWidth) {
                 break;
             }
 
@@ -152,13 +164,13 @@ public static class FL {
 #endregion colors
 
 #region common
-    public static float GetElapsedTime() {
-        if (e is null) {
-            return 0f;
-        }
+    public static float ElapsedTime => e?.ElapsedTime ?? 0f;
 
-        return e.ElapsedTime;
-    }
+    public static int ScaledWidth => scaledWidth;
+    private static int scaledWidth;
+
+    public static int ScaledHeight => scaledHeight;
+    private static int scaledHeight;
 
     private static uint randState = 0;
 

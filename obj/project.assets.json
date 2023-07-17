@@ -413,13 +413,13 @@
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
-    "version": "0.1.1",
+    "version": "0.1.2",
     "restore": {
-      "projectUniqueName": "D:\\Common\\Repos\\FragLib\\Fraglib.csproj",
+      "projectUniqueName": "D:\\Common\\Repos\\Fraglib\\FragLib.csproj",
       "projectName": "Fraglib",
-      "projectPath": "D:\\Common\\Repos\\FragLib\\Fraglib.csproj",
+      "projectPath": "D:\\Common\\Repos\\Fraglib\\FragLib.csproj",
       "packagesPath": "C:\\Users\\Main\\.nuget\\packages\\",
-      "outputPath": "D:\\Common\\Repos\\FragLib\\obj\\",
+      "outputPath": "D:\\Common\\Repos\\Fraglib\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

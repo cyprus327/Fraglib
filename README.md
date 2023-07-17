@@ -85,9 +85,55 @@ internal sealed class Example {
     }
 }
 ```
-Creates a window that fades between the two images below
+Creates a window that fades between the two images below.
 
 ![Vertex Coord Colors, ~0.0z](https://github.com/cyprus327/Fraglib/assets/76965606/cd0a9e46-fb12-4126-b2fa-fd2a1e4b42f1)
 ![Vertex Coord Colors, ~1.0z](https://github.com/cyprus327/Fraglib/assets/76965606/b86aab81-26df-4a28-8eb7-b4e8896fd2a1)
+
+### Using Custom Pixel Size SetClear Example 
+```csharp
+using Fraglib;
+
+internal sealed class Example {
+    private static void Main() {
+        // initialize with additional parameter, pixelSize
+        FL.Init(1280, 720, "Example Window", Program, pixelSize: 20);
+        FL.Run();
+    }
+
+    private static void Program() {
+        // clear the last frame
+        FL.Clear(FL.Black);
+
+        float st = (float)Math.Sin(FL.ElapsedTime) * 0.5f + 0.5f;
+
+        // it's important to use FL.ScaledHeight and 
+        // FL.ScaledWidth when using a pixel size > 0
+        for (int i = 0; i < FL.ScaledHeight; i++) {
+            FL.SetPixel((int)(st * FL.ScaledWidth), i, FL.Blue);
+        }
+    }
+}
+```
+Makes a blue bar scroll back and forth.
+
+### Using Custom Pixel Size PerPixel Example
+```csharp
+using Fraglib;
+
+internal sealed class Example {
+    private static void Main() {
+        // initialize with additional parameter, pixelSize
+        FL.Init(1280, 720, "Example Window", PerPixel, pixelSize: 20);
+        FL.Run();
+    }
+
+    private static uint PerPixel(int x, int y, PerPixelVars u) {
+        float uvx = (float)x / FL.ScaledWidth, uvy = (float)y / FL.ScaledHeight;
+        return FL.NewColor((byte)(uvx * 255), (byte)(uvy * 255), (byte)((Math.Sin(u.Time) * 0.5 + 0.5) * 255));
+    }
+}
+```
+Exact same result as the first PerPixel example, just with 20x20 pixels.
 
 You may have noticed there is nothing like "FL.Close()", which is on purpose. There's no unbinding, unloading, etc. in Fraglib, everything happens automatically behind the scenes.
