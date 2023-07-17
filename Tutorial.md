@@ -27,10 +27,16 @@ When you run this, you should see a black window open with your specified resolu
 
 ![Window VSync Off](https://github.com/cyprus327/Fraglib/assets/76965606/14a85c41-92c4-45be-9631-245603a3e81c)
 
-If you want to change settings, such as VSync, change them before initializing as shown below.
+If you want to change settings, such as VSync, change them before calling FL.Run as shown below.
 ```csharp
+// this is fine
 FL.VSync = false;
 FL.Init(1024, 768, "Window With No VSync");
+FL.Run();
+
+// this is also fine
+FL.Init(1024, 768, "Window With No VSync");
+FL.VSync = false;
 FL.Run();
 ```
 
