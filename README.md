@@ -67,12 +67,7 @@ using Fraglib;
 
 internal sealed class Example {
     private static void Main() {
-        // initialize and run the window
         FL.Init(1024, 768, "Example Window", PerPixel);
-        // if you wanted to use a different pixel size,
-        // simply add an additional parameter after PerPixel,
-        // e.g.: FL.Init(..., PerPixel, 20); sets the pixel
-        // size to 20x20, with no additional changes needed
         FL.Run();
     }
 
