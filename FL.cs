@@ -70,7 +70,7 @@ public static class FL {
         return s.GetPixel(x, y);
     }
 
-    public static void Clear(uint color = 255) {
+    public static void Clear(uint color) {
         if (e is null) {
             return;
         }
@@ -81,9 +81,45 @@ public static class FL {
 
         s.Clear(color);
     }
+
+    public static void Clear(int x, int y, int width, int height, uint color) {
+        if (e is null) {
+            return;
+        }
+
+        if (x < 0 || x >= e.Width || y < 0 || y >= e.Height) {
+            return;
+        }
+        
+        if (e is not SetClearEngine s) {
+            return;
+        }
+
+        for (int i = x; i < x + width; i++) {
+            if (i >= e.Width) {
+                break;
+            }
+
+            s.SetVerticalSection(i, y, y + height, color);
+        }
+    }
 #endregion setclear methods
 
 #region colors
+    public static uint Black => BitConverter.IsLittleEndian ? 4278190080 : 255;
+    public static uint Gray => BitConverter.IsLittleEndian ? 4286611584 : 2155905279;
+    public static uint White => 4294967295;
+    public static uint Red => 4278190335;
+    public static uint Green => BitConverter.IsLittleEndian ? 4278255360 : 16711935;
+    public static uint Blue => BitConverter.IsLittleEndian ? 4294901760 : 65535;
+    public static uint Yellow => BitConverter.IsLittleEndian ? 4278255615 : 4294902015;
+    public static uint Orange => BitConverter.IsLittleEndian ? 4278232575 : 4289003775;
+    public static uint Cyan => BitConverter.IsLittleEndian ? 4294967040 : 16777215;
+    public static uint Magenta => BitConverter.IsLittleEndian ? 4294902015 : 4278255615;
+    public static uint Turquoise => BitConverter.IsLittleEndian ? 4291878976 : 1088475391;
+    public static uint Lavender => BitConverter.IsLittleEndian ? 4294633190 : 3873897215;
+    public static uint Crimson => BitConverter.IsLittleEndian ? 4282127580 : 3692313855;
+
     public static uint NewColor(byte r, byte g, byte b, byte a = 255) {
         return BitConverter.IsLittleEndian ?
             ((uint)a << 24) | ((uint)b << 16) | ((uint)g << 8) | r :
