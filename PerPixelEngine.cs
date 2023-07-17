@@ -22,16 +22,17 @@ internal sealed class PerPixelEngine : Engine {
             return;
         }
 
-        Parallel.For(0, ScaledWidth, x => {
-            x *= PixelSize;
-            for (int y = 0; y < WindowHeight; y += PixelSize) {
-                if (x + PixelSize >= WindowWidth || y + PixelSize >= WindowHeight) {
-                    continue;
-                }
-
+        Parallel.For(0, ScaledHeight, sy => {
+            int y = sy * PixelSize; // original y
+            for (int sx = 0; sx < ScaledWidth; sx++) {
+                uint fragColor = _perPixel(sx, sy, ppvs);
+                int x = sx * PixelSize; // original x
                 for (int py = y; py < y + PixelSize; py++) {
                     for (int px = x; px < x + PixelSize; px++) {
-                        Screen[py * WindowWidth + px] = _perPixel(x, y, ppvs);
+                        if (px >= WindowWidth || py >= WindowHeight) {
+                            continue;
+                        }
+                        Screen[py * WindowWidth + px] = fragColor;
                     }
                 }
             }

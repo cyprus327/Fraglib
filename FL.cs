@@ -4,7 +4,7 @@ public static class FL {
     private static Engine? e = null;
 
 #region setup
-    public static void Init(int width, int height, string title, Action program, int pixelSize = 1) {
+    public static void Init(int width, int height, string title, Action? program = null, int pixelSize = 1) {
         if (e is not null) {
             return;
         }
@@ -17,8 +17,9 @@ public static class FL {
             pixelSize = 1;
         }
 
-        scaledWidth = width / pixelSize;
-        scaledHeight = height / pixelSize;
+        windowWidth = width / pixelSize;
+        windowHeight = height / pixelSize;
+        program ??= () => {};
         e = new SetClearEngine(pixelSize, width, height, title, program);
     }
 
@@ -35,8 +36,8 @@ public static class FL {
             pixelSize = 1;
         }
 
-        scaledWidth = width / pixelSize;
-        scaledHeight = height / pixelSize;
+        windowWidth = width / pixelSize;
+        windowHeight = height / pixelSize;
         e = new PerPixelEngine(pixelSize, width, height, title, perPixel);
     }
 
@@ -94,7 +95,7 @@ public static class FL {
         s.Clear(color);
     }
 
-    public static void Clear(int x, int y, int width, int height, uint color) {
+    public static void FillRect(int x, int y, int width, int height, uint color) {
         if (e is null) {
             return;
         }
@@ -115,6 +116,35 @@ public static class FL {
             s.SetVerticalSection(i, y, y + height, color);
         }
     }
+
+    public static void SetCircle(float centerX, float centerY, float radius, uint color) {
+        int x = (int)radius, y = 0;
+        int decisionOver2 = 1 - x;
+
+        while (y <= x) {
+            SetCirclePixel(centerX, centerY, x, y++, color);
+
+            if (decisionOver2 <= 0) {
+                decisionOver2 += 2 * y + 1;
+            } else {
+                x--;
+                decisionOver2 += 2 * (y - x) + 1;
+            }
+
+            SetCirclePixel(centerX, centerY, x, y, color);
+        }
+    }
+
+    private static void SetCirclePixel(float cx, float cy, int ox, int oy, uint color) {
+        SetPixel((int)(cx + ox), (int)(cy + oy), color);
+        SetPixel((int)(cx - ox), (int)(cy + oy), color);
+        SetPixel((int)(cx + ox), (int)(cy - oy), color);
+        SetPixel((int)(cx - ox), (int)(cy - oy), color);
+        SetPixel((int)(cx + oy), (int)(cy + ox), color);
+        SetPixel((int)(cx - oy), (int)(cy + ox), color);
+        SetPixel((int)(cx + oy), (int)(cy - ox), color);
+        SetPixel((int)(cx - oy), (int)(cy - ox), color);
+    }
 #endregion setclear methods
 
 #region colors
@@ -131,6 +161,7 @@ public static class FL {
     public static uint Turquoise => BitConverter.IsLittleEndian ? 4291878976 : 1088475391;
     public static uint Lavender => BitConverter.IsLittleEndian ? 4294633190 : 3873897215;
     public static uint Crimson => BitConverter.IsLittleEndian ? 4282127580 : 3692313855;
+    public static uint Rainbow(float timeScale = 1f) => HslToRgb((ElapsedTime * 60f * Math.Abs(timeScale)) % 360f, 1f, 0.5f);
 
     public static uint NewColor(byte r, byte g, byte b, byte a = 255) {
         return BitConverter.IsLittleEndian ?
@@ -161,16 +192,62 @@ public static class FL {
             (byte)(color >> 24) : 
             (byte)color;
     }
+
+    public static uint HslToRgb(float hue, float saturation, float lightness) {
+        float chroma = (1f - Math.Abs(2f * lightness - 1f)) * saturation;
+        float huePrime = hue / 60f;
+        float x = chroma * (1f - Math.Abs(huePrime % 2f - 1f));
+        float red, green, blue;
+
+        if (huePrime >= 0f && huePrime < 1f) {
+            red = chroma;
+            green = x;
+            blue = 0f;
+        }
+        else if (huePrime >= 1f && huePrime < 2f) {
+            red = x;
+            green = chroma;
+            blue = 0f;
+        }
+        else if (huePrime >= 2f && huePrime < 3f) {
+            red = 0f;
+            green = chroma;
+            blue = x;
+        }
+        else if (huePrime >= 3f && huePrime < 4f) {
+            red = 0f;
+            green = x;
+            blue = chroma;
+        }
+        else if (huePrime >= 4f && huePrime < 5f) {
+            red = x;
+            green = 0f;
+            blue = chroma;
+        }
+        else {
+            red = chroma;
+            green = 0f;
+            blue = x;
+        }
+
+        float lightnessMatch = lightness - 0.5f * chroma;
+        red += lightnessMatch;
+        green += lightnessMatch;
+        blue += lightnessMatch;
+
+        return NewColor((byte)(red * 255f), (byte)(green * 255f), (byte)(blue * 255f));
+    }
 #endregion colors
 
 #region common
     public static float ElapsedTime => e?.ElapsedTime ?? 0f;
+    public static float DeltaTime => e?.DeltaTime ?? 0f;
 
-    public static int ScaledWidth => scaledWidth;
-    private static int scaledWidth;
+    public static int Width => windowWidth;
+    private static int windowWidth;
 
-    public static int ScaledHeight => scaledHeight;
-    private static int scaledHeight;
+    public static int Height => windowHeight;
+    private static int windowHeight;
 
     private static uint randState = 0;
 

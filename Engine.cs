@@ -40,6 +40,7 @@ internal abstract class Engine : GameWindow {
     private int indexBufferHandle;
 
     public float ElapsedTime { get; private set; } = 0f;
+    public float DeltaTime { get; private set; } = 0f;
     
     protected override void OnLoad() {
         base.OnLoad();
@@ -159,11 +160,13 @@ internal abstract class Engine : GameWindow {
     protected override void OnUpdateFrame(FrameEventArgs args) {
         base.OnUpdateFrame(args);
 
-        ElapsedTime += (float)args.Time;
+        float t = (float)args.Time;
+        DeltaTime = t;
+        ElapsedTime += t;
 
         Update(args);
 
-        Title = $"{WindowTitle} | FPS: {(1.0 / args.Time):F0}";
+        Title = $"{WindowTitle} | FPS: {(1.0 / t):F0}";
     }
 
     private int CompileShader(ShaderType type, string source) {
