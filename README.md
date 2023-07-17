@@ -59,7 +59,7 @@ internal sealed class Tutorial {
     }
 }
 ```
-![Scaled rainbow ball](https://github.com/cyprus327/Fraglib/assets/76965606/f9a68f0a-278e-4636-ab60-696a35ffd817)
+![Rainbow Ball](https://github.com/cyprus327/Fraglib/assets/76965606/c192aa0f-c844-43fb-906e-eb7992d9bde0)
 
 ### PerPixel Mode Example
 ```csharp
