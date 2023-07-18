@@ -26,7 +26,7 @@ public static class FL {
         e = new SetClearEngine((int)PixelSize, width, height, title, program);
     }
 
-    public static void Init(int width, int height, string title, Func<int, int, PerPixelVars, uint> perPixel) {
+    public static void Init(int width, int height, string title, Func<int, int, Uniforms, uint> perPixel) {
         if (e is not null) {
             return;
         }
@@ -104,7 +104,8 @@ public static class FL {
             return;
         }
 
-        if (x < 0 || x >= e.WindowWidth || y < 0 || y >= e.WindowHeight) {
+        if (x < 0 || x >= e.ScaledWidth || y < 0 || y >= e.ScaledHeight 
+            || x + width >= e.ScaledWidth || y + height >= e.ScaledHeight) {
             return;
         }
         
@@ -112,13 +113,7 @@ public static class FL {
             return;
         }
 
-        for (int i = x; i < x + width; i++) {
-            if (i >= e.WindowWidth) {
-                break;
-            }
-
-            s.SetVerticalSection(i, y, y + height, color);
-        }
+        s.FillRect(x * e.PixelSize, y * e.PixelSize, width * e.PixelSize, height * e.PixelSize, color);
     }
 
     public static void SetCircle(float centerX, float centerY, float radius, uint color) {
@@ -177,6 +172,10 @@ public static class FL {
     public static uint Crimson => BitConverter.IsLittleEndian ? 4282127580 : 3692313855;
     public static uint Rainbow(float timeScale = 1f) => HslToRgb((ElapsedTime * 60f * Math.Abs(timeScale)) % 360f, 1f, 0.5f);
 
+    public static uint NewColor(float r, float g, float b, float a = 1f) {
+        return NewColor((byte)(r * 255), (byte)(g * 255), (byte)(b * 255), (byte)(a * 255));
+    }
+
     public static uint NewColor(byte r, byte g, byte b, byte a = 255) {
         return BitConverter.IsLittleEndian ?
             ((uint)a << 24) | ((uint)b << 16) | ((uint)g << 8) | r :
@@ -217,28 +216,23 @@ public static class FL {
             red = chroma;
             green = x;
             blue = 0f;
-        }
-        else if (huePrime >= 1f && huePrime < 2f) {
+        } else if (huePrime >= 1f && huePrime < 2f) {
             red = x;
             green = chroma;
             blue = 0f;
-        }
-        else if (huePrime >= 2f && huePrime < 3f) {
+        } else if (huePrime >= 2f && huePrime < 3f) {
             red = 0f;
             green = chroma;
             blue = x;
-        }
-        else if (huePrime >= 3f && huePrime < 4f) {
+        } else if (huePrime >= 3f && huePrime < 4f) {
             red = 0f;
             green = x;
             blue = chroma;
-        }
-        else if (huePrime >= 4f && huePrime < 5f) {
+        } else if (huePrime >= 4f && huePrime < 5f) {
             red = x;
             green = 0f;
             blue = chroma;
-        }
-        else {
+        } else {
             red = chroma;
             green = 0f;
             blue = x;

@@ -1,6 +1,6 @@
 using Fraglib;
 
-internal sealed class Tutorial {
+internal sealed class Example {
     // variables for the ball
     private static float ballX = FL.Width / 2f;
     private static float ballY = FL.Height / 2f;
@@ -15,14 +15,11 @@ internal sealed class Tutorial {
     }
 
     private static void Program() {
-        // clear the last frame
         FL.Clear(FL.Black);
 
-        // update ball position
         ballX += ballSpeedX * FL.DeltaTime;
         ballY += ballSpeedY * FL.DeltaTime;
 
-        // handle collision with screen edges
         if (ballX + ballRadius >= FL.Width || ballX - ballRadius <= 0) {
             ballSpeedX *= -1f;
         }
@@ -30,7 +27,6 @@ internal sealed class Tutorial {
             ballSpeedY *= -1f;
         }
 
-        // draw the ball
         FL.FillCircle(ballX, ballY, ballRadius, FL.Rainbow());
     }
 }

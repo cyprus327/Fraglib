@@ -11,30 +11,26 @@ internal sealed class SetClearEngine : Engine {
     private readonly int _count;
     private readonly Action _gameLoop;
     
-    public void SetPixel(int x, int y, uint c) {
+    public void SetPixel(int x, int y, uint col) {
         if (PixelSize == 1) {
-            Screen[y * WindowWidth + x] = c;
+            Screen[y * WindowWidth + x] = col;
             return;
         }
 
         for (int py = y; py < y + PixelSize; py++) {
+            int yo = py * WindowWidth;
             for (int px = x; px < x + PixelSize; px++) {
-                Screen[py * WindowWidth + px] = c;
+                Screen[yo + px] = col;
             }
         }
     }
 
-    public void SetVerticalSection(int x, int y0, int y1, uint c) {
-        if (y0 >= y1) {
-            return;
-        }
-
-        if (y1 >= WindowHeight) {
-            y1 = WindowHeight;
-        }
-
-        while (y0 < y1) {
-            SetPixel(x, y0++, c);
+    public void FillRect(int x, int y, int w, int h, uint col) {
+        for (int r = y; r < y + h; r++) {
+            int ro = r * WindowWidth;
+            for (int c = x; c < x + w; c++) {
+                Screen[ro + c] = col;
+            }
         }
     }
 
@@ -42,8 +38,8 @@ internal sealed class SetClearEngine : Engine {
         return Screen[y * WindowWidth + x];
     }
 
-    public void Clear(uint c = 255) {
-        Array.Fill(Screen, c);
+    public void Clear(uint col) {
+        Array.Fill(Screen, col);
     }
 
     public override void Update(FrameEventArgs args) {
