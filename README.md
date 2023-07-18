@@ -39,10 +39,7 @@ internal sealed class Example {
     // the function that gets run for each pixel on the window
     private static uint PerPixel(int x, int y, Uniforms u) {
         float uvx = (float)x / u.Width, uvy = (float)y / u.Height;
-        byte r = (byte)(uvx * 255),
-             g = (byte)(uvy * 255),
-             b = 0;
-        return FL.NewColor(r, g, b);
+        return FL.NewColor(uvx, uvy, 0f);
     }
 }
 ```
@@ -56,12 +53,12 @@ internal sealed class Example {
     // variables for the ball
     private static float ballX = FL.Width / 2f;
     private static float ballY = FL.Height / 2f;
-    private static float ballRadius = 50f;
-    private static float ballSpeedX = 700f;
-    private static float ballSpeedY = 700f;
+    private static float ballRadius = 50f / FL.PixelSize;
+    private static float ballSpeedX = 700f / FL.PixelSize;
+    private static float ballSpeedY = 700f / FL.PixelSize;
     
     private static void Main() {
-        FL.VSync = true;
+        FL.PixelSize = 4;
         FL.Init(1024, 768, "Rainbow Ball", Program);
         FL.Run();
     }
