@@ -121,7 +121,7 @@ internal sealed class Tutorial {
 Here's the output of both above programs:
 ![Blue line program](https://github.com/cyprus327/Fraglib/assets/76965606/31952d37-dde4-469b-9b06-fa449e5a045f)
 
-Let's make something at least a little bit more exciting by adding some motion!
+Let's make this at least a little bit more exciting by adding some motion!
 ```csharp
 using Fraglib;
 
@@ -173,7 +173,7 @@ Much better!
 
 For the final part of this section, let's make a rainbow ball that bounces around the screen. This might sound a lot more complicated than a blue bar at first, but Fraglib makes it a breeze.
 
-Step 1) Initialize the variables for the ball
+**Step 1)** Initialize the variables for the ball
 ```csharp
 float ballX = FL.Width / 2f;
 float ballY = FL.Height / 2f;
@@ -182,7 +182,7 @@ float ballSpeedX = 700f;
 float ballSpeedY = 700f;
 ```
 
-Step 2) Create the program for moving the ball
+**Step 2)** Create the program for moving the ball
 ```csharp
 private static void Program() {
     // clear the last frame
@@ -287,34 +287,34 @@ internal sealed class Tutorial {
 
 You may have noticed that in this code I use u.Width and u.Height instead of FL.Width and FL.Height. Using FL.Width/Height would work perfectly here, however there is a slight performance gain when using u.Width/Height instead. The same thing goes for u.Time instead of FL.ElapsedTime, except there is a quite noticeable performance difference here.
 
-Let's end the PerPixel segment with a cooler looking shader, how about an RGB spinning pinwheel?
+Let's end the PerPixel segment with a cooler looking shader, how about a spinning pinwheel?
 
-Step 1) Building off the last example, get the uv coordinates.
+**Step 1)** Building off the last example, get the uv coordinates.
 ```csharp
 float uvx = (float)x / u.Width, uvy = (float)y / u.Height;
 ```
 
-Step 2) Define some constants for the pinwheel.
+**Step 2)** Define some constants for the pinwheel.
 ```csharp
 const float radius = 0.4f;
 const float centerX = 0.5f;
 const float centerY = 0.5f;
 ```
 
-Step 3) Calculate the distance from the current pixel to the center of the pattern and the angle from the current pixel relative to the center of the pattern.
+**Step 3)** Calculate the distance from the current pixel to the center of the pattern and the angle from the current pixel relative to the center of the pattern.
 ```csharp
 float distance = (float)Math.Sqrt((uvx - centerX) * (uvx - centerX) + (uvy - centerY) * (uvy - centerY));
 float angle = (float)Math.Atan2(uvx - centerX, uvy - centerY);
 ```
 
-Step 4) Color based on angle and time to make the pinwheel spin
+**Step 4)** Color based on angle and time to make the pinwheel spin
 ```csharp
 float r = MathF.Sin(u.Time + angle);
 float g = MathF.Sin(u.Time + angle + 2);
 float b = MathF.Sin(u.Time + angle + 4);
 ```
 
-Step 5) Return based on the distance
+**Step 5)** Return based on the distance
 ```csharp
 return distance >= radius ? FL.Black : FL.NewColor(r, g, b);
 ```
