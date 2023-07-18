@@ -45,7 +45,7 @@ internal sealed class Example {
     }
 }
 ```
-![Vertex Coord Colors, ~0.0z](https://github.com/cyprus327/Fraglib/assets/76965606/cd0a9e46-fb12-4126-b2fa-fd2a1e4b42f1)
+![Vertex Coord Colors, ~0.0z](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/UVGradient.png)
 
 ### SetClear Mode Example
 ```csharp
@@ -86,6 +86,6 @@ internal sealed class Example {
     }
 }
 ```
-![Rainbow Ball](https://github.com/cyprus327/Fraglib/assets/76965606/c192aa0f-c844-43fb-906e-eb7992d9bde0)
+![Rainbow Ball](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/RainbowBallGIF.gif)
 
 You may have noticed there is nothing like "FL.Close()", which is on purpose. There's no unbinding, unloading, etc. in Fraglib, everything happens automatically behind the scenes.
