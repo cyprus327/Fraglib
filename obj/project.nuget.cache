@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "C00SaG9CTvjM/T5MCUqKJgVldt9iLArr4AkggAfS3V9zrgMGjJFDSpqbCijdrxLrmL1BsuS7t87oREcNZ7S97g==",
+  "dgSpecHash": "9E9SMcsO9yZqUqWstAoHKyCvjIFQYxHwDATgI4D9zCxMEqfkrFIU8E2fzMpsIO/BubioMp/k+X1vIJGLnGIYgg==",
   "success": true,
-  "projectFilePath": "D:\\Common\\Repos\\Fraglib\\FragLib.csproj",
+  "projectFilePath": "D:\\Common\\Repos\\Fraglib\\Fraglib.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Main\\.nuget\\packages\\opentk\\4.7.7\\opentk.4.7.7.nupkg.sha512",
     "C:\\Users\\Main\\.nuget\\packages\\opentk.compute\\4.7.7\\opentk.compute.4.7.7.nupkg.sha512",
