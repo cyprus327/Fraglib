@@ -25,7 +25,7 @@ private static void Main() {
 
 When you run this, you should see a black window open with your specified resolution and title, something like the image below.
 
-![Window VSync Off](https://github.com/cyprus327/Fraglib/assets/76965606/14a85c41-92c4-45be-9631-245603a3e81c)
+![Window VSync Off](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/BlackWindow.png)
 
 If you want to change settings, such as PixelSize, change them before calling FL.Init as shown below.
 ```csharp
@@ -49,7 +49,7 @@ FL.Run();
 
 You should now see a window with the color of your choice!
 
-![Turquoise Window](https://github.com/cyprus327/Fraglib/assets/76965606/c73ddc1e-5a21-410d-a283-741e0b6d9c38)
+![Turquoise Window](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/TurquoiseWindow.png)
 
 Here's the full code of this section:
 ```csharp
@@ -119,7 +119,7 @@ internal sealed class Tutorial {
 ```
 
 Here's the output of both above programs:
-![Blue line program](https://github.com/cyprus327/Fraglib/assets/76965606/31952d37-dde4-469b-9b06-fa449e5a045f)
+![Blue line program](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/BlueLineWindow.png)
 
 Let's make this at least a little bit more exciting by adding some motion!
 ```csharp
@@ -143,7 +143,7 @@ internal sealed class Tutorial {
 }
 ```
 
-![Moving blue bar](https://github.com/cyprus327/Fraglib/assets/76965606/b8c3a5c0-a5b0-40ba-93d8-f4fe68a1ddf4)
+![Moving blue bar](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/BlueLineNoClearWindow.png)
 
 That's not what we want right now, but that shows some of the control I mentioned earlier. Let's make this look how we want by clearing the window before drawing again.
 ```csharp
@@ -167,7 +167,7 @@ internal sealed class Tutorial {
 }
 ```
 
-![Cleared blue moving bar](https://github.com/cyprus327/Fraglib/assets/76965606/35a728b2-16cc-434d-b52e-ed3fc57d13de)
+![Cleared blue moving bar](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/BlueLineClearWindow.png)
 
 Much better!
 
@@ -207,7 +207,7 @@ private static void Program() {
 
 Done!
 
-![Rainbow Ball](https://github.com/cyprus327/Fraglib/assets/76965606/c192aa0f-c844-43fb-906e-eb7992d9bde0)
+![Rainbow Ball](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/RainbowBallGIF.gif)
 
 Here's the final code:
 ```csharp
@@ -250,7 +250,7 @@ internal sealed class Tutorial {
 
 Before moving on, try experimenting with some things. For example, see if you can get the ball to look like the screenshot below
 
-![Scaled rainbow ball](https://github.com/cyprus327/Fraglib/assets/76965606/f9a68f0a-278e-4636-ab60-696a35ffd817)
+![Scaled rainbow ball](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/PixelatedRainbowBall.png)
 
 Here's a hint:
 ```csharp
@@ -276,14 +276,11 @@ internal sealed class Tutorial {
 
     private static uint PerPixel(int x, int y, Uniforms u) {
         float uvx = (float)x / u.Width, uvy = (float)y / u.Height;
-        byte r = (byte)(uvx * 255),
-             g = (byte)(uvy * 255),
-             b = (byte)((Math.Sin(u.Time) * 0.5 + 0.5) * 255);
-        return FL.NewColor(r, g, b);
+        return FL.NewColor(uvx, uvy, 0f);
     }
 }
 ```
-![Vertex colors gif](https://github.com/cyprus327/Fraglib/assets/76965606/3088f216-b363-4df7-9611-6ab3e5a0d66d)
+![Vertex colors gif](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/UVGradient.png)
 
 You may have noticed that in this code I use u.Width and u.Height instead of FL.Width and FL.Height. Using FL.Width/Height would work perfectly here, however there is a slight performance gain when using u.Width/Height instead. The same thing goes for u.Time instead of FL.ElapsedTime, except there is a quite noticeable performance difference here.
 
@@ -321,7 +318,7 @@ return distance >= radius ? FL.Black : FL.NewColor(r, g, b);
 
 Done! Well, almost.
 
-![Streched pinwheel](https://github.com/cyprus327/Fraglib/assets/76965606/7eb03679-d4d7-424c-a842-122c8cb43a94)
+![Streched pinwheel](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/StrechedPinwheel.png)
 
 Calculating uv coordinates like that only works for square resolutions, which causes our pinwheel to be streched out. To fix this, we can calculate them like below instead.
 ```csharp
@@ -329,13 +326,13 @@ float uvx = (-u.Width + 2.0f * x) / u.Height;
 float uvy = (-u.Height + 2.0f * y) / u.Height;
 ```
 
-![Zoomed out pinwheel](https://github.com/cyprus327/Fraglib/assets/76965606/15c52364-02f1-402f-8b52-d8573aedff29)
+![Zoomed out pinwheel](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/FixedPinwheel1.png)
 
 But now it's like we've zoomed out, and the pinwheel is no longer in the center :(
 
 It's very simple to fix this, all we need to do is change the constants for the pinwheel around a little bit, and we have our beautiful pinwheel!
 
-![Final pinwheel](https://github.com/cyprus327/Fraglib/assets/76965606/ceb27a01-8e63-4223-8912-ea529ebc4ef5)
+![Final pinwheel](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/FixedPinwheel2.png)
 
 And here's the full code
 ```csharp
