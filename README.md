@@ -34,7 +34,8 @@ using Fraglib;
 
 internal sealed class Example {
     private static void Main() {
-        FL.Init(1024, 768, "Example Window", PerPixel);
+        FL.VSync = true;
+        FL.Init(1024, 768, "Window", PerPixel);
         FL.Run();
     }
 
@@ -45,7 +46,7 @@ internal sealed class Example {
     }
 }
 ```
-![Vertex Coord Colors, ~0.0z](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/UVGradient.png)
+![Vertex Coord Colors](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/UVGradient.png)
 
 ### SetClear Mode Example
 ```csharp
