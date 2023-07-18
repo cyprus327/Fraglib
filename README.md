@@ -1,39 +1,64 @@
 # Fraglib
 
-An simple to learn framework for using C# like a fragment shader or rendering anything in general.
+Fraglib is a powerful and simple-to-learn framework that allows you to use C# like a fragment shader, or to help render things in general.
 
-[Tutorial here](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md).
+## Index
+- [Features](https://github.com/cyprus327/Fraglib/blob/main/README.md#Features)
+- [Installation](https://github.com/cyprus327/Fraglib/blob/main/README.md#Getting-Started)
+- [Tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md)
+- [SetClear Tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#setclear-tutorial)
+- [PerPixel Tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#perpixel-tutorial)
 
-## Some Features of Fraglib
+## Features
 
-SetClear mode: You have individual control over every pixel on the window.
-PerPixel mode: You make a perPixel function that runs for every pixel on the window.
-You can set the pixel size to be any number (>= 1) without making any other change to your program, Fraglib will handle everything.
-There are many functions that you'd probably wind up making yourself (e.g. a deterministic random) to speed up development.
+- **SetClear Mode**: Individual control over every pixel on the window.
+- **PerPixel Mode**: A perPixel function that runs for every pixel on the window.
+- **Flexible pixel size**: You can set the pixel size to any number (>= 1) without making other changes to your program. Fraglib handles everything automatically.
+- **Time-saving functions**: Fraglib provides many functions that are commonly used in development, such as a deterministic random, to speed up your workflow.
 
-## Getting Fraglib
+## Getting Started
 
-Fraglib can be downloaded as a NuGet package
-```
+Fraglib can be easily installed as a NuGet package.
+
+```shell
 dotnet add package Fraglib --version *
 ```
 
 ## Examples:
 
+### PerPixel Mode Example
+```csharp
+using Fraglib;
+
+internal sealed class Example {
+    private static void Main() {
+        FL.Init(1024, 768, "Example Window", PerPixel);
+        FL.Run();
+    }
+
+    // the function that gets run for each pixel on the window
+    private static uint PerPixel(int x, int y, Uniforms u) {
+        float uvx = (float)x / u.Width, uvy = (float)y / u.Height;
+        return FL.NewColor(uvx, uvy, 0f);
+    }
+}
+```
+![Vertex Coord Colors, ~0.0z](https://github.com/cyprus327/Fraglib/assets/76965606/cd0a9e46-fb12-4126-b2fa-fd2a1e4b42f1)
+
 ### SetClear Mode Example
 ```csharp
 using Fraglib;
 
-internal sealed class Tutorial {
+internal sealed class Example {
     // variables for the ball
     private static float ballX = FL.Width / 2f;
     private static float ballY = FL.Height / 2f;
-    private static float ballRadius = 50f;
-    private static float ballSpeedX = 700f;
-    private static float ballSpeedY = 700f;
+    private static float ballRadius = 50f / FL.PixelSize;
+    private static float ballSpeedX = 700f / FL.PixelSize;
+    private static float ballSpeedY = 700f / FL.PixelSize;
     
     private static void Main() {
-        FL.VSync = true;
+        FL.PixelSize = 4;
         FL.Init(1024, 768, "Rainbow Ball", Program);
         FL.Run();
     }
@@ -60,32 +85,5 @@ internal sealed class Tutorial {
 }
 ```
 ![Rainbow Ball](https://github.com/cyprus327/Fraglib/assets/76965606/c192aa0f-c844-43fb-906e-eb7992d9bde0)
-
-### PerPixel Mode Example
-```csharp
-using Fraglib;
-
-internal sealed class Example {
-    private static void Main() {
-        FL.Init(1024, 768, "Example Window", PerPixel);
-        FL.Run();
-    }
-
-    // the function that gets run for each pixel on the window
-    // u == the "uniforms"
-    private static uint PerPixel(int x, int y, PerPixelVars u) {
-        float uvx = (float)x / FL.Width, uvy = (float)y / FL.Height;
-        byte r = (byte)(uvx * 255),
-             g = (byte)(uvy * 255),
-             b = (byte)((Math.Sin(u.Time) * 0.5 + 0.5) * 255);
-        return FL.NewColor(r, g, b);
-    }
-}
-```
-Fades between the two images below.
-
-![Vertex Coord Colors, ~0.0z](https://github.com/cyprus327/Fraglib/assets/76965606/cd0a9e46-fb12-4126-b2fa-fd2a1e4b42f1)
-![Vertex Coord Colors, ~1.0z](https://github.com/cyprus327/Fraglib/assets/76965606/b86aab81-26df-4a28-8eb7-b4e8896fd2a1)
-
 
 You may have noticed there is nothing like "FL.Close()", which is on purpose. There's no unbinding, unloading, etc. in Fraglib, everything happens automatically behind the scenes.

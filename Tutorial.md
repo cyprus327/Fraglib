@@ -4,7 +4,7 @@
 
 First things first, add the latest version of Fraglib to your project.
 
-```
+```shell
 dotnet add package Fraglib --version *
 ```
 
@@ -64,7 +64,7 @@ internal static class Tutorial {
 }
 ```
 
-## Basics of SetClear Mode
+## SetClear Tutorial
 
 There are two main methods of drawing things in computer graphics, [immediate](https://en.wikipedia.org/wiki/Immediate_mode_(computer_graphics)) and [retained](https://en.wikipedia.org/wiki/Retained_mode).
 Fraglib uses a mixture of both of these methods, allowing you to be much more in control.
@@ -121,7 +121,7 @@ internal sealed class Tutorial {
 Here's the output of both above programs:
 ![Blue line program](https://github.com/cyprus327/Fraglib/assets/76965606/31952d37-dde4-469b-9b06-fa449e5a045f)
 
-Let's make something at least a little bit more exciting by adding some motion!
+Let's make this at least a little bit more exciting by adding some motion!
 ```csharp
 using Fraglib;
 
@@ -171,9 +171,9 @@ internal sealed class Tutorial {
 
 Much better!
 
-For the final part of this section, let's make a rainbow ball that bounces around the screen. This might sound complicated at first, but Fraglib makes it a breeze.
+For the final part of this section, let's make a rainbow ball that bounces around the screen. This might sound a lot more complicated than a blue bar at first, but Fraglib makes it a breeze.
 
-Step 1) Initialize the variables for the ball
+**Step 1)** Initialize the variables for the ball
 ```csharp
 float ballX = FL.Width / 2f;
 float ballY = FL.Height / 2f;
@@ -181,7 +181,8 @@ float ballRadius = 50f;
 float ballSpeedX = 700f;
 float ballSpeedY = 700f;
 ```
-Step 2) Create the program for moving the ball
+
+**Step 2)** Create the program for moving the ball
 ```csharp
 private static void Program() {
     // clear the last frame
@@ -203,7 +204,8 @@ private static void Program() {
     FL.FillCircle(ballX, ballY, ballRadius, FL.Rainbow());
 }
 ```
-Step 3) Done!
+
+Done!
 
 ![Rainbow Ball](https://github.com/cyprus327/Fraglib/assets/76965606/c192aa0f-c844-43fb-906e-eb7992d9bde0)
 
@@ -258,4 +260,121 @@ And another hint: Scale your variables!
 
 ## PerPixel Tutorial
 
-Coming soon
+In if you've skipped the previous tutorials you'll probably understand fine, but there is a lot said in the SetClear tutorial that won't be repeated here, so if at any point there's something not specific to PerPixel mode that's unclear, it's probably explained in the [SetClear Tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#setclear-tutorial).
+
+PerPixel mode is meant to be as similar as possible to writing a fragment shader, which means essentially anything you can make in a fragment shader you can make in this mode.
+
+The only difference, setup-wise, when using PerPixel mode as opposed to SetClear mode is that your Program method is a PerPixel method, so instead of the last parameter in Init being an Action, it's a Func<int, int, Uniforms, uint>. Below is an example of what this looks like.
+```csharp
+using Fraglib;
+
+internal sealed class Tutorial {
+    private static void Main() {
+        FL.Init(1024, 768, "Window", PerPixel);
+        FL.Run();
+    }
+
+    private static uint PerPixel(int x, int y, Uniforms u) {
+        float uvx = (float)x / u.Width, uvy = (float)y / u.Height;
+        byte r = (byte)(uvx * 255),
+             g = (byte)(uvy * 255),
+             b = (byte)((Math.Sin(u.Time) * 0.5 + 0.5) * 255);
+        return FL.NewColor(r, g, b);
+    }
+}
+```
+![Vertex colors gif](https://github.com/cyprus327/Fraglib/assets/76965606/3088f216-b363-4df7-9611-6ab3e5a0d66d)
+
+You may have noticed that in this code I use u.Width and u.Height instead of FL.Width and FL.Height. Using FL.Width/Height would work perfectly here, however there is a slight performance gain when using u.Width/Height instead. The same thing goes for u.Time instead of FL.ElapsedTime, except there is a quite noticeable performance difference here.
+
+Let's end the PerPixel segment with a cooler looking shader, how about a spinning pinwheel?
+
+**Step 1)** Building off the last example, get the uv coordinates.
+```csharp
+float uvx = (float)x / u.Width, uvy = (float)y / u.Height;
+```
+
+**Step 2)** Define some constants for the pinwheel.
+```csharp
+const float radius = 0.4f;
+const float centerX = 0.5f;
+const float centerY = 0.5f;
+```
+
+**Step 3)** Calculate the distance from the current pixel to the center of the pattern and the angle from the current pixel relative to the center of the pattern.
+```csharp
+float distance = (float)Math.Sqrt((uvx - centerX) * (uvx - centerX) + (uvy - centerY) * (uvy - centerY));
+float angle = (float)Math.Atan2(uvx - centerX, uvy - centerY);
+```
+
+**Step 4)** Color based on angle and time to make the pinwheel spin
+```csharp
+float r = MathF.Sin(u.Time + angle);
+float g = MathF.Sin(u.Time + angle + 2);
+float b = MathF.Sin(u.Time + angle + 4);
+```
+
+**Step 5)** Return based on the distance
+```csharp
+return distance >= radius ? FL.Black : FL.NewColor(r, g, b);
+```
+
+Done! Well, almost.
+
+![Streched pinwheel](https://github.com/cyprus327/Fraglib/assets/76965606/7eb03679-d4d7-424c-a842-122c8cb43a94)
+
+Calculating uv coordinates like that only works for square resolutions, which causes our pinwheel to be streched out. To fix this, we can calculate them like below instead.
+```csharp
+float uvx = (-u.Width + 2.0f * x) / u.Height;
+float uvy = (-u.Height + 2.0f * y) / u.Height;
+```
+
+![Zoomed out pinwheel](https://github.com/cyprus327/Fraglib/assets/76965606/15c52364-02f1-402f-8b52-d8573aedff29)
+
+But now it's like we've zoomed out, and the pinwheel is no longer in the center :(
+
+It's very simple to fix this, all we need to do is change the constants for the pinwheel around a little bit, and we have our beautiful pinwheel!
+
+![Final pinwheel](https://github.com/cyprus327/Fraglib/assets/76965606/ceb27a01-8e63-4223-8912-ea529ebc4ef5)
+
+And here's the full code
+```csharp
+using Fraglib;
+
+internal sealed class Tutorial {
+    private static void Main() {
+        FL.Init(1024, 768, "Pinwheel Example", PerPixel);
+        FL.Run();
+    }
+
+    private static uint PerPixel(int x, int y, Uniforms u) {
+        // normalized uv coordinates
+        float uvx = (-u.Width + 2.0f * x) / u.Height;
+        float uvy = (-u.Height + 2.0f * y) / u.Height;
+
+        // constants for the pinwheel
+        const float radius = 0.7f;
+        const float centerX = 0.0f;
+        const float centerY = 0.0f;
+
+        // distance from the current pixel to the center of the pattern
+        float distance = (float)Math.Sqrt((uvx - centerX) * (uvx - centerX) + (uvy - centerY) * (uvy - centerY));
+        
+        // if not part of the pinwheel, return black
+        if (distance >= radius) {
+            return FL.Black;
+        }
+
+        // angle of the current pixel relative to the center of the pattern
+        float angle = (float)Math.Atan2(uvx - centerX, uvy - centerY);
+
+        // color based on angle and time to add a little spin
+        float r = MathF.Sin(u.Time + angle);
+        float g = MathF.Sin(u.Time + angle + 2);
+        float b = MathF.Sin(u.Time + angle + 4);
+        return FL.NewColor(r, g, b);
+    }
+}
+```
+
+With that, the this tutorial comes to an end. I hope you like Fraglib, and make something amazing!
