@@ -1,6 +1,8 @@
 # Fraglib
 
-Fraglib is a powerful and simple-to-learn framework that allows you to use C# like a fragment shader, or to help render things in general.
+Fraglib is a powerful and simple-to-learn library that allows you to use C# like a fragment shader, or to help render things in general.
+
+NOTE: This library is still in very early stages of development, and is in no way final. See [Fraglib on NuGet](https://www.nuget.org/packages/Fraglib) to see what the latest version is.
 
 ## Index
 - [Features](https://github.com/cyprus327/Fraglib/blob/main/README.md#Features)
