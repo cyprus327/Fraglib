@@ -67,7 +67,7 @@ internal static class Tutorial {
 ## SetClear Tutorial
 
 There are two main methods of drawing things in computer graphics, [immediate](https://en.wikipedia.org/wiki/Immediate_mode_(computer_graphics)) and [retained](https://en.wikipedia.org/wiki/Retained_mode).
-Fraglib uses a mixture of both of these methods, allowing you to be much more in control.
+Fraglib uses a mixture of both of these methods, allowing you more control.
 
 Here's an example that demonstrates what this means.
 
@@ -374,7 +374,7 @@ internal sealed class Tutorial {
 }
 ```
 
-A part of PerPixel mode I haven't mentioned yet is the PerFrame function. PerFrame is an Action, and functions exactly as you'd think it would, it's called once every frame.
+A part of PerPixel mode I haven't mentioned yet is the PerFrame function. PerFrame is an Action and functions exactly as you'd think it would, it's called once per frame.
 
 Here's an example of using PerFrame with a Mandelbrot renderer.
 
@@ -422,4 +422,4 @@ internal sealed class Tutorial {
 
 ![Mandelbrot Zoom](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/MandelbrotGIF.gif)
 
-With that, the this tutorial comes to an end. I hope you like Fraglib, and make something amazing!
+With that, this tutorial comes to an end. I hope you like Fraglib, and make something amazing!
