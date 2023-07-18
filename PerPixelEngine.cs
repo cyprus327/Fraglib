@@ -3,18 +3,22 @@ using OpenTK.Windowing.Common;
 namespace Fraglib;
 
 internal sealed class PerPixelEngine : Engine {
-    public PerPixelEngine(int s, int w, int h, string t, Func<int, int, Uniforms, uint> p) : base(s, w, h, t) {
-        _perPixel = p;
+    public PerPixelEngine(int s, int w, int h, string t, Func<int, int, Uniforms, uint> pp, Action pf) : base(s, w, h, t) {
+        _perPixel = pp;
+        _perFrame = pf;
         uniforms.Time = 0f;
         uniforms.Width = w;
         uniforms.Height = h;
     }
 
     private readonly Func<int, int, Uniforms, uint> _perPixel;
+    private readonly Action _perFrame;
     private Uniforms uniforms = new Uniforms();
 
     public override void Update(FrameEventArgs args) {
         uniforms.Time += (float)args.Time;
+        
+        _perFrame();
         
         if (PixelSize == 1) {
             Parallel.For(0, WindowWidth, x => {
