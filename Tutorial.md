@@ -10,12 +10,12 @@ dotnet add package Fraglib --version *
 
 ## First Window
 
-Use Fraglib
+**Step 1)** Use Fraglib
 ```csharp
 using Fraglib;
 ```
 
-Initialize and run the window
+**Step 2)** Initialize and run the window
 ```csharp
 private static void Main() {
     FL.Init(1024, 768, "Window Title");
@@ -248,7 +248,7 @@ internal sealed class Tutorial {
 }
 ```
 
-Before moving on, try experimenting with some things. For example, see if you can get the ball to look like the screenshot below
+Before moving on, try experimenting with some things. For example, see if you can get the ball to look like the screenshot below.
 
 ![Scaled rainbow ball](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/PixelatedRainbowBall.png)
 
@@ -284,21 +284,21 @@ internal sealed class Tutorial {
 
 You may have noticed that in this code I use u.Width and u.Height instead of FL.Width and FL.Height. Using FL.Width/Height would work perfectly here, however there is a slight performance gain when using u.Width/Height instead. The same thing goes for u.Time instead of FL.ElapsedTime, except there is a quite noticeable performance difference here.
 
-Let's end the PerPixel segment with a cooler looking shader, how about a spinning pinwheel?
+Lets make a little shader, how about a spinning pinwheel?
 
-**Step 1)** Building off the last example, get the uv coordinates.
+**Step 1)** Building off the last example, get the uv coordinates
 ```csharp
 float uvx = (float)x / u.Width, uvy = (float)y / u.Height;
 ```
 
-**Step 2)** Define some constants for the pinwheel.
+**Step 2)** Define some constants for the pinwheel
 ```csharp
 const float radius = 0.4f;
 const float centerX = 0.5f;
 const float centerY = 0.5f;
 ```
 
-**Step 3)** Calculate the distance from the current pixel to the center of the pattern and the angle from the current pixel relative to the center of the pattern.
+**Step 3)** Calculate the distance from the current pixel to the center of the pattern and the angle from the current pixel relative to the center of the pattern
 ```csharp
 float distance = (float)Math.Sqrt((uvx - centerX) * (uvx - centerX) + (uvy - centerY) * (uvy - centerY));
 float angle = (float)Math.Atan2(uvx - centerX, uvy - centerY);
@@ -328,13 +328,13 @@ float uvy = (-u.Height + 2.0f * y) / u.Height;
 
 ![Zoomed out pinwheel](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/FixedPinwheel1.png)
 
-But now it's like we've zoomed out, and the pinwheel is no longer in the center :(
+But now it's like we've zoomed out, and the pinwheel is no longer in the center. :(
 
 It's very simple to fix this, all we need to do is change the constants for the pinwheel around a little bit, and we have our beautiful pinwheel!
 
 ![Final pinwheel](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/FixedPinwheel2.png)
 
-And here's the full code
+And here's the full code.
 ```csharp
 using Fraglib;
 
@@ -373,5 +373,53 @@ internal sealed class Tutorial {
     }
 }
 ```
+
+A part of PerPixel mode I haven't mentioned yet is the PerFrame function. PerFrame is an Action, and functions exactly as you'd think it would, it's called once every frame.
+
+Here's an example of using PerFrame with a Mandelbrot renderer.
+
+```csharp
+using System.Numerics;
+using Fraglib;
+
+internal sealed class Tutorial {
+    private static float zoom = 0.07f;
+    private static Vector2 center = new(-1.555466652f, 0f);
+    private static readonly float _log2 = MathF.Log(2f);
+
+    private static void Main() {
+        FL.Init(800, 450, "Mandelbrot Renderer", PerPixel, PerFrame);
+        FL.Run();
+    }
+
+    private static void PerFrame() {
+        zoom *= MathF.Pow(2f, FL.DeltaTime);
+    }
+
+    private static uint PerPixel(int x, int y, Uniforms u) {
+        Vector2 uv = (new Vector2(x, y) - new Vector2(u.Width / 2f, u.Height / 2f)) / u.Height / zoom + center;
+        Vector2 z = new(0f);
+
+        const int MAX_ITER = 190;
+        int iter = 0;
+        while (iter < MAX_ITER && Vector2.Dot(z, z) < 4.0) {
+            z = new Vector2(z.X * z.X - z.Y * z.Y, 2f * z.X * z.Y) + uv;
+            iter++;
+        }
+
+        if (iter == MAX_ITER) {
+            return FL.Black;
+        }
+
+        float t = (float)iter / MAX_ITER;
+        float r = 9f * (1f - t) * t * t * t;
+        float g = 15f * (1f - t) * (1f - t) * t * t;
+        float b = 8.5f * (1f - t) * (1f - t) * (1f - t) * t;
+        return FL.NewColor(r, g, b);
+    }
+}
+```
+
+![Mandelbrot Zoom](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/MandelbrotGIF.gif)
 
 With that, the this tutorial comes to an end. I hope you like Fraglib, and make something amazing!

@@ -3,9 +3,9 @@ using OpenTK.Windowing.Common;
 namespace Fraglib;
 
 internal sealed class PerPixelEngine : Engine {
-    public PerPixelEngine(int s, int w, int h, string t, Func<int, int, Uniforms, uint> pp, Action pf) : base(s, w, h, t) {
-        _perPixel = pp;
-        _perFrame = pf;
+    public PerPixelEngine(int w, int h, string t, Func<int, int, Uniforms, uint> perPixel, Action perFrame) : base(w, h, t) {
+        _perPixel = perPixel;
+        _perFrame = perFrame;
         uniforms.Time = 0f;
         uniforms.Width = w;
         uniforms.Height = h;

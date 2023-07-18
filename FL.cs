@@ -23,7 +23,7 @@ public static class FL {
         windowWidth = width / (int)PixelSize;
         windowHeight = height / (int)PixelSize;
         program ??= () => {};
-        e = new SetClearEngine((int)PixelSize, width, height, title, program);
+        e = new SetClearEngine(width, height, title, program);
     }
 
     public static void Init(int width, int height, string title, Func<int, int, Uniforms, uint> perPixel, Action? perFrame = null) {
@@ -42,7 +42,7 @@ public static class FL {
         windowWidth = width / (int)PixelSize;
         windowHeight = height / (int)PixelSize;
         perFrame ??= () => {};
-        e = new PerPixelEngine((int)PixelSize, width, height, title, perPixel, perFrame);
+        e = new PerPixelEngine(width, height, title, perPixel, perFrame);
     }
 
     public static void Run() {
@@ -51,6 +51,7 @@ public static class FL {
         }
 
         e.VSyncEnabled = VSync;
+        e.PixelSize = (int)Math.Abs(PixelSize);
         e.Run();
     }
 #endregion setup
