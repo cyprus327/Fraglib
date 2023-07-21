@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace Fraglib;
 
 public static class FL {
@@ -58,42 +60,38 @@ public static class FL {
 
 #region setclear methods
     public static void SetPixel(int x, int y, uint color) {
-        if (e is null) {
-            return;
-        }
-
-        if (x < 0 || x >= e.ScaledWidth || y < 0 || y >= e.ScaledHeight) {
-            return;
-        }
-
         if (e is not SetClearEngine s) {
             return; 
+        }
+        
+        if (x < 0 || x >= e.ScaledWidth || y < 0 || y >= e.ScaledHeight) {
+            return;
         }
 
         s.SetPixel(x * e.PixelSize, y * e.PixelSize, color);
     }
 
+    private static void SetPixel(int x, int y, uint color, SetClearEngine s) {
+        if (x < 0 || x >= s.ScaledWidth || y < 0 || y >= s.ScaledHeight) {
+            return;
+        }
+
+        s.SetPixel(x * s.PixelSize, y * s.PixelSize, color);
+    }
+
     public static uint GetPixel(int x, int y) {
-        if (e is null) {
-            return 255;
+        if (e is not SetClearEngine s) {
+            return 255; 
         }
 
         if (x < 0 || x >= e.WindowWidth || y < 0 || y >= e.WindowHeight) {
             return 255;
         }
 
-        if (e is not SetClearEngine s) {
-            return 255; 
-        }
-
         return s.GetPixel(x, y);
     }
 
     public static void Clear(uint color) {
-        if (e is null) {
-            return;
-        }
-
         if (e is not SetClearEngine s) {
             return; 
         }
@@ -102,15 +100,6 @@ public static class FL {
     }
 
     public static void FillRect(int x, int y, int width, int height, uint color) {
-        if (e is null) {
-            return;
-        }
-
-        if (x < 0 || x >= e.ScaledWidth || y < 0 || y >= e.ScaledHeight 
-            || x + width >= e.ScaledWidth || y + height >= e.ScaledHeight) {
-            return;
-        }
-        
         if (e is not SetClearEngine s) {
             return;
         }
@@ -119,11 +108,15 @@ public static class FL {
     }
 
     public static void SetCircle(float centerX, float centerY, float radius, uint color) {
+        if (e is not SetClearEngine s) {
+            return;
+        }
+
         int x = (int)radius, y = 0;
         int decisionOver2 = 1 - x;
 
         while (y <= x) {
-            SetCirclePixel(centerX, centerY, x, y++, color);
+            SetCirclePixel(centerX, centerY, x, y++, color, s);
 
             if (decisionOver2 <= 0) {
                 decisionOver2 += 2 * y + 1;
@@ -132,11 +125,11 @@ public static class FL {
                 decisionOver2 += 2 * (y - x) + 1;
             }
 
-            SetCirclePixel(centerX, centerY, x, y, color);
+            SetCirclePixel(centerX, centerY, x, y, color, s);
         }
     }
 
-    private static void SetCirclePixel(float cx, float cy, int ox, int oy, uint color) {
+    private static void SetCirclePixel(float cx, float cy, int ox, int oy, uint color, SetClearEngine s) {
         SetPixel((int)(cx + ox), (int)(cy + oy), color);
         SetPixel((int)(cx - ox), (int)(cy + oy), color);
         SetPixel((int)(cx + ox), (int)(cy - oy), color);
@@ -148,12 +141,127 @@ public static class FL {
     }
 
     public static void FillCircle(float centerX, float centerY, float radius, uint color) {
+        if (e is not SetClearEngine s) {
+            return;
+        }
+
         for (int x = (int)(centerX - radius); x <= centerX + radius; x++) {
             for (int y = (int)(centerY - radius); y <= centerY + radius; y++) {
                 if (Math.Pow(x - centerX, 2) + Math.Pow(y - centerY, 2) <= Math.Pow(radius, 2)) {
-                    SetPixel(x, y, color);
+                    SetPixel(x, y, color, s);
                 }
             }
+        }
+    }
+
+    public static void SetLine(int x0, int y0, int x1, int y1, uint color) {
+        if (e is not SetClearEngine s) {
+            return;
+        }
+
+        int dx = Math.Abs(x1 - x0);
+        int dy = Math.Abs(y1 - y0);
+
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+
+        int er = dx - dy;
+
+        while (true) {
+            SetPixel(x0, y0, color);
+
+            if (x0 == x1 && y0 == y1)
+                break;
+
+            int e2 = 2 * er;
+
+            if (e2 > -dy) {
+                er -= dy;
+                x0 += sx;
+            }
+
+            if (e2 < dx) {
+                er += dx;
+                y0 += sy;
+            }
+        }
+    }
+
+    public static void SetPolygon(uint color, params Vector2[] vertices) {
+        if (vertices is null || vertices.Length < 3) {
+            return;
+        }
+
+        int vertexCount = vertices.Length;
+        for (int i = 0; i < vertexCount; i++) {
+            int next = (i + 1) % vertexCount;
+            SetLine((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
+        }
+    }
+
+    public static void FillPolygon(uint color, params Vector2[] vertices) {
+        if (e is not SetClearEngine s) {
+            return;
+        }
+
+        int minY = int.MaxValue;
+        int maxY = int.MinValue;
+        foreach (var vertex in vertices) {
+            if (vertex.Y < minY) {
+                minY = (int)vertex.Y;
+            }
+            if (vertex.Y > maxY) {
+                maxY = (int)vertex.Y;
+            }
+        }
+
+        List<List<int>> edgeTable = new(maxY - minY + 1);
+        for (int i = 0; i < maxY - minY + 1; i++) {
+            edgeTable.Add(new List<int>());
+        }
+
+        int vertexCount = vertices.Length;
+        for (int i = 0; i < vertexCount; i++) {
+            int nextIndex = (i + 1) % vertexCount;
+            Vector2 currentVertex = vertices[i];
+            Vector2 nextVertex = vertices[nextIndex];
+
+            if (currentVertex.Y == nextVertex.Y) {
+                continue;
+            }
+
+            int yStart = (int)Math.Min(currentVertex.Y, nextVertex.Y) - minY;
+            int yEnd = (int)Math.Max(currentVertex.Y, nextVertex.Y) - minY;
+            int xStart = currentVertex.Y < nextVertex.Y ? (int)currentVertex.X : (int)nextVertex.X;
+            int xEnd = currentVertex.Y < nextVertex.Y ? (int)nextVertex.X : (int)currentVertex.X;
+
+            int xStep = (xEnd - xStart) / (yEnd - yStart);
+            int xCurrent = xStart;
+
+            for (int y = yStart; y < yEnd; y++) {
+                edgeTable[y].Add(xCurrent);
+                xCurrent += xStep;
+            }
+        }
+
+        List<int> activeEdgeTable = new();
+        for (int y = 0; y < edgeTable.Count; y++) {
+            foreach (int x in edgeTable[y]) {
+                activeEdgeTable.Add(x);
+            }
+
+            activeEdgeTable.Sort();
+
+            for (int i = 0; i < activeEdgeTable.Count; i += 2) {
+                int xStart = activeEdgeTable[i];
+                int xEnd = activeEdgeTable[i + 1];
+
+                for (int x = xStart; x <= xEnd; x++) {
+                    SetPixel(x, y + minY, color, s);
+                }
+            }
+
+            activeEdgeTable.Clear();
         }
     }
 #endregion setclear methods
@@ -294,6 +402,12 @@ public static class FL {
     }
     public static bool RMBDown() {
         return (GetAsyncKeyState(0x02) & 0x8000) != 0;
+    }
+    public static bool LMBUp() {
+        return GetKeyUp((char)0x01);
+    }
+    public static bool RMBUp() {
+        return GetKeyUp((char)0x02);
     }
 #endregion common
 }
