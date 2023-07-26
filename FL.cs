@@ -25,7 +25,7 @@ public static class FL {
         windowWidth = width / (int)PixelSize;
         windowHeight = height / (int)PixelSize;
         program ??= () => {};
-        e = new SetClearEngine(width, height, title, program);
+        e = new DrawClearEngine(width, height, title, program);
     }
 
     public static void Init(int width, int height, string title, Func<int, int, Uniforms, uint> perPixel, Action? perFrame = null) {
@@ -60,7 +60,7 @@ public static class FL {
 
 #region setclear methods
     public static void SetPixel(int x, int y, uint color) {
-        if (e is not SetClearEngine s) {
+        if (e is not DrawClearEngine s) {
             return; 
         }
         
@@ -71,7 +71,7 @@ public static class FL {
         s.SetPixel(x * e.PixelSize, y * e.PixelSize, color);
     }
 
-    private static void SetPixel(int x, int y, uint color, SetClearEngine s) {
+    private static void SetPixel(int x, int y, uint color, DrawClearEngine s) {
         if (x < 0 || x >= s.ScaledWidth || y < 0 || y >= s.ScaledHeight) {
             return;
         }
@@ -80,7 +80,7 @@ public static class FL {
     }
 
     public static uint GetPixel(int x, int y) {
-        if (e is not SetClearEngine s) {
+        if (e is not DrawClearEngine s) {
             return 255; 
         }
 
@@ -92,7 +92,7 @@ public static class FL {
     }
 
     public static void Clear(uint color) {
-        if (e is not SetClearEngine s) {
+        if (e is not DrawClearEngine s) {
             return; 
         }
 
@@ -100,15 +100,15 @@ public static class FL {
     }
 
     public static void FillRect(int x, int y, int width, int height, uint color) {
-        if (e is not SetClearEngine s) {
+        if (e is not DrawClearEngine s) {
             return;
         }
 
         s.FillRect(x * e.PixelSize, y * e.PixelSize, width * e.PixelSize, height * e.PixelSize, color);
     }
 
-    public static void SetCircle(float centerX, float centerY, float radius, uint color) {
-        if (e is not SetClearEngine s) {
+    public static void DrawCircle(float centerX, float centerY, float radius, uint color) {
+        if (e is not DrawClearEngine s) {
             return;
         }
 
@@ -116,7 +116,7 @@ public static class FL {
         int decisionOver2 = 1 - x;
 
         while (y <= x) {
-            SetCirclePixel(centerX, centerY, x, y++, color, s);
+            SetCirclePixels(centerX, centerY, x, y++, color, s);
 
             if (decisionOver2 <= 0) {
                 decisionOver2 += 2 * y + 1;
@@ -125,23 +125,23 @@ public static class FL {
                 decisionOver2 += 2 * (y - x) + 1;
             }
 
-            SetCirclePixel(centerX, centerY, x, y, color, s);
+            SetCirclePixels(centerX, centerY, x, y, color, s);
         }
     }
 
-    private static void SetCirclePixel(float cx, float cy, int ox, int oy, uint color, SetClearEngine s) {
-        SetPixel((int)(cx + ox), (int)(cy + oy), color);
-        SetPixel((int)(cx - ox), (int)(cy + oy), color);
-        SetPixel((int)(cx + ox), (int)(cy - oy), color);
-        SetPixel((int)(cx - ox), (int)(cy - oy), color);
-        SetPixel((int)(cx + oy), (int)(cy + ox), color);
-        SetPixel((int)(cx - oy), (int)(cy + ox), color);
-        SetPixel((int)(cx + oy), (int)(cy - ox), color);
-        SetPixel((int)(cx - oy), (int)(cy - ox), color);
+    private static void SetCirclePixels(float cx, float cy, int ox, int oy, uint color, DrawClearEngine s) {
+        SetPixel((int)(cx + ox), (int)(cy + oy), color, s);
+        SetPixel((int)(cx - ox), (int)(cy + oy), color, s);
+        SetPixel((int)(cx + ox), (int)(cy - oy), color, s);
+        SetPixel((int)(cx - ox), (int)(cy - oy), color, s);
+        SetPixel((int)(cx + oy), (int)(cy + ox), color, s);
+        SetPixel((int)(cx - oy), (int)(cy + ox), color, s);
+        SetPixel((int)(cx + oy), (int)(cy - ox), color, s);
+        SetPixel((int)(cx - oy), (int)(cy - ox), color, s);
     }
 
     public static void FillCircle(float centerX, float centerY, float radius, uint color) {
-        if (e is not SetClearEngine s) {
+        if (e is not DrawClearEngine s) {
             return;
         }
 
@@ -154,8 +154,8 @@ public static class FL {
         }
     }
 
-    public static void SetLine(int x0, int y0, int x1, int y1, uint color) {
-        if (e is not SetClearEngine s) {
+    public static void DrawLine(int x0, int y0, int x1, int y1, uint color) {
+        if (e is not DrawClearEngine s) {
             return;
         }
 
@@ -168,7 +168,7 @@ public static class FL {
         int er = dx - dy;
 
         while (true) {
-            SetPixel(x0, y0, color);
+            SetPixel(x0, y0, color, s);
 
             if (x0 == x1 && y0 == y1)
                 break;
@@ -187,7 +187,7 @@ public static class FL {
         }
     }
 
-    public static void SetPolygon(uint color, params Vector2[] vertices) {
+    public static void DrawPolygon(uint color, params Vector2[] vertices) {
         if (vertices is null || vertices.Length < 3) {
             return;
         }
@@ -195,12 +195,16 @@ public static class FL {
         int vertexCount = vertices.Length;
         for (int i = 0; i < vertexCount; i++) {
             int next = (i + 1) % vertexCount;
-            SetLine((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
+            DrawLine((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
         }
     }
 
     public static void FillPolygon(uint color, params Vector2[] vertices) {
-        if (e is not SetClearEngine s) {
+        if (e is not DrawClearEngine s) {
+            return;
+        }
+
+        if (vertices is null || vertices.Length < 3) {
             return;
         }
 

@@ -2,8 +2,8 @@ using OpenTK.Windowing.Common;
 
 namespace Fraglib;
 
-internal sealed class SetClearEngine : Engine {
-    public SetClearEngine(int w, int h, string t, Action gameLoop) : base(w, h, t) {
+internal sealed class DrawClearEngine : Engine {
+    public DrawClearEngine(int w, int h, string t, Action gameLoop) : base(w, h, t) {
         _gameLoop = gameLoop;
     }
 
