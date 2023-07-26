@@ -422,7 +422,7 @@ public static class FL {
 
     //===========================================================
     // Math
-    public static void Rotate(this ref Vector2 vec, Vector2 center, float angle) {
+    public static Vector2 Rotate(this ref Vector2 vec, Vector2 center, float angle) {
         float cos = MathF.Cos(angle);
         float sin = MathF.Sin(angle);
 
@@ -431,35 +431,61 @@ public static class FL {
 
         vec.X = newX;
         vec.Y = newY;
+
+        return vec;
     }
-    public static void Rotate(this Vector2[] arr, Vector2 center, float angle) {
+    public static Vector2[] Rotate(this Vector2[] arr, Vector2 center, float angle) {
         //Array.ForEach(arr, v => v.Rotate(center, angle));
         for (int i = 0; i < arr.Length; i++) {
             arr[i].Rotate(center, angle);
         }
+
+        return arr;
     }
 
-    public static void Scale(this ref Vector2 vec, Vector2 center, float factor) {
+    public static Vector2 Scale(this ref Vector2 vec, Vector2 center, float factor) {
         float newX = center.X + (vec.X - center.X) * factor;
         float newY = center.Y + (vec.Y - center.Y) * factor;
 
         vec.X = newX;
         vec.Y = newY;
+
+        return vec;
     }
-    public static void Scale(this Vector2[] arr, Vector2 center, float factor) {
+    public static Vector2[] Scale(this Vector2[] arr, Vector2 center, float factor) {
         for (int i = 0; i < arr.Length; i++) {
             arr[i].Scale(center, factor);
         }
+
+        return arr;
     }
 
-    public static void AverageWith(this ref Vector2 vec, Vector2 other) {
+    public static Vector2 AverageWith(this ref Vector2 vec, Vector2 other) {
         vec.X = (vec.X + other.X) / 2f;
         vec.Y = (vec.Y + other.Y) / 2f;
+    
+        return vec;
     }
-    public static void AverageWith(this Vector2[] arr, Vector2 other) {
+    public static Vector2[] AverageWith(this Vector2[] arr, Vector2 other) {
         for (int i = 0; i < arr.Length; i++) {
             arr[i].AverageWith(other);
         }
+
+        return arr;
+    }
+
+    public static Vector2 Translate(this ref Vector2 vec, float offsetX, float offsetY) {
+        vec.X += offsetX;
+        vec.Y += offsetY;
+
+        return vec;
+    }
+    public static Vector2[] Translate(this Vector2[] arr, float offsetX, float offsetY) {
+        for (int i = 0; i < arr.Length; i++) {
+            arr[i].Translate(offsetX, offsetY);
+        }
+
+        return arr;
     }
 #endregion common
 }
