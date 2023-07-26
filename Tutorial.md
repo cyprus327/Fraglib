@@ -64,14 +64,14 @@ internal static class Tutorial {
 }
 ```
 
-## SetClear Tutorial
+## DrawClear Tutorial
 
 There are two main methods of drawing things in computer graphics, [immediate](https://en.wikipedia.org/wiki/Immediate_mode_(computer_graphics)) and [retained](https://en.wikipedia.org/wiki/Retained_mode).
 Fraglib uses a mixture of both of these methods, allowing you more control.
 
 Here's an example that demonstrates what this means.
 
-Start with the standard SetClear mode setup.
+Start with the standard DrawClear mode setup.
 ```csharp
 using Fraglib;
 
@@ -260,11 +260,11 @@ And another hint: Scale your variables!
 
 ## PerPixel Tutorial
 
-In if you've skipped the previous tutorials you'll probably understand fine, but there is a lot said in the SetClear tutorial that won't be repeated here, so if at any point there's something not specific to PerPixel mode that's unclear, it's probably explained in the [SetClear Tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#setclear-tutorial).
+In if you've skipped the previous tutorials you'll probably understand fine, but there is a lot said in the DrawClear tutorial that won't be repeated here, so if at any point there's something not specific to PerPixel mode that's unclear, it's probably explained in the [DrawClear Tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#DrawClear-tutorial).
 
 PerPixel mode is meant to be as similar as possible to writing a fragment shader, which means essentially anything you can make in a fragment shader you can make in this mode.
 
-The only difference, setup-wise, when using PerPixel mode as opposed to SetClear mode is that your Program method is a PerPixel method, so instead of the last parameter in Init being an Action, it's a Func<int, int, Uniforms, uint>. Below is an example of what this looks like.
+The only difference, setup-wise, when using PerPixel mode as opposed to DrawClear mode is that your Program method is a PerPixel method, so instead of the last parameter in Init being an Action, it's a Func<int, int, Uniforms, uint>. Below is an example of what this looks like.
 ```csharp
 using Fraglib;
 
@@ -346,11 +346,11 @@ internal sealed class Tutorial {
 
     private static uint PerPixel(int x, int y, Uniforms u) {
         // normalized uv coordinates
-        float uvx = (-u.Width + 2.0f * x) / u.Height;
-        float uvy = (-u.Height + 2.0f * y) / u.Height;
+        float uvx = (-u.Width + 2f * x) / u.Height;
+        float uvy = (-u.Height + 2f * y) / u.Height;
 
         // constants for the pinwheel
-        const float radius = 0.7f;
+        const float radius  = 0.7f;
         const float centerX = 0.0f;
         const float centerY = 0.0f;
 

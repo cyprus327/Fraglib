@@ -8,12 +8,12 @@ NOTE: This library is still in very early stages of development, and is in no wa
 - [Features](https://github.com/cyprus327/Fraglib/blob/main/README.md#Features)
 - [Installation](https://github.com/cyprus327/Fraglib/blob/main/README.md#Getting-Started)
 - [Tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md)
-- [SetClear Tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#setclear-tutorial)
+- [DrawClear Tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#DrawClear-tutorial)
 - [PerPixel Tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#perpixel-tutorial)
 
 ## Features
 
-- **SetClear Mode**: Individual control over every pixel on the window.
+- **DrawClear Mode**: Individual control over every pixel on the window.
 - **PerPixel Mode**: A perPixel function that runs for every pixel on the window.
 - **Flexible pixel size**: You can set the pixel size to any number (>= 1) without making other changes to your program. Fraglib handles everything automatically.
 - **Time-saving functions**: Fraglib provides many functions that are commonly used in development, such as a deterministic random, to speed up your workflow.
@@ -48,7 +48,7 @@ internal sealed class Example {
 ```
 ![Vertex Coord Colors](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/UVGradient.png)
 
-### SetClear Mode Example
+### DrawClear Mode Example
 ```csharp
 using Fraglib;
 
