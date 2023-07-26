@@ -362,6 +362,8 @@ public static class FL {
 #endregion colors
 
 #region common
+    //===========================================================
+    // Properties
     public static float ElapsedTime => e?.ElapsedTime ?? 0f;
     public static float DeltaTime => e?.DeltaTime ?? 0f;
 
@@ -371,6 +373,8 @@ public static class FL {
     public static int Height => windowHeight;
     private static int windowHeight;
 
+    //===========================================================
+    // Lehmer Rand
     private static uint randState = 0;
     public static uint Rand() {
         randState += 0xE120FC15;
@@ -388,6 +392,8 @@ public static class FL {
         return (double)Rand() / (double)uint.MaxValue * (max - min) + min;
     }
 
+    //===========================================================
+    // Input
     [System.Runtime.InteropServices.DllImport("user32.dll")] static extern short GetAsyncKeyState(int key);
     private static readonly Dictionary<char, bool> _previousKeyStates = new Dictionary<char, bool>();
     public static bool GetKeyDown(char key) {
@@ -412,6 +418,48 @@ public static class FL {
     }
     public static bool RMBUp() {
         return GetKeyUp((char)0x02);
+    }
+
+    //===========================================================
+    // Math
+    public static void Rotate(this ref Vector2 vec, Vector2 center, float angle) {
+        float cos = MathF.Cos(angle);
+        float sin = MathF.Sin(angle);
+
+        float newX = center.X + (vec.X - center.X) * cos - (vec.Y - center.Y) * sin;
+        float newY = center.Y + (vec.X - center.X) * sin + (vec.Y - center.Y) * cos;
+
+        vec.X = newX;
+        vec.Y = newY;
+    }
+    public static void Rotate(this Vector2[] arr, Vector2 center, float angle) {
+        //Array.ForEach(arr, v => v.Rotate(center, angle));
+        for (int i = 0; i < arr.Length; i++) {
+            arr[i].Rotate(center, angle);
+        }
+    }
+
+    public static void Scale(this ref Vector2 vec, Vector2 center, float factor) {
+        float newX = center.X + (vec.X - center.X) * factor;
+        float newY = center.Y + (vec.Y - center.Y) * factor;
+
+        vec.X = newX;
+        vec.Y = newY;
+    }
+    public static void Scale(this Vector2[] arr, Vector2 center, float factor) {
+        for (int i = 0; i < arr.Length; i++) {
+            arr[i].Scale(center, factor);
+        }
+    }
+
+    public static void AverageWith(this ref Vector2 vec, Vector2 other) {
+        vec.X = (vec.X + other.X) / 2f;
+        vec.Y = (vec.Y + other.Y) / 2f;
+    }
+    public static void AverageWith(this Vector2[] arr, Vector2 other) {
+        for (int i = 0; i < arr.Length; i++) {
+            arr[i].AverageWith(other);
+        }
     }
 #endregion common
 }
