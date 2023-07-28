@@ -15,9 +15,11 @@ internal sealed class DrawClearEngine : Engine {
             return;
         }
 
-        for (int py = y; py < y + PixelSize; py++) {
+        int xBounds = Math.Min(x + PixelSize, WindowWidth);
+        int yBounds = Math.Min(y + PixelSize, WindowHeight);
+        for (int py = y; py < yBounds; py++) {
             int yo = py * WindowWidth;
-            for (int px = x; px < x + PixelSize; px++) {
+            for (int px = x; px < xBounds; px++) {
                 Screen[yo + px] = col;
             }
         }
