@@ -6,7 +6,12 @@ public static class FL {
     private static Engine? e = null;
 
 #region setup
-    public static uint PixelSize { get; set; } = 1;
+    private static uint pixelSize = 1;
+    public static uint PixelSize {
+        get => pixelSize;
+        set => pixelSize = Math.Clamp(value, 1u, 100u);
+    }
+
     public static bool VSync { get; set; } = true;
 
     public static void Init(int width, int height, string title, Action? program = null) {
@@ -16,10 +21,6 @@ public static class FL {
 
         if (width <= 0 || width >= 5000 || height <= 0 || height >= 4000) {
             return;
-        }
-
-        if (PixelSize < 1 || PixelSize >= height || PixelSize >= width) {
-            PixelSize = 1;
         }
 
         windowWidth = width / (int)PixelSize;
@@ -35,10 +36,6 @@ public static class FL {
 
         if (width <= 0 || width >= 5000 || height <= 0 || height >= 4000) {
             return;
-        }
-
-        if (PixelSize < 1 || PixelSize >= height || PixelSize >= width) {
-            PixelSize = 1;
         }
 
         windowWidth = width / (int)PixelSize;
@@ -208,64 +205,35 @@ public static class FL {
             return;
         }
 
-        int minY = int.MaxValue;
-        int maxY = int.MinValue;
-        foreach (var vertex in vertices) {
-            if (vertex.Y < minY) {
-                minY = (int)vertex.Y;
-            }
-            if (vertex.Y > maxY) {
-                maxY = (int)vertex.Y;
-            }
-        }
+        List<Vector2> sortedVertices = vertices.OrderBy(v => v.Y).ToList();
 
-        List<List<int>> edgeTable = new(maxY - minY + 1);
-        for (int i = 0; i < maxY - minY + 1; i++) {
-            edgeTable.Add(new List<int>());
-        }
+        int minY = (int)sortedVertices[0].Y;
+        int maxY = (int)sortedVertices[sortedVertices.Count - 1].Y;
 
-        int vertexCount = vertices.Length;
-        for (int i = 0; i < vertexCount; i++) {
-            int nextIndex = (i + 1) % vertexCount;
-            Vector2 currentVertex = vertices[i];
-            Vector2 nextVertex = vertices[nextIndex];
+        for (int y = minY; y <= maxY; y++) {
+            List<int> intersections = new List<int>();
 
-            if (currentVertex.Y == nextVertex.Y) {
-                continue;
-            }
+            for (int i = 0; i < sortedVertices.Count; i++) {
+                int nextIndex = (i + 1) % sortedVertices.Count;
+                Vector2 currentVertex = sortedVertices[i];
+                Vector2 nextVertex = sortedVertices[nextIndex];
 
-            int yStart = (int)Math.Min(currentVertex.Y, nextVertex.Y) - minY;
-            int yEnd = (int)Math.Max(currentVertex.Y, nextVertex.Y) - minY;
-            int xStart = currentVertex.Y < nextVertex.Y ? (int)currentVertex.X : (int)nextVertex.X;
-            int xEnd = currentVertex.Y < nextVertex.Y ? (int)nextVertex.X : (int)currentVertex.X;
-
-            int xStep = (xEnd - xStart) / (yEnd - yStart);
-            int xCurrent = xStart;
-
-            for (int y = yStart; y < yEnd; y++) {
-                edgeTable[y].Add(xCurrent);
-                xCurrent += xStep;
-            }
-        }
-
-        List<int> activeEdgeTable = new();
-        for (int y = 0; y < edgeTable.Count; y++) {
-            foreach (int x in edgeTable[y]) {
-                activeEdgeTable.Add(x);
-            }
-
-            activeEdgeTable.Sort();
-
-            for (int i = 0; i < activeEdgeTable.Count; i += 2) {
-                int xStart = activeEdgeTable[i];
-                int xEnd = activeEdgeTable[i + 1];
-
-                for (int x = xStart; x <= xEnd; x++) {
-                    SetPixel(x, y + minY, color, s);
+                if (currentVertex.Y <= y && nextVertex.Y >= y || nextVertex.Y <= y && currentVertex.Y >= y) {
+                    int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
+                    intersections.Add(intersectionX);
                 }
             }
 
-            activeEdgeTable.Clear();
+            intersections.Sort();
+
+            for (int i = 0; i < intersections.Count; i += 2) {
+                int xStart = intersections[i];
+                int xEnd = intersections[i + 1];
+
+                for (int x = xStart; x <= xEnd; x++) {
+                    SetPixel(x, y, color, s);
+                }
+            }
         }
     }
 #endregion setclear methods
@@ -296,25 +264,25 @@ public static class FL {
             ((uint)r << 24) | ((uint)g << 16) | ((uint)b << 8) | a;
     }
 
-    public static byte GetR(uint color) {
+    public static byte GetR(this uint color) {
         return BitConverter.IsLittleEndian ?
             (byte)color : 
             (byte)(color >> 24);
     }
 
-    public static byte GetB(uint color) {
+    public static byte GetB(this uint color) {
         return BitConverter.IsLittleEndian ?
             (byte)(color >> 16) : 
             (byte)(color >> 8);
     }
 
-    public static byte GetG(uint color) {
+    public static byte GetG(this uint color) {
         return BitConverter.IsLittleEndian ?
             (byte)(color >> 8) : 
             (byte)(color >> 16);
     }
 
-    public static byte GetA(uint color) {
+    public static byte GetA(this uint color) {
         return BitConverter.IsLittleEndian ?
             (byte)(color >> 24) : 
             (byte)color;
@@ -422,6 +390,14 @@ public static class FL {
 
     //===========================================================
     // Math
+    public static float DegToRad(this float deg) {
+        return MathF.PI / 180f * deg;
+    }
+
+    public static float RadToDeg(this float rad) {
+        return 180f / MathF.PI * rad;
+    }
+
     public static Vector2 Rotate(this ref Vector2 vec, Vector2 center, float angle) {
         float cos = MathF.Cos(angle);
         float sin = MathF.Sin(angle);
@@ -475,8 +451,8 @@ public static class FL {
     }
 
     public static Vector2 Translate(this ref Vector2 vec, float offsetX, float offsetY) {
-        vec.X += offsetX;
-        vec.Y += offsetY;
+        vec.X += offsetX / PixelSize;
+        vec.Y += offsetY / PixelSize;
 
         return vec;
     }
