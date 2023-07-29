@@ -3,11 +3,11 @@ using OpenTK.Windowing.Common;
 namespace Fraglib;
 
 internal sealed class DrawClearEngine : Engine {
-    public DrawClearEngine(int w, int h, string t, Action gameLoop) : base(w, h, t) {
-        _gameLoop = gameLoop;
+    public DrawClearEngine(int w, int h, string t, Action program) : base(w, h, t) {
+        _program = program;
     }
 
-    private readonly Action _gameLoop;
+    private readonly Action _program;
     
     public void SetPixel(int x, int y, uint col) {
         if (PixelSize == 1) {
@@ -43,6 +43,6 @@ internal sealed class DrawClearEngine : Engine {
     }
 
     public override void Update(FrameEventArgs args) {
-        _gameLoop();
+        _program();
     }
 }
