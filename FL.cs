@@ -88,6 +88,10 @@ public static class FL {
         return s.GetPixel(x, y);
     }
 
+    public static void Clear() {
+        Clear(Black);
+    }
+
     public static void Clear(uint color) {
         if (e is not DrawClearEngine s) {
             return; 
@@ -205,18 +209,16 @@ public static class FL {
             return;
         }
 
-        List<Vector2> sortedVertices = vertices.OrderBy(v => v.Y).ToList();
-
-        int minY = (int)sortedVertices[0].Y;
-        int maxY = (int)sortedVertices[sortedVertices.Count - 1].Y;
+        int minX = (int)vertices.Min(v => v.X);
+        int maxX = (int)vertices.Max(v => v.X);
+        int minY = (int)vertices.Min(v => v.Y);
+        int maxY = (int)vertices.Max(v => v.Y);
 
         for (int y = minY; y <= maxY; y++) {
             List<int> intersections = new List<int>();
-
-            for (int i = 0; i < sortedVertices.Count; i++) {
-                int nextIndex = (i + 1) % sortedVertices.Count;
-                Vector2 currentVertex = sortedVertices[i];
-                Vector2 nextVertex = sortedVertices[nextIndex];
+            for (int i = 0; i < vertices.Length; i++) {
+                Vector2 currentVertex = vertices[i];
+                Vector2 nextVertex = vertices[(i + 1) % vertices.Length];
 
                 if (currentVertex.Y <= y && nextVertex.Y >= y || nextVertex.Y <= y && currentVertex.Y >= y) {
                     int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
@@ -237,6 +239,38 @@ public static class FL {
         }
     }
 #endregion setclear methods
+
+#region states
+    private static readonly List<uint[]> _states = new();
+
+    public static void SaveScreen(out int state) {
+        if (e is null) {
+            state = -1;
+            return;
+        }
+
+        int index = _states.Count;
+        _states.Add((uint[])e.Screen.Clone());
+        state = index;
+    }
+
+    public static void LoadScreen(int state) {
+        if (e is null) {
+            return;
+        }
+
+        if (state < 0 || state >= _states.Count) {
+            return;
+        }
+
+        Array.Copy(_states[state], e.Screen, e.Screen.Length);
+        //Buffer.BlockCopy(_states[state], 0, e.Screen, 0, e.Screen.Length * sizeof(uint));
+    }
+
+    public static void ClearStates() {
+        _states.Clear();
+    }
+#endregion states
 
 #region colors
     public static uint Black => BitConverter.IsLittleEndian ? 4278190080 : 255;
