@@ -6,10 +6,10 @@ public static class FL {
     private static Engine? e = null;
 
 #region setup
-    private static uint pixelSize = 1;
-    public static uint PixelSize {
+    private static int pixelSize = 1;
+    public static int PixelSize {
         get => pixelSize;
-        set => pixelSize = Math.Clamp(value, 1u, 100u);
+        set => pixelSize = Math.Clamp(value, 1, 100);
     }
 
     public static bool VSync { get; set; } = true;
@@ -23,8 +23,8 @@ public static class FL {
             return;
         }
 
-        windowWidth = width / (int)PixelSize;
-        windowHeight = height / (int)PixelSize;
+        windowWidth = width / PixelSize;
+        windowHeight = height / PixelSize;
         program ??= () => {};
         e = new DrawClearEngine(width, height, title, program);
     }
@@ -38,8 +38,8 @@ public static class FL {
             return;
         }
 
-        windowWidth = width / (int)PixelSize;
-        windowHeight = height / (int)PixelSize;
+        windowWidth = width / PixelSize;
+        windowHeight = height / PixelSize;
         perFrame ??= () => {};
         e = new PerPixelEngine(width, height, title, perPixel, perFrame);
     }
@@ -50,7 +50,7 @@ public static class FL {
         }
 
         e.VSyncEnabled = VSync;
-        e.PixelSize = (int)Math.Abs(PixelSize);
+        e.PixelSize = Math.Abs(PixelSize);
         e.Run();
     }
 #endregion setup
@@ -65,7 +65,7 @@ public static class FL {
             return;
         }
 
-        s.SetPixel(x * e.PixelSize, y * e.PixelSize, color);
+        s.SetPixel(x * PixelSize, y * PixelSize, color);
     }
 
     private static void SetPixel(int x, int y, uint color, DrawClearEngine s) {
@@ -73,7 +73,7 @@ public static class FL {
             return;
         }
 
-        s.SetPixel(x * s.PixelSize, y * s.PixelSize, color);
+        s.SetPixel(x * PixelSize, y * PixelSize, color);
     }
 
     public static uint GetPixel(int x, int y) {
@@ -105,7 +105,11 @@ public static class FL {
             return;
         }
 
-        s.FillRect(x * e.PixelSize, y * e.PixelSize, width * e.PixelSize, height * e.PixelSize, color);
+        if (x < 0 || x >= e.ScaledWidth || y < 0 || y >= e.ScaledHeight) {
+            return;
+        }
+
+        s.FillRect(x * PixelSize, y * PixelSize, width * e.PixelSize, height * e.PixelSize, color);
     }
 
     public static void DrawCircle(float centerX, float centerY, float radius, uint color) {
@@ -214,11 +218,12 @@ public static class FL {
         int minY = (int)vertices.Min(v => v.Y);
         int maxY = (int)vertices.Max(v => v.Y);
 
+        int length = vertices.Length;
         for (int y = minY; y <= maxY; y++) {
             List<int> intersections = new List<int>();
-            for (int i = 0; i < vertices.Length; i++) {
+            for (int i = 0; i < length; i++) {
                 Vector2 currentVertex = vertices[i];
-                Vector2 nextVertex = vertices[(i + 1) % vertices.Length];
+                Vector2 nextVertex = vertices[(i + 1) % length];
 
                 if (currentVertex.Y <= y && nextVertex.Y >= y || nextVertex.Y <= y && currentVertex.Y >= y) {
                     int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
@@ -227,10 +232,11 @@ public static class FL {
             }
 
             intersections.Sort();
-
-            for (int i = 0; i < intersections.Count; i += 2) {
+            
+            int count = intersections.Count;
+            for (int i = 0; i < count; i += 2) {
                 int xStart = intersections[i];
-                int xEnd = intersections[i + 1];
+                int xEnd = intersections[(i + 1) % count];
 
                 for (int x = xStart; x <= xEnd; x++) {
                     SetPixel(x, y, color, s);
@@ -299,27 +305,49 @@ public static class FL {
     }
 
     public static byte GetR(this uint color) {
-        return BitConverter.IsLittleEndian ?
-            (byte)color : 
-            (byte)(color >> 24);
-    }
-
-    public static byte GetB(this uint color) {
-        return BitConverter.IsLittleEndian ?
-            (byte)(color >> 16) : 
-            (byte)(color >> 8);
+        return BitConverter.IsLittleEndian ? 
+            (byte)(color & 0xFF) : 
+            (byte)((color >> 24) & 0xFF);
     }
 
     public static byte GetG(this uint color) {
-        return BitConverter.IsLittleEndian ?
-            (byte)(color >> 8) : 
-            (byte)(color >> 16);
+        return (byte)((color >> 8) & 0xFF);
+    }
+
+    public static byte GetB(this uint color) {
+        return BitConverter.IsLittleEndian ? 
+            (byte)((color >> 16) & 0xFF) : 
+            (byte)((color >> 8) & 0xFF);
     }
 
     public static byte GetA(this uint color) {
-        return BitConverter.IsLittleEndian ?
-            (byte)(color >> 24) : 
-            (byte)color;
+        return BitConverter.IsLittleEndian ? 
+            (byte)((color >> 24) & 0xFF) : 
+            (byte)(color & 0xFF);
+    }
+
+    public static void SetR(this ref uint color, byte newR) {
+        color = BitConverter.IsLittleEndian ?
+            (color & 0xFFFFFF00) | newR :
+            (color & 0xFF00FFFF) | ((uint)newR << 24);
+    }
+
+    public static void SetG(this ref uint color, byte newG) {
+        color = BitConverter.IsLittleEndian ?
+            (color & 0xFFFF00FF) | ((uint)newG << 8) :
+            (color & 0xFF00FFFF) | ((uint)newG << 16);
+    }
+
+    public static void SetB(this ref uint color, byte newB) {
+        color = BitConverter.IsLittleEndian ?
+            (color & 0xFF00FFFF) | ((uint)newB << 16) :
+            color = (color & 0xFFFFFF00) | newB;
+    }
+
+    public static void SetA(this ref uint color, byte newA) {
+        color = BitConverter.IsLittleEndian ?
+            (color & 0x00FFFFFF) | ((uint)newA << 24) :
+            (color & 0xFFFFFF00) | newA;
     }
 
     public static uint HslToRgb(float hue, float saturation, float lightness) {
