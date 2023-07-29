@@ -14,7 +14,7 @@ NOTE: This library is still in very early stages of development, and is in no wa
 ## Features
 
 - **DrawClear Mode**: Individual control over every pixel on the window.
-- **PerPixel Mode**: A perPixel function that runs for every pixel on the window.
+- **PerPixel Mode**: A perPixel function that runs for every pixel on the window and a perFrame function that runs each frame.
 - **Flexible pixel size**: You can set the pixel size to any number (>= 1) without making other changes to your program. Fraglib handles everything automatically.
 - **Time-saving functions**: Fraglib provides many functions that are commonly used in development, such as a deterministic random, to speed up your workflow.
 
@@ -26,8 +26,6 @@ Fraglib can be easily installed as a NuGet package.
 dotnet add package Fraglib --version *
 ```
 
-## Examples:
-
 ### PerPixel Mode Example
 ```csharp
 using Fraglib;
@@ -35,7 +33,7 @@ using Fraglib;
 internal sealed class Example {
     private static void Main() {
         FL.VSync = true;
-        FL.Init(1024, 768, "Window", PerPixel);
+        FL.Init(1024, 768, "Window", PerPixel); // PerFrame optional
         FL.Run();
     }
 
@@ -62,6 +60,7 @@ internal sealed class Example {
     
     private static void Main() {
         FL.PixelSize = 4;
+        FL.VSync = true;
         FL.Init(1024, 768, "Rainbow Ball", Program);
         FL.Run();
     }
