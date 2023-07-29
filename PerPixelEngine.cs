@@ -21,25 +21,29 @@ internal sealed class PerPixelEngine : Engine {
         
         _perFrame();
         
+        int width = ScaledWidth, height = ScaledHeight;
         if (PixelSize == 1) {
-            Parallel.For(0, WindowWidth, x => {
-                for (int y = 0; y < WindowHeight; y++) {
-                    Screen[y * WindowWidth + x] = _perPixel(x, y, uniforms);
-                }
+            Parallel.For(0, width * height, i => {
+                Screen[i] = _perPixel(i % width, i / width, uniforms);
             });
             return;
         }
 
-        Parallel.For(0, ScaledHeight, sy => {
-            int y = sy * PixelSize; // original y
-            for (int sx = 0; sx < ScaledWidth; sx++) {
-                uint fragColor = _perPixel(sx, sy, uniforms);
-                int x = sx * PixelSize; // original x
-                for (int py = y; py < y + PixelSize; py++) {
-                    for (int px = x; px < x + PixelSize; px++) {
-                        if (px >= WindowWidth || py >= WindowHeight) continue;
-                        Screen[py * WindowWidth + px] = fragColor;
-                    }
+        Parallel.For(0, width * height, i => {
+            int sx = i % width;
+            int sy = i / width;
+
+            uint fragColor = _perPixel(sx, sy, uniforms);
+
+            int startX = sx * PixelSize;
+            int startY = sy * PixelSize;
+
+            for (int py = 0; py < PixelSize; py++) {
+                int y = startY + py;
+                for (int px = 0; px < PixelSize; px++) {
+                    int x = startX + px;
+                    if (x >= width || y >= height) continue;
+                    Screen[y * width + x] = fragColor;
                 }
             }
         });

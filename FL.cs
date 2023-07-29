@@ -55,7 +55,7 @@ public static class FL {
     }
 #endregion setup
 
-#region setclear methods
+#region drawclear methods
     public static void SetPixel(int x, int y, uint color) {
         if (e is not DrawClearEngine s) {
             return; 
@@ -175,8 +175,9 @@ public static class FL {
         while (true) {
             SetPixel(x0, y0, color, s);
 
-            if (x0 == x1 && y0 == y1)
+            if (x0 == x1 && y0 == y1) {
                 break;
+            }
 
             int e2 = 2 * er;
 
@@ -188,6 +189,50 @@ public static class FL {
             if (e2 < dx) {
                 er += dx;
                 y0 += sy;
+            }
+        }
+    }
+
+    public static void DrawVerticalLine(int x, int y0, int y1, uint color) {
+        if (e is not DrawClearEngine s) {
+            return;
+        }
+
+        if (x < 0 || x >= s.ScaledWidth || y0 < 0 || y1 >= s.ScaledHeight || y0 > y1) {
+            return;
+        }
+
+        // for (int y = y0; y <= y1; y++) {
+        //     s.SetPixel(x, y, color);
+        // }
+
+        if (PixelSize == 1) {
+            unsafe { 
+                fixed (uint* ptr = s.Screen) {
+                    int stride = Width;
+                    for (int y = y0; y <= y1; y++) {
+                        ptr[y * stride + x] = color;
+                    }
+                }
+            }
+            return;
+        }
+
+        int scaledX = x * PixelSize;
+        int scaledY0 = y0 * PixelSize;
+        int scaledY1 = y1 * PixelSize;
+
+        int xBounds = Math.Min(scaledX + PixelSize, s.WindowWidth);
+        int yBounds = Math.Min(scaledY1 + PixelSize, s.WindowHeight);
+
+        unsafe {
+            fixed (uint* ptr = s.Screen) {
+                for (int sy = scaledY0; sy < yBounds; sy++) {
+                    int yo = sy * s.WindowWidth;
+                    for (int sx = scaledX; sx < xBounds; sx++) {
+                        ptr[yo + sx] = color;
+                    }
+                }
             }
         }
     }
@@ -244,7 +289,7 @@ public static class FL {
             }
         }
     }
-#endregion setclear methods
+#endregion drawclear methods
 
 #region states
     private static readonly List<uint[]> _states = new();
