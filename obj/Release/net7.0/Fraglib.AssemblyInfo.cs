@@ -12,7 +12,7 @@ using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("cyprus327")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
-[assembly: System.Reflection.AssemblyDescriptionAttribute("A simple way to use C# as if it were a fragment shader")]
+[assembly: System.Reflection.AssemblyDescriptionAttribute("A simple way to use C# like a shader. https://github.com/cyprus327/Fraglib")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.1.3.0")]
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.3")]
 [assembly: System.Reflection.AssemblyProductAttribute("Fraglib")]
