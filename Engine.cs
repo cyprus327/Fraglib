@@ -113,6 +113,8 @@ internal abstract class Engine : GameWindow {
         textureHandle = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, textureHandle);
 
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, ClientSize.X, ClientSize.Y, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
@@ -143,10 +145,12 @@ internal abstract class Engine : GameWindow {
     protected override void OnRenderFrame(FrameEventArgs args) {
         base.OnRenderFrame(args);
 
-        GL.Clear(ClearBufferMask.ColorBufferBit);
-
         GL.BindTexture(TextureTarget.Texture2D, textureHandle);
-        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, ClientSize.X, ClientSize.Y, 0, PixelFormat.Rgba, PixelType.UnsignedByte, Screen);
+        unsafe {
+            fixed (uint* ptr = Screen) {
+                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, ClientSize.X, ClientSize.Y, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);
+            }
+        }
 
         GL.UseProgram(programHandle);
         GL.BindVertexArray(vertexArrayHandle);
@@ -155,7 +159,6 @@ internal abstract class Engine : GameWindow {
 
         SwapBuffers();
     }
-
 
     protected override void OnUpdateFrame(FrameEventArgs args) {
         base.OnUpdateFrame(args);
