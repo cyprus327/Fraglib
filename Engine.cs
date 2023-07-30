@@ -40,7 +40,6 @@ internal abstract class Engine : GameWindow {
     public float DeltaTime { get; private set; } = 0f;
     public bool VSyncEnabled { get => VSync == VSyncMode.On; set => VSync = value ? VSyncMode.On : VSyncMode.Off; }
     public int PixelSize { get; set; } = 1;
-    public (int x, int y) Mouse { get; private set; } = (0, 0);
 
     protected override void OnLoad() {
         base.OnLoad();
@@ -166,8 +165,6 @@ internal abstract class Engine : GameWindow {
         float t = (float)args.Time;
         DeltaTime = t;
         ElapsedTime += t;
-
-        Mouse = ((int)MousePosition.X, (int)MousePosition.Y);
 
         Update(args);
 

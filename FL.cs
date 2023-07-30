@@ -808,6 +808,16 @@ public static class FL {
 
     private static int windowWidth = 0, windowHeight = 0;
 
+    /// <name>Mouse</name>
+    /// <returns>Vector2</returns>
+    /// <summary>The mouse position on the window.</summary>
+    public static Vector2 Mouse => new(e?.MousePosition.X ?? 0f, windowHeight - e?.MousePosition.Y ?? 0f);
+
+    /// <name>MouseDelta</name>
+    /// <returns>Vector2</returns>
+    /// <summary>The amount the mouse has moved from the last frame to the current frame.</summary>
+    public static Vector2 MouseDelta => new(e?.MouseState.Delta.X ?? 0f, e?.MouseState.Delta.Y ?? 0f);
+
     //===========================================================
     // Lehmer Rand
     private static uint randState = 0;
