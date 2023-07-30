@@ -316,7 +316,7 @@ public static class FL {
         }
     }
 
-    /// <name>DrawLine</name>
+    /// <name>DrawVerticalLine</name>
     /// <returns>void</returns>
     /// <summary>Draws a vertical line of specified color along the specified path.</summary>
     /// <summary>Should be used over DrawLine if the line is vertical.</summary>

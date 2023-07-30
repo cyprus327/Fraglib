@@ -55,7 +55,7 @@ Draws a line of specified color along the specified path.
 - **x1**: The ending x coordinate of the line.
 - **y1**: The ending y coordinate of the line.
 - **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
-## DrawLine (void)
+## DrawVerticalLine (void)
 Draws a vertical line of specified color along the specified path. 
 Should be used over DrawLine if the line is vertical. 
 - **x**: The x coordinate of the line.
