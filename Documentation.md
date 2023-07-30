@@ -26,8 +26,8 @@ Gets the pixel's color at the specified position.
 - **color**: The color of the pixel in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
 ## Clear (void)
 Clears the window to black. 
-## SetPixel (void)
-Sets the pixel at the specified position to the given color. 
+## Clear (void)
+Clears the window to the specified color. 
 - **color**: The color the window will get cleared to in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
 ## FillRect (void)
 Fills a solid rectangle of specified size and color at the specified coordinates. 

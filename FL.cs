@@ -155,9 +155,9 @@ public static class FL {
         Clear(Black);
     }
 
-    /// <name>SetPixel</name>
+    /// <name>Clear</name>
     /// <returns>void</returns>
-    /// <summary>Sets the pixel at the specified position to the given color.</summary>
+    /// <summary>Clears the window to the specified color.</summary>
     /// <param name="color">The color the window will get cleared to in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void Clear(uint color) {
         if (!isDrawClear) {
