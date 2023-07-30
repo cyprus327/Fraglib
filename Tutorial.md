@@ -422,4 +422,4 @@ internal sealed class Tutorial {
 
 ![Mandelbrot Zoom](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/MandelbrotGIF.gif)
 
-With that, this tutorial comes to an end. I hope you like Fraglib, and make something amazing!
+With that, this tutorial comes to an end. If you'd like to see some more things made with Fraglib, check out the [gallery](https://github.com/cyprus327/Fraglib/blob/main/Gallery.md)
