@@ -14,6 +14,8 @@ public static class FL {
 
     public static bool VSync { get; set; } = true;
 
+    private static bool isDrawClear = false;
+
     public static void Init(int width, int height, string title, Action? program = null) {
         if (e is not null) {
             return;
@@ -27,6 +29,7 @@ public static class FL {
         windowHeight = height / PixelSize;
         program ??= () => {};
         e = new DrawClearEngine(width, height, title, program);
+        isDrawClear = true;
     }
 
     public static void Init(int width, int height, string title, Func<int, int, Uniforms, uint> perPixel, Action? perFrame = null) {
@@ -45,11 +48,11 @@ public static class FL {
     }
 
     public static void Run() {
-        if (e is null) {
+        if (!isDrawClear) {
             return;
         }
 
-        e.VSyncEnabled = VSync;
+        e!.VSyncEnabled = VSync;
         e.PixelSize = Math.Abs(PixelSize);
         e.Run();
     }
@@ -57,35 +60,63 @@ public static class FL {
 
 #region drawclear methods
     public static void SetPixel(int x, int y, uint color) {
-        if (e is not DrawClearEngine s) {
-            return; 
-        }
-        
-        if (x < 0 || x >= e.ScaledWidth || y < 0 || y >= e.ScaledHeight) {
+        if (!isDrawClear || x < 0 || x >= e!.ScaledWidth || y < 0 || y >= e.ScaledHeight) {
             return;
         }
 
-        s.SetPixel(x * PixelSize, y * PixelSize, color);
+        if (PixelSize == 1) {
+            e.Screen[y * e.WindowWidth + x] = color;
+            return;
+        }
+
+        x *= PixelSize;
+        y *= PixelSize;
+        int xMax = Math.Min(x + PixelSize, e.WindowWidth);
+        int yMax = Math.Min(y + PixelSize, e.WindowHeight);
+        unsafe {
+            fixed (uint* ptr = e.Screen) {
+                for (int py = y; py < yMax; py++) {
+                    int yo = py * e.WindowWidth;
+                    for (int px = x; px < xMax; px++) {
+                        ptr[yo + px] = color;
+                    }
+                }
+            }
+        }
     }
 
-    private static void SetPixel(int x, int y, uint color, DrawClearEngine s) {
-        if (x < 0 || x >= s.ScaledWidth || y < 0 || y >= s.ScaledHeight) {
+    private static unsafe void SetPixel(int x, int y, uint color, uint* ptr) {
+        if (!isDrawClear || x < 0 || x >= e!.ScaledWidth || y < 0 || y >= e.ScaledHeight) {
             return;
         }
 
-        s.SetPixel(x * PixelSize, y * PixelSize, color);
+        if (PixelSize == 1) {
+            ptr[y * e.WindowWidth + x] = color;
+            return;
+        }
+
+        x *= PixelSize;
+        y *= PixelSize;
+        int xMax = Math.Min(x + PixelSize, e.WindowWidth);
+        int yMax = Math.Min(y + PixelSize, e.WindowHeight);
+        for (int py = y; py < yMax; py++) {
+            int yo = py * e.WindowWidth;
+            for (int px = x; px < xMax; px++) {
+                ptr[yo + px] = color;
+            }
+        }
     }
 
     public static uint GetPixel(int x, int y) {
-        if (e is not DrawClearEngine s) {
-            return 255; 
+        if (!isDrawClear) {
+            return 0; 
         }
 
-        if (x < 0 || x >= e.WindowWidth || y < 0 || y >= e.WindowHeight) {
-            return 255;
+        if (x < 0 || x >= e!.WindowWidth || y < 0 || y >= e.WindowHeight) {
+            return 0;
         }
 
-        return s.GetPixel(x, y);
+        return e.Screen[y * e.WindowWidth + x];
     }
 
     public static void Clear() {
@@ -93,74 +124,96 @@ public static class FL {
     }
 
     public static void Clear(uint color) {
-        if (e is not DrawClearEngine s) {
+        if (!isDrawClear) {
             return; 
         }
 
-        s.Clear(color);
+        Array.Fill(e!.Screen, color);
     }
 
     public static void FillRect(int x, int y, int width, int height, uint color) {
-        if (e is not DrawClearEngine s) {
+        if (!isDrawClear || width <= 0 || height <= 0) {
             return;
         }
 
-        if (x < 0 || x >= e.ScaledWidth || y < 0 || y >= e.ScaledHeight) {
-            return;
-        }
+        x = Math.Max(x, 0);
+        y = Math.Max(y, 0);
+        width = Math.Min(x + width, e!.WindowWidth);
+        height = Math.Min(y + height, e.WindowHeight);
 
-        s.FillRect(x * PixelSize, y * PixelSize, width * e.PixelSize, height * e.PixelSize, color);
+        x *= PixelSize;
+        y *= PixelSize;
+        width *= PixelSize;
+        height *= PixelSize;
+        unsafe {
+            fixed (uint* ptr = e.Screen) {
+                for (int r = y; r < height; r++) {
+                    int ro = r * e.WindowWidth;
+                    for (int c = x; c < width; c++) {
+                        ptr[ro + c] = color;
+                    }
+                }
+            }
+        }
     }
 
     public static void DrawCircle(float centerX, float centerY, float radius, uint color) {
-        if (e is not DrawClearEngine s) {
+        if (!isDrawClear) {
             return;
         }
 
         int x = (int)radius, y = 0;
         int decisionOver2 = 1 - x;
 
-        while (y <= x) {
-            SetCirclePixels(centerX, centerY, x, y++, color, s);
+        unsafe {
+            fixed (uint* ptr = e!.Screen) {
+                while (y <= x) {
+                    SetCirclePixels(centerX, centerY, x, y++, color, ptr);
 
-            if (decisionOver2 <= 0) {
-                decisionOver2 += 2 * y + 1;
-            } else {
-                x--;
-                decisionOver2 += 2 * (y - x) + 1;
+                    if (decisionOver2 <= 0) {
+                        decisionOver2 += 2 * y + 1;
+                    } else {
+                        x--;
+                        decisionOver2 += 2 * (y - x) + 1;
+                    }
+
+                    SetCirclePixels(centerX, centerY, x, y, color, ptr);
+                }
             }
-
-            SetCirclePixels(centerX, centerY, x, y, color, s);
         }
     }
 
-    private static void SetCirclePixels(float cx, float cy, int ox, int oy, uint color, DrawClearEngine s) {
-        SetPixel((int)(cx + ox), (int)(cy + oy), color, s);
-        SetPixel((int)(cx - ox), (int)(cy + oy), color, s);
-        SetPixel((int)(cx + ox), (int)(cy - oy), color, s);
-        SetPixel((int)(cx - ox), (int)(cy - oy), color, s);
-        SetPixel((int)(cx + oy), (int)(cy + ox), color, s);
-        SetPixel((int)(cx - oy), (int)(cy + ox), color, s);
-        SetPixel((int)(cx + oy), (int)(cy - ox), color, s);
-        SetPixel((int)(cx - oy), (int)(cy - ox), color, s);
+    private static unsafe void SetCirclePixels(float cx, float cy, int ox, int oy, uint color, uint* ptr) {
+        SetPixel((int)(cx + ox), (int)(cy + oy), color, ptr);
+        SetPixel((int)(cx - ox), (int)(cy + oy), color, ptr);
+        SetPixel((int)(cx + ox), (int)(cy - oy), color, ptr);
+        SetPixel((int)(cx - ox), (int)(cy - oy), color, ptr);
+        SetPixel((int)(cx + oy), (int)(cy + ox), color, ptr);
+        SetPixel((int)(cx - oy), (int)(cy + ox), color, ptr);
+        SetPixel((int)(cx + oy), (int)(cy - ox), color, ptr);
+        SetPixel((int)(cx - oy), (int)(cy - ox), color, ptr);
     }
 
     public static void FillCircle(float centerX, float centerY, float radius, uint color) {
-        if (e is not DrawClearEngine s) {
+        if (!isDrawClear) {
             return;
         }
 
-        for (int x = (int)(centerX - radius); x <= centerX + radius; x++) {
-            for (int y = (int)(centerY - radius); y <= centerY + radius; y++) {
-                if (Math.Pow(x - centerX, 2) + Math.Pow(y - centerY, 2) <= Math.Pow(radius, 2)) {
-                    SetPixel(x, y, color, s);
+        unsafe {
+            fixed (uint* ptr = e!.Screen) {
+                for (int x = (int)(centerX - radius); x <= centerX + radius; x++) {
+                    for (int y = (int)(centerY - radius); y <= centerY + radius; y++) {
+                        if (Math.Pow(x - centerX, 2) + Math.Pow(y - centerY, 2) <= Math.Pow(radius, 2)) {
+                            SetPixel(x, y, color, ptr);
+                        }
+                    }
                 }
             }
         }
     }
 
     public static void DrawLine(int x0, int y0, int x1, int y1, uint color) {
-        if (e is not DrawClearEngine s) {
+        if (!isDrawClear) {
             return;
         }
 
@@ -172,43 +225,40 @@ public static class FL {
 
         int er = dx - dy;
 
-        while (true) {
-            SetPixel(x0, y0, color, s);
+        unsafe {
+            fixed (uint* ptr = e!.Screen) {
+                while (true) {
+                    SetPixel(x0, y0, color, ptr);
 
-            if (x0 == x1 && y0 == y1) {
-                break;
-            }
+                    if (x0 == x1 && y0 == y1) {
+                        break;
+                    }
 
-            int e2 = 2 * er;
+                    int e2 = 2 * er;
 
-            if (e2 > -dy) {
-                er -= dy;
-                x0 += sx;
-            }
+                    if (e2 > -dy) {
+                        er -= dy;
+                        x0 += sx;
+                    }
 
-            if (e2 < dx) {
-                er += dx;
-                y0 += sy;
+                    if (e2 < dx) {
+                        er += dx;
+                        y0 += sy;
+                    }
+                }
             }
         }
     }
 
     public static void DrawVerticalLine(int x, int y0, int y1, uint color) {
-        if (e is not DrawClearEngine s) {
+        if (!isDrawClear || x < 0 || x >= e!.ScaledWidth || y0 < 0 || y1 >= e.ScaledHeight || y0 > y1) {
             return;
         }
 
-        if (x < 0 || x >= s.ScaledWidth || y0 < 0 || y1 >= s.ScaledHeight || y0 > y1) {
-            return;
-        }
-
-        // for (int y = y0; y <= y1; y++) {
-        //     s.SetPixel(x, y, color);
-        // }
-
+        // NOTE: don't replace with SetPixel, ~110fps faster to do it like this
         if (PixelSize == 1) {
             unsafe { 
-                fixed (uint* ptr = s.Screen) {
+                fixed (uint* ptr = e.Screen) {
                     int stride = Width;
                     for (int y = y0; y <= y1; y++) {
                         ptr[y * stride + x] = color;
@@ -222,13 +272,13 @@ public static class FL {
         int scaledY0 = y0 * PixelSize;
         int scaledY1 = y1 * PixelSize;
 
-        int xBounds = Math.Min(scaledX + PixelSize, s.WindowWidth);
-        int yBounds = Math.Min(scaledY1 + PixelSize, s.WindowHeight);
+        int xBounds = Math.Min(scaledX + PixelSize, e.WindowWidth);
+        int yBounds = Math.Min(scaledY1 + PixelSize, e.WindowHeight);
 
         unsafe {
-            fixed (uint* ptr = s.Screen) {
+            fixed (uint* ptr = e.Screen) {
                 for (int sy = scaledY0; sy < yBounds; sy++) {
-                    int yo = sy * s.WindowWidth;
+                    int yo = sy * e.WindowWidth;
                     for (int sx = scaledX; sx < xBounds; sx++) {
                         ptr[yo + sx] = color;
                     }
@@ -238,7 +288,7 @@ public static class FL {
     }
 
     public static void DrawPolygon(uint color, params Vector2[] vertices) {
-        if (vertices is null || vertices.Length < 3) {
+        if (!isDrawClear || vertices is null || vertices.Length < 3) {
             return;
         }
 
@@ -250,11 +300,7 @@ public static class FL {
     }
 
     public static void FillPolygon(uint color, params Vector2[] vertices) {
-        if (e is not DrawClearEngine s) {
-            return;
-        }
-
-        if (vertices is null || vertices.Length < 3) {
+        if (!isDrawClear || vertices is null || vertices.Length < 3) {
             return;
         }
 
@@ -263,28 +309,32 @@ public static class FL {
         int minY = (int)vertices.Min(v => v.Y);
         int maxY = (int)vertices.Max(v => v.Y);
 
-        int length = vertices.Length;
-        for (int y = minY; y <= maxY; y++) {
-            List<int> intersections = new List<int>();
-            for (int i = 0; i < length; i++) {
-                Vector2 currentVertex = vertices[i];
-                Vector2 nextVertex = vertices[(i + 1) % length];
+        unsafe {
+            fixed (uint* ptr = e!.Screen) {
+                int length = vertices.Length;
+                for (int y = minY; y <= maxY; y++) {
+                    List<int> intersections = new List<int>();
+                    for (int i = 0; i < length; i++) {
+                        Vector2 currentVertex = vertices[i];
+                        Vector2 nextVertex = vertices[(i + 1) % length];
 
-                if (currentVertex.Y <= y && nextVertex.Y >= y || nextVertex.Y <= y && currentVertex.Y >= y) {
-                    int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
-                    intersections.Add(intersectionX);
-                }
-            }
+                        if (currentVertex.Y <= y && nextVertex.Y >= y || nextVertex.Y <= y && currentVertex.Y >= y) {
+                            int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
+                            intersections.Add(intersectionX);
+                        }
+                    }
 
-            intersections.Sort();
-            
-            int count = intersections.Count;
-            for (int i = 0; i < count; i += 2) {
-                int xStart = intersections[i];
-                int xEnd = intersections[(i + 1) % count];
+                    intersections.Sort();
+                    
+                    int count = intersections.Count;
+                    for (int i = 0; i < count; i += 2) {
+                        int xStart = intersections[i];
+                        int xEnd = intersections[(i + 1) % count];
 
-                for (int x = xStart; x <= xEnd; x++) {
-                    SetPixel(x, y, color, s);
+                        for (int x = xStart; x <= xEnd; x++) {
+                            SetPixel(x, y, color, ptr);
+                        }
+                    }
                 }
             }
         }
