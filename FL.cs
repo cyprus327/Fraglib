@@ -88,7 +88,7 @@ public static class FL {
         }
 
         if (PixelSize == 1) {
-            e.Screen[y * windowWidth + x] = color;
+            e!.Screen[y * windowWidth + x] = color;
             return;
         }
 
@@ -97,7 +97,7 @@ public static class FL {
         int xMax = Math.Min(x + PixelSize, windowWidth);
         int yMax = Math.Min(y + PixelSize, windowHeight);
         unsafe {
-            fixed (uint* ptr = e.Screen) {
+            fixed (uint* ptr = e!.Screen) {
                 for (int py = y; py < yMax; py++) {
                     int yo = py * windowWidth;
                     for (int px = x; px < xMax; px++) {
@@ -332,7 +332,7 @@ public static class FL {
         // NOTE: don't replace with SetPixel, ~110fps faster to do it like this
         if (PixelSize == 1) {
             unsafe { 
-                fixed (uint* ptr = e.Screen) {
+                fixed (uint* ptr = e!.Screen) {
                     int stride = Width;
                     for (int y = y0; y <= y1; y++) {
                         ptr[y * stride + x] = color;
@@ -350,7 +350,7 @@ public static class FL {
         int yBounds = Math.Min(scaledY1 + PixelSize, windowHeight);
 
         unsafe {
-            fixed (uint* ptr = e.Screen) {
+            fixed (uint* ptr = e!.Screen) {
                 for (int sy = scaledY0; sy < yBounds; sy++) {
                     int yo = sy * windowWidth;
                     for (int sx = scaledX; sx < xBounds; sx++) {
