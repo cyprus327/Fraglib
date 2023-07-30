@@ -195,6 +195,10 @@ The time from the current frame to the last frame.
 The scaled width of the window, i.e. real window width / pixel size. 
 ## Height (int)
 The scaled height of the window, i.e. real window height / pixel size. 
+## Mouse (Vector2)
+The mouse position on the window. 
+## MouseDelta (Vector2)
+The amount the mouse has moved from the last frame to the current frame. 
 ## Rand (uint)
 Generates a random unsigned integer using the Lehmer random number generator. 
 ## Rand (int)
