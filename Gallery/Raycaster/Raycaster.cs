@@ -1,6 +1,8 @@
 using System.Numerics;
 using Fraglib;
 
+namespace Gallery;
+
 internal sealed class Raycaster {
     public Raycaster(int width, int height, int pixelSize) {
         _width = width / pixelSize;
