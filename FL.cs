@@ -474,62 +474,62 @@ public static class FL {
     /// <summary>The color black, either 4278190080 or 255.</summary>
     public static uint Black => BitConverter.IsLittleEndian ? 4278190080 : 255;
     
-    /// <name>Black</name>
+    /// <name>Gray</name>
     /// <returns>uint</returns>
     /// <summary>The color gray, either 4286611584 or 2155905279.</summary>
     public static uint Gray => BitConverter.IsLittleEndian ? 4286611584 : 2155905279;
     
-    /// <name>Black</name>
+    /// <name>White</name>
     /// <returns>uint</returns>
     /// <summary>The color white, represented as 4294967295.</summary>
     public static uint White => 4294967295;
     
-    /// <name>Black</name>
+    /// <name>Red</name>
     /// <returns>uint</returns>
     /// <summary>The color red, represented as 4278190335.</summary>
     public static uint Red => 4278190335;
 
-    /// <name>Black</name>
+    /// <name>Green</name>
     /// <returns>uint</returns>
     /// <summary>The color green, either 4278255360 or 16711935.</summary>
     public static uint Green => BitConverter.IsLittleEndian ? 4278255360 : 16711935;
 
-    /// <name>Black</name>
+    /// <name>Blue</name>
     /// <returns>uint</returns>
     /// <summary>The color blue, either 4294901760 or 65535.</summary>
     public static uint Blue => BitConverter.IsLittleEndian ? 4294901760 : 65535;
 
-    /// <name>Black</name>
+    /// <name>Yellow</name>
     /// <returns>uint</returns>
     /// <summary>The color yellow, either 4278255615 or 4294902015.</summary>
     public static uint Yellow => BitConverter.IsLittleEndian ? 4278255615 : 4294902015;
 
-    /// <name>Black</name>
+    /// <name>Orange</name>
     /// <returns>uint</returns>
     /// <summary>The color orange, either 4278232575 or 4289003775.</summary>
     public static uint Orange => BitConverter.IsLittleEndian ? 4278232575 : 4289003775;
 
-    /// <name>Black</name>
+    /// <name>Cyan</name>
     /// <returns>uint</returns>
     /// <summary>The color cyan, either 4294967040 or 16777215.</summary>
     public static uint Cyan => BitConverter.IsLittleEndian ? 4294967040 : 16777215;
 
-    /// <name>Black</name>
+    /// <name>Magenta</name>
     /// <returns>uint</returns>
     /// <summary>The color magenta, either 4294902015 or 4278255615.</summary>
     public static uint Magenta => BitConverter.IsLittleEndian ? 4294902015 : 4278255615;
 
-    /// <name>Black</name>
+    /// <name>Turquoise</name>
     /// <returns>uint</returns>
     /// <summary>The color turquoise, either 4291878976 or 1088475391.</summary>
     public static uint Turquoise => BitConverter.IsLittleEndian ? 4291878976 : 1088475391;
 
-    /// <name>Black</name>
+    /// <name>Lavender</name>
     /// <returns>uint</returns>
     /// <summary>The color lavender, either 4294633190 or 3873897215.</summary>
     public static uint Lavender => BitConverter.IsLittleEndian ? 4294633190 : 3873897215;
 
-    /// <name>Black</name>
+    /// <name>Crimson</name>
     /// <returns>uint</returns>
     /// <summary>The color crimson, either 4282127580 or 3692313855.</summary>
     public static uint Crimson => BitConverter.IsLittleEndian ? 4282127580 : 3692313855;

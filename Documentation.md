@@ -80,29 +80,29 @@ Sets the window to a previously saved state.
 Clears any previously saved states. 
 ## Black (uint)
 The color black, either 4278190080 or 255. 
-## Black (uint)
+## Gray (uint)
 The color gray, either 4286611584 or 2155905279. 
-## Black (uint)
+## White (uint)
 The color white, represented as 4294967295. 
-## Black (uint)
+## Red (uint)
 The color red, represented as 4278190335. 
-## Black (uint)
+## Green (uint)
 The color green, either 4278255360 or 16711935. 
-## Black (uint)
+## Blue (uint)
 The color blue, either 4294901760 or 65535. 
-## Black (uint)
+## Yellow (uint)
 The color yellow, either 4278255615 or 4294902015. 
-## Black (uint)
+## Orange (uint)
 The color orange, either 4278232575 or 4289003775. 
-## Black (uint)
+## Cyan (uint)
 The color cyan, either 4294967040 or 16777215. 
-## Black (uint)
+## Magenta (uint)
 The color magenta, either 4294902015 or 4278255615. 
-## Black (uint)
+## Turquoise (uint)
 The color turquoise, either 4291878976 or 1088475391. 
-## Black (uint)
+## Lavender (uint)
 The color lavender, either 4294633190 or 3873897215. 
-## Black (uint)
+## Crimson (uint)
 The color crimson, either 4282127580 or 3692313855. 
 ## Rainbow (uint)
 A color that cycles through all the full rainbow based on ElapsedTime. 
