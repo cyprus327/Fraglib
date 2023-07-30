@@ -389,14 +389,19 @@ public static class FL {
     public static uint Crimson => BitConverter.IsLittleEndian ? 4282127580 : 3692313855;
     public static uint Rainbow(float timeScale = 1f) => HslToRgb((ElapsedTime * 60f * Math.Abs(timeScale)) % 360f, 1f, 0.5f);
 
-    public static uint NewColor(float r, float g, float b, float a = 1f) {
-        return NewColor((byte)(r * 255), (byte)(g * 255), (byte)(b * 255), (byte)(a * 255));
-    }
-
     public static uint NewColor(byte r, byte g, byte b, byte a = 255) {
         return BitConverter.IsLittleEndian ?
             ((uint)a << 24) | ((uint)b << 16) | ((uint)g << 8) | r :
             ((uint)r << 24) | ((uint)g << 16) | ((uint)b << 8) | a;
+    }
+    public static uint NewColor(float r, float g, float b, float a = 1f) {
+        return NewColor((byte)(r * 255), (byte)(g * 255), (byte)(b * 255), (byte)(a * 255));
+    }
+    public static uint NewColor(Vector3 col, float a = 1f) {
+        return NewColor(col.X, col.Y, col.Z, a);
+    }
+    public static uint NewColor(Vector4 col) {
+        return NewColor(col.X, col.Y, col.Z, col.W);
     }
 
     public static byte GetR(this uint color) {
@@ -421,28 +426,52 @@ public static class FL {
             (byte)(color & 0xFF);
     }
 
-    public static void SetR(this ref uint color, byte newR) {
+    public static uint SetR(this ref uint color, byte newR) {
         color = BitConverter.IsLittleEndian ?
             (color & 0xFFFFFF00) | newR :
             (color & 0xFF00FFFF) | ((uint)newR << 24);
+        
+        return color;
+    }
+    public static uint SetR(this ref uint color, float newR) {
+        color.SetR((byte)(newR * 255f));
+        return color;
     }
 
-    public static void SetG(this ref uint color, byte newG) {
+    public static uint SetG(this ref uint color, byte newG) {
         color = BitConverter.IsLittleEndian ?
             (color & 0xFFFF00FF) | ((uint)newG << 8) :
             (color & 0xFF00FFFF) | ((uint)newG << 16);
+        
+        return color;
+    }
+    public static uint SetG(this ref uint color, float newG) {
+        color.SetR((byte)(newG * 255f));
+        return color;
     }
 
-    public static void SetB(this ref uint color, byte newB) {
+    public static uint SetB(this ref uint color, byte newB) {
         color = BitConverter.IsLittleEndian ?
             (color & 0xFF00FFFF) | ((uint)newB << 16) :
             color = (color & 0xFFFFFF00) | newB;
+        
+        return color;
+    }
+    public static uint SetB(this ref uint color, float newB) {
+        color.SetR((byte)(newB * 255f));
+        return color;
     }
 
-    public static void SetA(this ref uint color, byte newA) {
+    public static uint SetA(this ref uint color, byte newA) {
         color = BitConverter.IsLittleEndian ?
             (color & 0x00FFFFFF) | ((uint)newA << 24) :
             (color & 0xFFFFFF00) | newA;
+        
+        return color;
+    }
+    public static uint SetA(this ref uint color, float newA) {
+        color.SetR((byte)(newA * 255f));
+        return color;
     }
 
     public static uint HslToRgb(float hue, float saturation, float lightness) {
