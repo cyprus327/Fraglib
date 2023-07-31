@@ -10,6 +10,8 @@ Initializes the window with the specified width, height, title, perPixel functio
 This method must be called before using any other FL methods. 
 - **width**: The width of the window in pixels.
 - **height**: The height of the window in pixels.
+- **perPixel**: The function that gets invoked for every pixel on the window until the window is closed.
+- **perFrame**: Optional function that gets invoked once per frame until the window is closed.
 ## Run (void)
 Starts the main loop of the engine. 
 Must be called after Init for a window to appear. 

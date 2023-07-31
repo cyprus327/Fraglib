@@ -40,8 +40,8 @@ public static class FL {
     /// <summary>This method must be called before using any other FL methods.</summary>
     /// <param name="width">The width of the window in pixels.</param>
     /// <param name="height">The height of the window in pixels.</param>
-    /// <param name="perPixel">The funcion that gets invoked for every pixel on the window until the window is closed.</summary>
-    /// <param name="perFrame">The funcion that gets invoked once per frame until the window is closed.</summary>
+    /// <param name="perPixel">The function that gets invoked for every pixel on the window until the window is closed.</summary>
+    /// <param name="perFrame">Optional function that gets invoked once per frame until the window is closed.</summary>
     public static void Init(int width, int height, string title, Func<int, int, Uniforms, uint> perPixel, Action? perFrame = null) {
         if (e is not null) {
             return;
