@@ -59,7 +59,7 @@ public static class FL {
         e = new PerPixelEngine(width, height, title, perPixel, perFrame);
     }
 
-    /// <name>Init</name>
+    /// <name>Run</name>
     /// <returns>void</returns>
     /// <summary>Starts the main loop of the engine.</summary>
     /// <summary>Must be called after Init for a window to appear.</summary>
@@ -135,7 +135,6 @@ public static class FL {
     /// <summary>Gets the pixel's color at the specified position.</summary>
     /// <param name="x">The x coordinate of the pixel.</param>
     /// <param name="y">The y coordinate of the pixel.</param>
-    /// <param name="color">The color of the pixel in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static uint GetPixel(int x, int y) {
         if (!isDrawClear) {
             return 0; 

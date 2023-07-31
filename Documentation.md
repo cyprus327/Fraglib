@@ -10,7 +10,7 @@ Initializes the window with the specified width, height, title, perPixel functio
 This method must be called before using any other FL methods. 
 - **width**: The width of the window in pixels.
 - **height**: The height of the window in pixels.
-## Init (void)
+## Run (void)
 Starts the main loop of the engine. 
 Must be called after Init for a window to appear. 
 Any settings changed after this (PixelSize, VSync, etc.) won't affect anything. 
@@ -23,7 +23,6 @@ Sets the pixel at the specified position to the given color.
 Gets the pixel's color at the specified position. 
 - **x**: The x coordinate of the pixel.
 - **y**: The y coordinate of the pixel.
-- **color**: The color of the pixel in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
 ## Clear (void)
 Clears the window to black. 
 ## Clear (void)
