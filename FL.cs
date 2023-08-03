@@ -24,7 +24,6 @@ public static class FL {
             return;
         }
 
-
         windowWidth = width;
         windowHeight = height;
         scaledWidth = width / PixelSize;
@@ -109,7 +108,7 @@ public static class FL {
     }
 
     private static unsafe void SetPixel(int x, int y, uint color, uint* ptr) {
-        if (!isDrawClear || x < 0 || x >= scaledWidth || y < 0 || y >= scaledHeight) {
+        if (x < 0 || x >= scaledWidth || y < 0 || y >= scaledHeight) {
             return;
         }
 
@@ -175,29 +174,31 @@ public static class FL {
     /// <param name="height">The height of the rectangle.</param>
     /// <param name="color">The color of the rectangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void FillRect(int x, int y, int width, int height, uint color) {
-        if (!isDrawClear || width <= 0 || height <= 0) {
-            return;
-        }
-
         x = Math.Max(x, 0);
         y = Math.Max(y, 0);
         width = Math.Min(x + width, windowWidth);
         height = Math.Min(y + height, windowHeight);
+        
+        if (!isDrawClear || width <= 0 || height <= 0) {
+            return;
+        }
 
-        x *= PixelSize;
-        y *= PixelSize;
-        width *= PixelSize;
-        height *= PixelSize;
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                for (int r = y; r < height; r++) {
-                    int ro = r * windowWidth;
-                    for (int c = x; c < width; c++) {
-                        ptr[ro + c] = color;
+        ((DrawClearEngine)e!).Queue.Enqueue(() => {
+            x *= PixelSize;
+            y *= PixelSize;
+            width *= PixelSize;
+            height *= PixelSize;
+            unsafe {
+                fixed (uint* ptr = e!.Screen) {
+                    for (int r = y; r < height; r++) {
+                        int ro = r * windowWidth;
+                        for (int c = x; c < width; c++) {
+                            ptr[ro + c] = color;
+                        }
                     }
                 }
             }
-        }
+        });
     }
 
     /// <name>DrawCircle</name>
@@ -212,25 +213,28 @@ public static class FL {
             return;
         }
 
-        int x = (int)radius, y = 0;
-        int decisionOver2 = 1 - x;
+        ((DrawClearEngine)e!).Queue.Enqueue(() => {
+            int x = (int)radius, y = 0;
+            int decisionOver2 = 1 - x;
 
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                while (y <= x) {
-                    SetCirclePixels(centerX, centerY, x, y++, color, ptr);
+            unsafe {
+                fixed (uint* ptr = e!.Screen) {
+                    while (y <= x) {
+                        SetCirclePixels(centerX, centerY, x, y, color, ptr);
 
-                    if (decisionOver2 <= 0) {
-                        decisionOver2 += 2 * y + 1;
-                    } else {
-                        x--;
-                        decisionOver2 += 2 * (y - x) + 1;
+                        if (decisionOver2 <= 0) {
+                            decisionOver2 += 2 * y + 1;
+                        } else {
+                            x--;
+                            decisionOver2 += 2 * (y - x) + 1;
+                        }
+
+                        y++;
                     }
-
-                    SetCirclePixels(centerX, centerY, x, y, color, ptr);
                 }
             }
-        }
+        });
+
     }
 
     private static unsafe void SetCirclePixels(float cx, float cy, int ox, int oy, uint color, uint* ptr) {
@@ -252,21 +256,31 @@ public static class FL {
     /// <param name="radius">The radius of the circle.</param>
     /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void FillCircle(float centerX, float centerY, float radius, uint color) {
-        if (!isDrawClear) {
+        if (!isDrawClear || radius == 0) {
             return;
         }
 
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                for (int x = (int)(centerX - radius); x <= centerX + radius; x++) {
-                    for (int y = (int)(centerY - radius); y <= centerY + radius; y++) {
-                        if (Math.Pow(x - centerX, 2) + Math.Pow(y - centerY, 2) <= Math.Pow(radius, 2)) {
-                            SetPixel(x, y, color, ptr);
+        ((DrawClearEngine)e!).Queue.Enqueue(() => {
+            int xStart = (int)(centerX - radius);
+            int xEnd = (int)(centerX + radius);
+            int yStart = (int)(centerY - radius);
+            int yEnd = (int)(centerY + radius);
+            float radiusSquared = radius * radius;
+
+            unsafe {
+                fixed (uint* ptr = e!.Screen) {
+                    for (int x = xStart; x <= xEnd; x++) {
+                        for (int y = yStart; y <= yEnd; y++) {
+                            float dx = x - centerX;
+                            float dy = y - centerY;
+                            if ((dx * dx + dy * dy) <= radiusSquared) {
+                                SetPixel(x, y, color, ptr);
+                            }
                         }
                     }
                 }
             }
-        }
+        });
     }
 
     /// <name>DrawLine</name>
@@ -366,15 +380,17 @@ public static class FL {
     /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
     public static void DrawPolygon(uint color, params Vector2[] vertices) {
-        if (!isDrawClear || vertices is null || vertices.Length < 3) {
+        if (!isDrawClear || vertices.Length < 3) {
             return;
         }
 
-        int vertexCount = vertices.Length;
-        for (int i = 0; i < vertexCount; i++) {
-            int next = (i + 1) % vertexCount;
-            DrawLine((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
-        }
+        ((DrawClearEngine)e!).Queue.Enqueue(() => {
+            int vertexCount = vertices.Length;
+            for (int i = 0; i < vertexCount; i++) {
+                int next = (i + 1) % vertexCount;
+                DrawLine((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
+            }
+        });
     }
 
     /// <name>FillPolygon</name>
@@ -387,40 +403,51 @@ public static class FL {
             return;
         }
 
-        int minX = (int)vertices.Min(v => v.X);
-        int maxX = (int)vertices.Max(v => v.X);
-        int minY = (int)vertices.Min(v => v.Y);
-        int maxY = (int)vertices.Max(v => v.Y);
+        ((DrawClearEngine)e!).Queue.Enqueue(() => {
+            int minY = (int)vertices[0].Y;
+            int maxY = (int)vertices[0].Y;
+            for (int i = 1; i < vertices.Length; i++) {
+                int y = (int)vertices[i].Y;
+                minY = Math.Min(minY, y);
+                maxY = Math.Max(maxY, y);
+            }
 
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                int length = vertices.Length;
-                for (int y = minY; y <= maxY; y++) {
-                    List<int> intersections = new List<int>();
-                    for (int i = 0; i < length; i++) {
-                        Vector2 currentVertex = vertices[i];
-                        Vector2 nextVertex = vertices[(i + 1) % length];
+            Array.Sort(vertices, (v1, v2) => v1.Y.CompareTo(v2.Y));
 
-                        if (currentVertex.Y <= y && nextVertex.Y >= y || nextVertex.Y <= y && currentVertex.Y >= y) {
-                            int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
-                            intersections.Add(intersectionX);
+            unsafe {
+                fixed (uint* ptr = e!.Screen) {
+                    int length = vertices.Length;
+                    for (int y = minY; y <= maxY; y++) {
+                        List<int> intersections = new List<int>();
+
+                        int j = length - 1;
+                        for (int i = 0; i < length; i++) {
+                            Vector2 currentVertex = vertices[i];
+                            Vector2 nextVertex = vertices[j];
+
+                            if (currentVertex.Y < y && nextVertex.Y >= y || nextVertex.Y < y && currentVertex.Y >= y) {
+                                int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
+                                intersections.Add(intersectionX);
+                            }
+
+                            j = i;
                         }
-                    }
 
-                    intersections.Sort();
-                    
-                    int count = intersections.Count;
-                    for (int i = 0; i < count; i += 2) {
-                        int xStart = intersections[i];
-                        int xEnd = intersections[(i + 1) % count];
+                        intersections.Sort();
 
-                        for (int x = xStart; x <= xEnd; x++) {
-                            SetPixel(x, y, color, ptr);
+                        int count = intersections.Count;
+                        for (int i = 0; i < count; i += 2) {
+                            int xStart = intersections[i];
+                            int xEnd = intersections[Math.Min(i + 1, count - 1)];
+
+                            for (int x = xStart; x <= xEnd; x++) {
+                                SetPixel(x, y, color, ptr);
+                            }
                         }
                     }
                 }
             }
-        }
+        });
     }
 #endregion drawclear methods
 

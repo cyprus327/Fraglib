@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using OpenTK.Windowing.Common;
 
 namespace Fraglib;
@@ -9,7 +10,12 @@ internal sealed class DrawClearEngine : Engine {
 
     private readonly Action _program;
 
+    public ConcurrentQueue<Action> Queue = new();
+
     public override void Update(FrameEventArgs args) {
         _program();
+
+        Parallel.ForEach(Queue, a => a());
+        Queue.Clear();
     }
 }
