@@ -69,7 +69,8 @@ public static class FL {
         }
 
         e!.VSyncEnabled = VSync;
-        e.PixelSize = Math.Abs(PixelSize);
+        e.PixelSize = PixelSize;
+        ((DrawClearEngine)e).Multithreaded = Multithreaded;
         e.Run();
     }
 #endregion setup
@@ -86,25 +87,27 @@ public static class FL {
             return;
         }
 
-        if (PixelSize == 1) {
-            e!.Screen[y * windowWidth + x] = color;
-            return;
-        }
+        ((DrawClearEngine)e!).AddAction(() => {
+            if (PixelSize == 1) {
+                e!.Screen[y * windowWidth + x] = color;
+                return;
+            }
 
-        x *= PixelSize;
-        y *= PixelSize;
-        int xMax = Math.Min(x + PixelSize, windowWidth);
-        int yMax = Math.Min(y + PixelSize, windowHeight);
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                for (int py = y; py < yMax; py++) {
-                    int yo = py * windowWidth;
-                    for (int px = x; px < xMax; px++) {
-                        ptr[yo + px] = color;
+            x *= PixelSize;
+            y *= PixelSize;
+            int xMax = Math.Min(x + PixelSize, windowWidth);
+            int yMax = Math.Min(y + PixelSize, windowHeight);
+            unsafe {
+                fixed (uint* ptr = e!.Screen) {
+                    for (int py = y; py < yMax; py++) {
+                        int yo = py * windowWidth;
+                        for (int px = x; px < xMax; px++) {
+                            ptr[yo + px] = color;
+                        }
                     }
                 }
             }
-        }
+        });
     }
 
     private static unsafe void SetPixel(int x, int y, uint color, uint* ptr) {
@@ -162,7 +165,9 @@ public static class FL {
             return; 
         }
 
-        Array.Fill(e!.Screen, color);
+        ((DrawClearEngine)e!).AddAction(() => {
+            Array.Fill(e.Screen, color);
+        });
     }
 
     /// <name>FillRect</name>
@@ -183,7 +188,7 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).Queue.Enqueue(() => {
+        ((DrawClearEngine)e!).AddAction(() => {
             x *= PixelSize;
             y *= PixelSize;
             width *= PixelSize;
@@ -213,7 +218,7 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).Queue.Enqueue(() => {
+        ((DrawClearEngine)e!).AddAction(() => {
             int x = (int)radius, y = 0;
             int decisionOver2 = 1 - x;
 
@@ -260,7 +265,7 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).Queue.Enqueue(() => {
+        ((DrawClearEngine)e!).AddAction(() => {
             int xStart = (int)(centerX - radius);
             int xEnd = (int)(centerX + radius);
             int yStart = (int)(centerY - radius);
@@ -292,6 +297,47 @@ public static class FL {
     /// <param name="y1">The ending y coordinate of the line.</param>
     /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void DrawLine(int x0, int y0, int x1, int y1, uint color) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => {
+            int dx = Math.Abs(x1 - x0);
+            int dy = Math.Abs(y1 - y0);
+
+            int sx = x0 < x1 ? 1 : -1;
+            int sy = y0 < y1 ? 1 : -1;
+
+            int er = dx - dy;
+
+            unsafe {
+                fixed (uint* ptr = e.Screen) {
+                    while (true) {
+                        SetPixel(x0, y0, color, ptr);
+
+                        if (x0 == x1 && y0 == y1) {
+                            break;
+                        }
+
+                        int e2 = 2 * er;
+
+                        if (e2 > -dy) {
+                            er -= dy;
+                            x0 += sx;
+                        }
+
+                        if (e2 < dx) {
+                            er += dx;
+                            y0 += sy;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // gross and repetitive having to use this
+    private static void DrawLineNonAdded(int x0, int y0, int x1, int y1, uint color) {
         if (!isDrawClear) {
             return;
         }
@@ -355,23 +401,184 @@ public static class FL {
             return;
         }
 
-        int scaledX = x * PixelSize;
-        int scaledY0 = y0 * PixelSize;
-        int scaledY1 = y1 * PixelSize;
+        x *= PixelSize;
+        y0 *= PixelSize;
+        y1 *= PixelSize;
 
-        int xBounds = Math.Min(scaledX + PixelSize, windowWidth);
-        int yBounds = Math.Min(scaledY1 + PixelSize, windowHeight);
+        int xBounds = Math.Min(x + PixelSize, windowWidth);
+        int yBounds = Math.Min(y1 + PixelSize, windowHeight);
 
         unsafe {
             fixed (uint* ptr = e!.Screen) {
-                for (int sy = scaledY0; sy < yBounds; sy++) {
+                for (int sy = y0; sy < yBounds; sy++) {
                     int yo = sy * windowWidth;
-                    for (int sx = scaledX; sx < xBounds; sx++) {
+                    for (int sx = x; sx < xBounds; sx++) {
                         ptr[yo + sx] = color;
                     }
                 }
             }
         }
+    }
+
+    /// <name>DrawVerticalLine</name>
+    /// <returns>void</returns>
+    /// <summary>Draws a horizontal line of specified color along the specified path.</summary>
+    /// <summary>Should be used over DrawLine if the line is horizontal.</summary>
+    /// <param name="x0">The starting x coordinate of the line.</param>
+    /// <param name="x1">The ending x coordinate of the line.</param>
+    /// <param name="y">The y coordinate of the line.</param>
+    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    public static void DrawHorizontalLine(int x0, int x1, int y, uint color) {
+        if (!isDrawClear || x0 < 0 || x0 > x1 || x1 >= scaledWidth || y < 0 || y >= scaledHeight) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => {
+            if (PixelSize == 1) {
+                unsafe {
+                    fixed (uint* ptr = e!.Screen) {
+                        int startInd = y * windowWidth + x0;
+                        uint* startPtr = ptr + startInd;
+                        uint* endPtr = startPtr + (x1 - x0);
+                        for (uint* currentPtr = startPtr; currentPtr < endPtr; currentPtr++) {
+                            *currentPtr = color;
+                        }
+                    }
+                }
+                return;
+            }
+
+            x0 *= PixelSize;
+            x1 *= PixelSize;
+            y *= PixelSize;
+
+            int xBounds = Math.Min(x1 + PixelSize, windowWidth);
+            int yBound = Math.Min(y + PixelSize, windowHeight);
+            
+            unsafe {
+                fixed (uint* ptr = e!.Screen) {
+                    for (int sy = y; sy < yBound; sy++) {
+                        int yo = sy * windowWidth;
+                        for (int sx = x0; sx < xBounds; sx += PixelSize) {
+                            int startInd = yo + sx;
+                            uint* startPtr = ptr + startInd;
+                            uint* endPtr = startPtr + PixelSize;
+                            for (uint* currentPtr = startPtr; currentPtr < endPtr; currentPtr++) {
+                                *currentPtr = color;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private static void DrawHorizontalLineNonAdded(int x0, int x1, int y, uint color) {
+        if (!isDrawClear || x0 < 0 || x0 > x1 || x1 >= scaledWidth || y < 0 || y >= scaledHeight) {
+            return;
+        }
+
+        if (PixelSize == 1) {
+            unsafe {
+                fixed (uint* ptr = e!.Screen) {
+                    int startInd = y * windowWidth + x0;
+                    uint* startPtr = ptr + startInd;
+                    uint* endPtr = startPtr + (x1 - x0);
+                    for (uint* currentPtr = startPtr; currentPtr < endPtr; currentPtr++) {
+                        *currentPtr = color;
+                    }
+                }
+            }
+            return;
+        }
+
+        x0 *= PixelSize;
+        x1 *= PixelSize;
+        y *= PixelSize;
+
+        int xBounds = Math.Min(x1 + PixelSize, windowWidth);
+        int yBound = Math.Min(y + PixelSize, windowHeight);
+        
+        unsafe {
+            fixed (uint* ptr = e!.Screen) {
+                for (int sy = y; sy < yBound; sy++) {
+                    int yo = sy * windowWidth;
+                    for (int sx = x0; sx < xBounds; sx += PixelSize) {
+                        int startInd = yo + sx;
+                        uint* startPtr = ptr + startInd;
+                        uint* endPtr = startPtr + PixelSize;
+                        for (uint* currentPtr = startPtr; currentPtr < endPtr; currentPtr++) {
+                            *currentPtr = color;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <name>FillPolygon</name>
+    /// <returns>void</returns>
+    /// <summary>Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle.</summary>
+    /// <param name="x0">The x coordinate of the 1st vertex.</param>
+    /// <param name="y0">The y coordinate of the 1st vertex.</param>
+    /// <param name="x1">The x coordinate of the 2nd vertex.</param>
+    /// <param name="y1">The y coordinate of the 2nd vertex.</param>
+    /// <param name="x2">The x coordinate of the 3rd vertex.</param>
+    /// <param name="y2">The y coordinate of the 3rd vertex.</param>
+    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    public static void FillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => {
+            if (y1 < y0) {
+                (x0, y0, x1, y1) = (x1, y1, x0, y0);
+            }
+            if (y2 < y0) {
+                (x0, y0, x2, y2) = (x2, y2, x0, y0);
+            }
+            if (y2 < y1) {
+                (x1, y1, x2, y2) = (x2, y2, x1, y1);
+            }
+
+            float s1 = (float)(x1 - x0) / (y1 - y0);
+            float s2 = (float)(x2 - x0) / (y2 - y0);
+            float s3 = (float)(x2 - x1) / (y2 - y1);
+
+            for (int scanlineY = y0; scanlineY <= y1; scanlineY++) {
+                int startX = (int)(x0 + (scanlineY - y0) * s1);
+                int endX = (int)(x0 + (scanlineY - y0) * s2);
+
+                if (endX < startX) {
+                    (startX, endX) = (endX, startX);
+                }
+
+                DrawHorizontalLineNonAdded(startX, endX, scanlineY, color);
+            }
+
+            for (int y = y1; y <= y2; y++) {
+                int startX = (int)(x1 + (y - y1) * s3);
+                int endX = (int)(x0 + (y - y0) * s2);
+
+                if (endX < startX) {
+                    (startX, endX) = (endX, startX);
+                }
+
+                DrawHorizontalLineNonAdded(startX, endX, y, color);
+            }
+        });
+    }
+
+    /// <name>FillPolygon</name>
+    /// <returns>void</returns>
+    /// <summary>Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle.</summary>
+    /// <param name="v0">The 1st vertex.</param>
+    /// <param name="v1">The 2nd vertex.</param>
+    /// <param name="v2">The 3rd vertex.</param>
+    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    public static void FillTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
+        FillTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
     }
 
     /// <name>DrawPolygon</name>
@@ -384,11 +591,11 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).Queue.Enqueue(() => {
+        ((DrawClearEngine)e!).AddAction(() => {
             int vertexCount = vertices.Length;
             for (int i = 0; i < vertexCount; i++) {
                 int next = (i + 1) % vertexCount;
-                DrawLine((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
+                DrawLineNonAdded((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
             }
         });
     }
@@ -403,7 +610,7 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).Queue.Enqueue(() => {
+        ((DrawClearEngine)e!).AddAction(() => {
             int minY = (int)vertices[0].Y;
             int maxY = (int)vertices[0].Y;
             for (int i = 1; i < vertices.Length; i++) {
@@ -495,15 +702,17 @@ public static class FL {
 #endregion states
 
 #region colors
+    private static readonly bool _isLittleEndian = BitConverter.IsLittleEndian;
+
     /// <name>Black</name>
     /// <returns>uint</returns>
     /// <summary>The color black, either 4278190080 or 255.</summary>
-    public static uint Black => BitConverter.IsLittleEndian ? 4278190080 : 255;
+    public static uint Black => _isLittleEndian ? 4278190080 : 255;
     
     /// <name>Gray</name>
     /// <returns>uint</returns>
     /// <summary>The color gray, either 4286611584 or 2155905279.</summary>
-    public static uint Gray => BitConverter.IsLittleEndian ? 4286611584 : 2155905279;
+    public static uint Gray => _isLittleEndian ? 4286611584 : 2155905279;
     
     /// <name>White</name>
     /// <returns>uint</returns>
@@ -518,47 +727,47 @@ public static class FL {
     /// <name>Green</name>
     /// <returns>uint</returns>
     /// <summary>The color green, either 4278255360 or 16711935.</summary>
-    public static uint Green => BitConverter.IsLittleEndian ? 4278255360 : 16711935;
+    public static uint Green => _isLittleEndian ? 4278255360 : 16711935;
 
     /// <name>Blue</name>
     /// <returns>uint</returns>
     /// <summary>The color blue, either 4294901760 or 65535.</summary>
-    public static uint Blue => BitConverter.IsLittleEndian ? 4294901760 : 65535;
+    public static uint Blue => _isLittleEndian ? 4294901760 : 65535;
 
     /// <name>Yellow</name>
     /// <returns>uint</returns>
     /// <summary>The color yellow, either 4278255615 or 4294902015.</summary>
-    public static uint Yellow => BitConverter.IsLittleEndian ? 4278255615 : 4294902015;
+    public static uint Yellow => _isLittleEndian ? 4278255615 : 4294902015;
 
     /// <name>Orange</name>
     /// <returns>uint</returns>
     /// <summary>The color orange, either 4278232575 or 4289003775.</summary>
-    public static uint Orange => BitConverter.IsLittleEndian ? 4278232575 : 4289003775;
+    public static uint Orange => _isLittleEndian ? 4278232575 : 4289003775;
 
     /// <name>Cyan</name>
     /// <returns>uint</returns>
     /// <summary>The color cyan, either 4294967040 or 16777215.</summary>
-    public static uint Cyan => BitConverter.IsLittleEndian ? 4294967040 : 16777215;
+    public static uint Cyan => _isLittleEndian ? 4294967040 : 16777215;
 
     /// <name>Magenta</name>
     /// <returns>uint</returns>
     /// <summary>The color magenta, either 4294902015 or 4278255615.</summary>
-    public static uint Magenta => BitConverter.IsLittleEndian ? 4294902015 : 4278255615;
+    public static uint Magenta => _isLittleEndian ? 4294902015 : 4278255615;
 
     /// <name>Turquoise</name>
     /// <returns>uint</returns>
     /// <summary>The color turquoise, either 4291878976 or 1088475391.</summary>
-    public static uint Turquoise => BitConverter.IsLittleEndian ? 4291878976 : 1088475391;
+    public static uint Turquoise => _isLittleEndian ? 4291878976 : 1088475391;
 
     /// <name>Lavender</name>
     /// <returns>uint</returns>
     /// <summary>The color lavender, either 4294633190 or 3873897215.</summary>
-    public static uint Lavender => BitConverter.IsLittleEndian ? 4294633190 : 3873897215;
+    public static uint Lavender => _isLittleEndian ? 4294633190 : 3873897215;
 
     /// <name>Crimson</name>
     /// <returns>uint</returns>
     /// <summary>The color crimson, either 4282127580 or 3692313855.</summary>
-    public static uint Crimson => BitConverter.IsLittleEndian ? 4282127580 : 3692313855;
+    public static uint Crimson => _isLittleEndian ? 4282127580 : 3692313855;
     
     /// <name>Rainbow</name>
     /// <returns>uint</returns>
@@ -574,7 +783,7 @@ public static class FL {
     /// <param name="b">The B channel's value between [0, 255].</param>
     /// <param name="a">The A channel's value between [0, 255].</param>
     public static uint NewColor(byte r, byte g, byte b, byte a = 255) {
-        return BitConverter.IsLittleEndian ?
+        return _isLittleEndian ?
             ((uint)a << 24) | ((uint)b << 16) | ((uint)g << 8) | r :
             ((uint)r << 24) | ((uint)g << 16) | ((uint)b << 8) | a;
     }
@@ -612,7 +821,7 @@ public static class FL {
     /// <summary>An extension method that extracts the red channel of the specified color in the range [0, 255].</summary>
     /// <param name="color">An optional parameter representing the color of which to extract the channel.</param>
     public static byte GetR(this uint color) {
-        return BitConverter.IsLittleEndian ? 
+        return _isLittleEndian ? 
             (byte)(color & 0xFF) : 
             (byte)((color >> 24) & 0xFF);
     }
@@ -630,7 +839,7 @@ public static class FL {
     /// <summary>An extension method that extracts the blue channel of the specified color in the range [0, 255].</summary>
     /// <param name="color">An optional parameter representing the color of which to extract the channel.</param>
     public static byte GetB(this uint color) {
-        return BitConverter.IsLittleEndian ? 
+        return _isLittleEndian ? 
             (byte)((color >> 16) & 0xFF) : 
             (byte)((color >> 8) & 0xFF);
     }
@@ -640,7 +849,7 @@ public static class FL {
     /// <summary>An extension method that extracts the alpha channel of the specified color in the range [0, 255].</summary>
     /// <param name="color">An optional parameter representing the color of which to extract the channel.</param>
     public static byte GetA(this uint color) {
-        return BitConverter.IsLittleEndian ? 
+        return _isLittleEndian ? 
             (byte)((color >> 24) & 0xFF) : 
             (byte)(color & 0xFF);
     }
@@ -652,7 +861,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the red channel.</param>
     /// <param name="newR">The new value for the R channel of the color, in the range [0, 255].</param>
     public static uint SetR(this ref uint color, byte newR) {
-        color = BitConverter.IsLittleEndian ?
+        color = _isLittleEndian ?
             (color & 0xFFFFFF00) | newR :
             (color & 0xFF00FFFF) | ((uint)newR << 24);
         
@@ -677,7 +886,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the green channel.</param>
     /// <param name="newG">The new value for the G channel of the color, in the range [0, 255].</param>
     public static uint SetG(this ref uint color, byte newG) {
-        color = BitConverter.IsLittleEndian ?
+        color = _isLittleEndian ?
             (color & 0xFFFF00FF) | ((uint)newG << 8) :
             (color & 0xFF00FFFF) | ((uint)newG << 16);
         
@@ -702,7 +911,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the blue channel.</param>
     /// <param name="newB">The new value for the B channel of the color, in the range [0, 255].</param>
     public static uint SetB(this ref uint color, byte newB) {
-        color = BitConverter.IsLittleEndian ?
+        color = _isLittleEndian ?
             (color & 0xFF00FFFF) | ((uint)newB << 16) :
             color = (color & 0xFFFFFF00) | newB;
         
@@ -727,7 +936,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the alpha channel.</param>
     /// <param name="newA">The new value for the A channel of the color, in the range [0, 255].</param>
     public static uint SetA(this ref uint color, byte newA) {
-        color = BitConverter.IsLittleEndian ?
+        color = _isLittleEndian ?
             (color & 0x00FFFFFF) | ((uint)newA << 24) :
             (color & 0xFFFFFF00) | newA;
         
@@ -807,9 +1016,14 @@ public static class FL {
 
     /// <name>VSync</name>
     /// <returns>bool</returns>
-    /// <summary>Whether or not VSync is enabled.</summary>
+    /// <summary>Gets or sets whether or not VSync is enabled.</summary>
     public static bool VSync { get; set; } = true;
 
+    /// <name>Multithreaded</name>
+    /// <returns>bool</returns>
+    /// <summary>Gets or sets whether or not the engine is multithreaded. Only applicable in DrawClear mode.</summary>
+    public static bool Multithreaded { get; set; } = true;
+    
     /// <name>ElapsedTime</name>
     /// <returns>float</returns>
     /// <summary>The total time since Run was called.</summary>
