@@ -125,6 +125,8 @@ internal abstract class Engine : GameWindow {
     protected override void OnUnload() {
         base.OnUnload();
 
+        OnWindowClose();
+
         GL.BindVertexArray(0);
         GL.DeleteVertexArray(vertexArrayHandle);
 
@@ -186,4 +188,5 @@ internal abstract class Engine : GameWindow {
     }
 
     public abstract void Update(FrameEventArgs args);
+    public abstract void OnWindowClose();
 }

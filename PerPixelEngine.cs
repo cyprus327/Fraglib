@@ -48,6 +48,10 @@ internal sealed class PerPixelEngine : Engine {
             }
         });
     }
+
+    public override void OnWindowClose() {
+        
+    }
 }
 
 public struct Uniforms {
