@@ -420,7 +420,7 @@ public static class FL {
         }
     }
 
-    /// <name>DrawVerticalLine</name>
+    /// <name>DrawHorizontalLine</name>
     /// <returns>void</returns>
     /// <summary>Draws a horizontal line of specified color along the specified path.</summary>
     /// <summary>Should be used over DrawLine if the line is horizontal.</summary>
@@ -516,7 +516,7 @@ public static class FL {
         }
     }
 
-    /// <name>FillPolygon</name>
+    /// <name>FillTriangle</name>
     /// <returns>void</returns>
     /// <summary>Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle.</summary>
     /// <param name="x0">The x coordinate of the 1st vertex.</param>
@@ -570,7 +570,7 @@ public static class FL {
         });
     }
 
-    /// <name>FillPolygon</name>
+    /// <name>FillTriangle</name>
     /// <returns>void</returns>
     /// <summary>Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle.</summary>
     /// <param name="v0">The 1st vertex.</param>

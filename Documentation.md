@@ -10,8 +10,6 @@ Initializes the window with the specified width, height, title, perPixel functio
 This method must be called before using any other FL methods. 
 - **width**: The width of the window in pixels.
 - **height**: The height of the window in pixels.
-- **perPixel**: The function that gets invoked for every pixel on the window until the window is closed.
-- **perFrame**: Optional function that gets invoked once per frame until the window is closed.
 ## Run (void)
 Starts the main loop of the engine. 
 Must be called after Init for a window to appear. 
@@ -62,6 +60,28 @@ Should be used over DrawLine if the line is vertical.
 - **x**: The x coordinate of the line.
 - **y0**: The starting y coordinate of the line.
 - **y1**: The ending y coordinate of the line.
+- **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+## DrawHorizontalLine (void)
+Draws a horizontal line of specified color along the specified path. 
+Should be used over DrawLine if the line is horizontal. 
+- **x0**: The starting x coordinate of the line.
+- **x1**: The ending x coordinate of the line.
+- **y**: The y coordinate of the line.
+- **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+## FillTriangle (void)
+Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle. 
+- **x0**: The x coordinate of the 1st vertex.
+- **y0**: The y coordinate of the 1st vertex.
+- **x1**: The x coordinate of the 2nd vertex.
+- **y1**: The y coordinate of the 2nd vertex.
+- **x2**: The x coordinate of the 3rd vertex.
+- **y2**: The y coordinate of the 3rd vertex.
+- **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+## FillTriangle (void)
+Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle. 
+- **v0**: The 1st vertex.
+- **v1**: The 2nd vertex.
+- **v2**: The 3rd vertex.
 - **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
 ## DrawPolygon (void)
 Draws the outline of a polygon of specified color with specified vertices. 
@@ -187,7 +207,9 @@ Converts a color from HSL color space to either RGBA (0xRRGGBBAA) or ARGB format
 ## PixelSize (int)
 The pixel size of the window. Locked between [1, 100]. 
 ## VSync (bool)
-Whether or not VSync is enabled. 
+Gets or sets whether or not VSync is enabled. 
+## Multithreaded (bool)
+Gets or sets whether or not the engine is multithreaded. Only applicable in DrawClear mode. 
 ## ElapsedTime (float)
 The total time since Run was called. 
 ## DeltaTime (float)
