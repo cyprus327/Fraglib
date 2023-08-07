@@ -5,6 +5,7 @@ namespace Fraglib;
 public static class FL {
     private static Engine? e = null;
 
+/// <region>Setup</region>
 #region setup
     private static bool isDrawClear = false;
 
@@ -64,17 +65,25 @@ public static class FL {
     /// <summary>Must be called after Init for a window to appear.</summary>
     /// <summary>Any settings changed after this (PixelSize, VSync, etc.) won't affect anything.</summary>
     public static void Run() {
-        if (!isDrawClear) {
+        if (e is null) {
             return;
         }
 
         e!.VSyncEnabled = VSync;
         e.PixelSize = PixelSize;
-        ((DrawClearEngine)e).Multithreaded = Multithreaded;
+        
+        if (isDrawClear) {
+            ((DrawClearEngine)e).Multithreaded = Multithreaded;
+            if (Multithreaded) {
+                ((DrawClearEngine)e).StartThreadPool();
+            }
+        }
+
         e.Run();
     }
 #endregion setup
 
+/// <region>DrawClear Methods</region>
 #region drawclear methods
     /// <name>SetPixel</name>
     /// <returns>void</returns>
@@ -179,31 +188,37 @@ public static class FL {
     /// <param name="height">The height of the rectangle.</param>
     /// <param name="color">The color of the rectangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void FillRect(int x, int y, int width, int height, uint color) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => FillRectAction(x, y, width, height, color));
+    }
+
+    private static void FillRectAction(int x, int y, int width, int height, uint color) {
         x = Math.Max(x, 0);
         y = Math.Max(y, 0);
         width = Math.Min(x + width, windowWidth);
         height = Math.Min(y + height, windowHeight);
         
-        if (!isDrawClear || width <= 0 || height <= 0) {
+        if (width <= 0 || height <= 0) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => {
-            x *= PixelSize;
-            y *= PixelSize;
-            width *= PixelSize;
-            height *= PixelSize;
-            unsafe {
-                fixed (uint* ptr = e!.Screen) {
-                    for (int r = y; r < height; r++) {
-                        int ro = r * windowWidth;
-                        for (int c = x; c < width; c++) {
-                            ptr[ro + c] = color;
-                        }
+        x *= PixelSize;
+        y *= PixelSize;
+        width *= PixelSize;
+        height *= PixelSize;
+        unsafe {
+            fixed (uint* ptr = e!.Screen) {
+                for (int r = y; r < height; r++) {
+                    int ro = r * windowWidth;
+                    for (int c = x; c < width; c++) {
+                        ptr[ro + c] = color;
                     }
                 }
             }
-        });
+        }
     }
 
     /// <name>DrawCircle</name>
@@ -218,28 +233,29 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => {
-            int x = (int)radius, y = 0;
-            int decisionOver2 = 1 - x;
+        ((DrawClearEngine)e!).AddAction(() => DrawCircleAction(centerX, centerY, radius, color));
+    }
 
-            unsafe {
-                fixed (uint* ptr = e!.Screen) {
-                    while (y <= x) {
-                        SetCirclePixels(centerX, centerY, x, y, color, ptr);
+    private static void DrawCircleAction(float centerX, float centerY, float radius, uint color) {
+        int x = (int)radius, y = 0;
+        int decisionOver2 = 1 - x;
 
-                        if (decisionOver2 <= 0) {
-                            decisionOver2 += 2 * y + 1;
-                        } else {
-                            x--;
-                            decisionOver2 += 2 * (y - x) + 1;
-                        }
+        unsafe {
+            fixed (uint* ptr = e!.Screen) {
+                while (y <= x) {
+                    SetCirclePixels(centerX, centerY, x, y, color, ptr);
 
-                        y++;
+                    if (decisionOver2 <= 0) {
+                        decisionOver2 += 2 * y + 1;
+                    } else {
+                        x--;
+                        decisionOver2 += 2 * (y - x) + 1;
                     }
+
+                    y++;
                 }
             }
-        });
-
+        }
     }
 
     private static unsafe void SetCirclePixels(float cx, float cy, int ox, int oy, uint color, uint* ptr) {
@@ -261,31 +277,37 @@ public static class FL {
     /// <param name="radius">The radius of the circle.</param>
     /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void FillCircle(float centerX, float centerY, float radius, uint color) {
-        if (!isDrawClear || radius == 0) {
+        if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => {
-            int xStart = (int)(centerX - radius);
-            int xEnd = (int)(centerX + radius);
-            int yStart = (int)(centerY - radius);
-            int yEnd = (int)(centerY + radius);
-            float radiusSquared = radius * radius;
+        ((DrawClearEngine)e!).AddAction(() => FillCircleAction(centerX, centerY, radius, color));
+    }
 
-            unsafe {
-                fixed (uint* ptr = e!.Screen) {
-                    for (int x = xStart; x <= xEnd; x++) {
-                        for (int y = yStart; y <= yEnd; y++) {
-                            float dx = x - centerX;
-                            float dy = y - centerY;
-                            if ((dx * dx + dy * dy) <= radiusSquared) {
-                                SetPixel(x, y, color, ptr);
-                            }
+    private static void FillCircleAction(float centerX, float centerY, float radius, uint color) {
+        if (radius == 0) {
+            return;
+        }
+
+        int xStart = (int)(centerX - radius);
+        int xEnd = (int)(centerX + radius);
+        int yStart = (int)(centerY - radius);
+        int yEnd = (int)(centerY + radius);
+        float radiusSquared = radius * radius;
+
+        unsafe {
+            fixed (uint* ptr = e!.Screen) {
+                for (int x = xStart; x <= xEnd; x++) {
+                    for (int y = yStart; y <= yEnd; y++) {
+                        float dx = x - centerX;
+                        float dy = y - centerY;
+                        if ((dx * dx + dy * dy) <= radiusSquared) {
+                            SetPixel(x, y, color, ptr);
                         }
                     }
                 }
             }
-        });
+        }
     }
 
     /// <name>DrawLine</name>
@@ -295,53 +317,16 @@ public static class FL {
     /// <param name="y0">The starting y coordinate of the line.</param>
     /// <param name="x1">The ending x coordinate of the line.</param>
     /// <param name="y1">The ending y coordinate of the line.</param>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void DrawLine(int x0, int y0, int x1, int y1, uint color) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => {
-            int dx = Math.Abs(x1 - x0);
-            int dy = Math.Abs(y1 - y0);
-
-            int sx = x0 < x1 ? 1 : -1;
-            int sy = y0 < y1 ? 1 : -1;
-
-            int er = dx - dy;
-
-            unsafe {
-                fixed (uint* ptr = e.Screen) {
-                    while (true) {
-                        SetPixel(x0, y0, color, ptr);
-
-                        if (x0 == x1 && y0 == y1) {
-                            break;
-                        }
-
-                        int e2 = 2 * er;
-
-                        if (e2 > -dy) {
-                            er -= dy;
-                            x0 += sx;
-                        }
-
-                        if (e2 < dx) {
-                            er += dx;
-                            y0 += sy;
-                        }
-                    }
-                }
-            }
-        });
+        ((DrawClearEngine)e!).AddAction(() => DrawLineAction(x0, y0, x1, y1, color));
     }
 
-    // gross and repetitive having to use this
-    private static void DrawLineNonAdded(int x0, int y0, int x1, int y1, uint color) {
-        if (!isDrawClear) {
-            return;
-        }
-
+    private static void DrawLineAction(int x0, int y0, int x1, int y1, uint color) {
         int dx = Math.Abs(x1 - x0);
         int dy = Math.Abs(y1 - y0);
 
@@ -382,9 +367,17 @@ public static class FL {
     /// <param name="x">The x coordinate of the line.</param>
     /// <param name="y0">The starting y coordinate of the line.</param>
     /// <param name="y1">The ending y coordinate of the line.</param>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void DrawVerticalLine(int x, int y0, int y1, uint color) {
-        if (!isDrawClear || x < 0 || x >= scaledWidth || y0 < 0 || y1 >= scaledHeight || y0 > y1) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => DrawVerticalLineAction(x, y0, y1, color));
+    }
+
+    private static void DrawVerticalLineAction(int x, int y0, int y1, uint color) {
+        if (x < 0 || x >= scaledWidth || y0 < 0 || y1 >= scaledHeight || y0 > y1) {
             return;
         }
 
@@ -427,54 +420,17 @@ public static class FL {
     /// <param name="x0">The starting x coordinate of the line.</param>
     /// <param name="x1">The ending x coordinate of the line.</param>
     /// <param name="y">The y coordinate of the line.</param>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void DrawHorizontalLine(int x0, int x1, int y, uint color) {
-        if (!isDrawClear || x0 < 0 || x0 > x1 || x1 >= scaledWidth || y < 0 || y >= scaledHeight) {
+        if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => {
-            if (PixelSize == 1) {
-                unsafe {
-                    fixed (uint* ptr = e!.Screen) {
-                        int startInd = y * windowWidth + x0;
-                        uint* startPtr = ptr + startInd;
-                        uint* endPtr = startPtr + (x1 - x0);
-                        for (uint* currentPtr = startPtr; currentPtr < endPtr; currentPtr++) {
-                            *currentPtr = color;
-                        }
-                    }
-                }
-                return;
-            }
-
-            x0 *= PixelSize;
-            x1 *= PixelSize;
-            y *= PixelSize;
-
-            int xBounds = Math.Min(x1 + PixelSize, windowWidth);
-            int yBound = Math.Min(y + PixelSize, windowHeight);
-            
-            unsafe {
-                fixed (uint* ptr = e!.Screen) {
-                    for (int sy = y; sy < yBound; sy++) {
-                        int yo = sy * windowWidth;
-                        for (int sx = x0; sx < xBounds; sx += PixelSize) {
-                            int startInd = yo + sx;
-                            uint* startPtr = ptr + startInd;
-                            uint* endPtr = startPtr + PixelSize;
-                            for (uint* currentPtr = startPtr; currentPtr < endPtr; currentPtr++) {
-                                *currentPtr = color;
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        ((DrawClearEngine)e!).AddAction(() => DrawHorizontalLineAction(x0, x1, y, color));
     }
 
-    private static void DrawHorizontalLineNonAdded(int x0, int x1, int y, uint color) {
-        if (!isDrawClear || x0 < 0 || x0 > x1 || x1 >= scaledWidth || y < 0 || y >= scaledHeight) {
+    private static void DrawHorizontalLineAction(int x0, int x1, int y, uint color) {
+        if (x0 < 0 || x0 > x1 || x1 >= scaledWidth || y < 0 || y >= scaledHeight) {
             return;
         }
 
@@ -516,6 +472,41 @@ public static class FL {
         }
     }
 
+    /// <name>DrawTriangle</name>
+    /// <returns>void</returns>
+    /// <summary>Draws the outline of a triangle of specified color with specified vertices. Should be used over DrawPolygon if the polygon is a triangle.</summary>
+    /// <param name="x0">The x coordinate of the 1st vertex.</param>
+    /// <param name="y0">The y coordinate of the 1st vertex.</param>
+    /// <param name="x1">The x coordinate of the 2nd vertex.</param>
+    /// <param name="y1">The y coordinate of the 2nd vertex.</param>
+    /// <param name="x2">The x coordinate of the 3rd vertex.</param>
+    /// <param name="y2">The y coordinate of the 3rd vertex.</param>
+    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    public static void DrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => DrawTriangleAction(x0, y0, x1, y1, x2, y2, color));
+    }
+
+    /// <name>DrawTriangle</name>
+    /// <returns>void</returns>
+    /// <summary>Draws the outline of a triangle of specified color with specified vertices. Should be used over DrawPolygon if the polygon is a triangle.</summary>
+    /// <param name="v0">The 1st vertex.</param>
+    /// <param name="v1">The 2nd vertex.</param>
+    /// <param name="v2">The 3rd vertex.</param>
+    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    public static void DrawTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
+        DrawTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
+    }
+
+    private static void DrawTriangleAction(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
+        DrawLineAction(x0, y0, x1, y1, color);
+        DrawLineAction(x1, y1, x2, y2, color);
+        DrawLineAction(x2, y2, x0, y0, color);
+    }
+
     /// <name>FillTriangle</name>
     /// <returns>void</returns>
     /// <summary>Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle.</summary>
@@ -525,49 +516,13 @@ public static class FL {
     /// <param name="y1">The y coordinate of the 2nd vertex.</param>
     /// <param name="x2">The x coordinate of the 3rd vertex.</param>
     /// <param name="y2">The y coordinate of the 3rd vertex.</param>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void FillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => {
-            if (y1 < y0) {
-                (x0, y0, x1, y1) = (x1, y1, x0, y0);
-            }
-            if (y2 < y0) {
-                (x0, y0, x2, y2) = (x2, y2, x0, y0);
-            }
-            if (y2 < y1) {
-                (x1, y1, x2, y2) = (x2, y2, x1, y1);
-            }
-
-            float s1 = (float)(x1 - x0) / (y1 - y0);
-            float s2 = (float)(x2 - x0) / (y2 - y0);
-            float s3 = (float)(x2 - x1) / (y2 - y1);
-
-            for (int scanlineY = y0; scanlineY <= y1; scanlineY++) {
-                int startX = (int)(x0 + (scanlineY - y0) * s1);
-                int endX = (int)(x0 + (scanlineY - y0) * s2);
-
-                if (endX < startX) {
-                    (startX, endX) = (endX, startX);
-                }
-
-                DrawHorizontalLineNonAdded(startX, endX, scanlineY, color);
-            }
-
-            for (int y = y1; y <= y2; y++) {
-                int startX = (int)(x1 + (y - y1) * s3);
-                int endX = (int)(x0 + (y - y0) * s2);
-
-                if (endX < startX) {
-                    (startX, endX) = (endX, startX);
-                }
-
-                DrawHorizontalLineNonAdded(startX, endX, y, color);
-            }
-        });
+        ((DrawClearEngine)e!).AddAction(() => FillTriangleAction(x0, y0, x1, y1, x2, y2, color));
     }
 
     /// <name>FillTriangle</name>
@@ -576,88 +531,139 @@ public static class FL {
     /// <param name="v0">The 1st vertex.</param>
     /// <param name="v1">The 2nd vertex.</param>
     /// <param name="v2">The 3rd vertex.</param>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     public static void FillTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
         FillTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
+    }
+
+    private static void FillTriangleAction(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
+        if (y1 < y0) {
+            (x0, y0, x1, y1) = (x1, y1, x0, y0);
+        }
+        if (y2 < y0) {
+            (x0, y0, x2, y2) = (x2, y2, x0, y0);
+        }
+        if (y2 < y1) {
+            (x1, y1, x2, y2) = (x2, y2, x1, y1);
+        }
+
+        float s1 = (float)(x1 - x0) / (y1 - y0);
+        float s2 = (float)(x2 - x0) / (y2 - y0);
+        float s3 = (float)(x2 - x1) / (y2 - y1);
+
+        for (int scanlineY = y0; scanlineY <= y1; scanlineY++) {
+            int startX = (int)(x0 + (scanlineY - y0) * s1);
+            int endX = (int)(x0 + (scanlineY - y0) * s2);
+
+            if (endX < startX) {
+                (startX, endX) = (endX, startX);
+            }
+
+            DrawHorizontalLineAction(startX, endX, scanlineY, color);
+        }
+
+        for (int y = y1; y <= y2; y++) {
+            int startX = (int)(x1 + (y - y1) * s3);
+            int endX = (int)(x0 + (y - y0) * s2);
+
+            if (endX < startX) {
+                (startX, endX) = (endX, startX);
+            }
+
+            DrawHorizontalLineAction(startX, endX, y, color);
+        }
     }
 
     /// <name>DrawPolygon</name>
     /// <returns>void</returns>
     /// <summary>Draws the outline of a polygon of specified color with specified vertices.</summary>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the polygon in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
     public static void DrawPolygon(uint color, params Vector2[] vertices) {
-        if (!isDrawClear || vertices.Length < 3) {
+        if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => {
-            int vertexCount = vertices.Length;
-            for (int i = 0; i < vertexCount; i++) {
-                int next = (i + 1) % vertexCount;
-                DrawLineNonAdded((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
-            }
-        });
+        ((DrawClearEngine)e!).AddAction(() => DrawPolygonAction(color, vertices));
+    }
+
+    private static void DrawPolygonAction(uint color, params Vector2[] vertices) {
+        if (vertices.Length < 3) {
+            return;
+        }
+
+        int vertexCount = vertices.Length;
+        for (int i = 0; i < vertexCount; i++) {
+            int next = (i + 1) % vertexCount;
+            DrawLineAction((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
+        }
     }
 
     /// <name>FillPolygon</name>
     /// <returns>void</returns>
     /// <summary>Fills a solid polygon of specified color with specified vertices.</summary>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the polygon in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
     public static void FillPolygon(uint color, params Vector2[] vertices) {
-        if (!isDrawClear || vertices is null || vertices.Length < 3) {
+        if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => {
-            int minY = (int)vertices[0].Y;
-            int maxY = (int)vertices[0].Y;
-            for (int i = 1; i < vertices.Length; i++) {
-                int y = (int)vertices[i].Y;
-                minY = Math.Min(minY, y);
-                maxY = Math.Max(maxY, y);
-            }
+        ((DrawClearEngine)e!).AddAction(() => FillPolygonAction(color, vertices));
+    }
 
-            Array.Sort(vertices, (v1, v2) => v1.Y.CompareTo(v2.Y));
+    private static void FillPolygonAction(uint color, params Vector2[] vertices) {
+        if (vertices.Length < 3) {
+            return;
+        }
 
-            unsafe {
-                fixed (uint* ptr = e!.Screen) {
-                    int length = vertices.Length;
-                    for (int y = minY; y <= maxY; y++) {
-                        List<int> intersections = new List<int>();
+        int minY = (int)vertices[0].Y;
+        int maxY = (int)vertices[0].Y;
+        for (int i = 1; i < vertices.Length; i++) {
+            int y = (int)vertices[i].Y;
+            minY = Math.Min(minY, y);
+            maxY = Math.Max(maxY, y);
+        }
 
-                        int j = length - 1;
-                        for (int i = 0; i < length; i++) {
-                            Vector2 currentVertex = vertices[i];
-                            Vector2 nextVertex = vertices[j];
+        Array.Sort(vertices, (v1, v2) => v1.Y.CompareTo(v2.Y));
 
-                            if (currentVertex.Y < y && nextVertex.Y >= y || nextVertex.Y < y && currentVertex.Y >= y) {
-                                int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
-                                intersections.Add(intersectionX);
-                            }
+        unsafe {
+            fixed (uint* ptr = e!.Screen) {
+                int length = vertices.Length;
+                for (int y = minY; y <= maxY; y++) {
+                    List<int> intersections = new List<int>();
 
-                            j = i;
+                    int j = length - 1;
+                    for (int i = 0; i < length; i++) {
+                        Vector2 currentVertex = vertices[i];
+                        Vector2 nextVertex = vertices[j];
+
+                        if (currentVertex.Y < y && nextVertex.Y >= y || nextVertex.Y < y && currentVertex.Y >= y) {
+                            int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
+                            intersections.Add(intersectionX);
                         }
 
-                        intersections.Sort();
+                        j = i;
+                    }
 
-                        int count = intersections.Count;
-                        for (int i = 0; i < count; i += 2) {
-                            int xStart = intersections[i];
-                            int xEnd = intersections[Math.Min(i + 1, count - 1)];
+                    intersections.Sort();
 
-                            for (int x = xStart; x <= xEnd; x++) {
-                                SetPixel(x, y, color, ptr);
-                            }
+                    int count = intersections.Count;
+                    for (int i = 0; i < count; i += 2) {
+                        int xStart = intersections[i];
+                        int xEnd = intersections[Math.Min(i + 1, count - 1)];
+
+                        for (int x = xStart; x <= xEnd; x++) {
+                            SetPixel(x, y, color, ptr);
                         }
                     }
                 }
             }
-        });
+        }
     }
 #endregion drawclear methods
 
+/// <region>States</region>
 #region states
     private static readonly List<uint[]> _states = new();
 
@@ -701,6 +707,7 @@ public static class FL {
     }
 #endregion states
 
+/// <region>Colors</region>
 #region colors
     private static readonly bool _isLittleEndian = BitConverter.IsLittleEndian;
 
@@ -1002,6 +1009,7 @@ public static class FL {
     }
 #endregion colors
 
+/// <region>Common</region>
 #region common
     //===========================================================
     // Properties
@@ -1022,7 +1030,7 @@ public static class FL {
     /// <name>Multithreaded</name>
     /// <returns>bool</returns>
     /// <summary>Gets or sets whether or not the engine is multithreaded. Only applicable in DrawClear mode.</summary>
-    public static bool Multithreaded { get; set; } = true;
+    public static bool Multithreaded { get; set; } = false;
     
     /// <name>ElapsedTime</name>
     /// <returns>float</returns>
