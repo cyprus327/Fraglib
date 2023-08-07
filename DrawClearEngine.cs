@@ -6,7 +6,6 @@ namespace Fraglib;
 internal sealed class DrawClearEngine : Engine {
     public DrawClearEngine(int w, int h, string t, Action program) : base(w, h, t) {
         _program = program;
-        _threadPool = new CustomThreadPool(Environment.ProcessorCount);
     }
 
     public bool Multithreaded { get; set; } = false;
@@ -15,7 +14,11 @@ internal sealed class DrawClearEngine : Engine {
 
     private Action[] actions = new Action[1024];
     private int actionCount = 0, lastActionCount = 0;
-    private readonly CustomThreadPool _threadPool;
+    private CustomThreadPool? threadPool = null;
+
+    public void StartThreadPool() {
+        threadPool = new CustomThreadPool(Environment.ProcessorCount);
+    }
 
     public void AddAction(Action a) {
         if (!Multithreaded) {
@@ -37,12 +40,9 @@ internal sealed class DrawClearEngine : Engine {
         }
 
         int count = Interlocked.Exchange(ref actionCount, 0);
-        CountdownEvent countdownEvent = new CountdownEvent(count);
         for (int i = 0; i < count; i++) {
-            int ind = i;
-            _threadPool.AddAction(() => { actions[ind](); countdownEvent.Signal(); });
+            threadPool!.AddAction(actions[i]);
         }
-        countdownEvent.Wait();
 
         if (count < lastActionCount) {
             Array.Clear(actions, 0, lastActionCount);
@@ -52,7 +52,9 @@ internal sealed class DrawClearEngine : Engine {
     }
 
     public override void OnWindowClose() {
-        _threadPool.Stop();
+        if (Multithreaded) {
+            threadPool!.Stop();
+        }
     }
 }
 
@@ -69,11 +71,12 @@ internal sealed class CustomThreadPool {
     private readonly ManualResetEventSlim _signal = new(false);
     private readonly ConcurrentQueue<Action> _queue = new();
     private readonly object _queueLock = new();
-    private volatile bool running = true;
+    private readonly object _stoppingLock = new();
+    private volatile bool stopping = false;
 
     public void AddAction(Action a) {
         lock (_queueLock) {
-            if (_queue.Count >= 1024) {
+            if (_queue.Count >= 512) {
                 Monitor.Wait(_queueLock);
             }
             
@@ -83,18 +86,23 @@ internal sealed class CustomThreadPool {
     }
 
     public void Stop() {
-        lock (_queueLock) {
-            running = false;
+        lock (_stoppingLock) {
+            stopping = true;
             _signal.Set();
-            foreach (var thread in _threads) {
-                thread.Join();
-            }
+        }
+
+        foreach (var thread in _threads) {
+            thread.Join();
         }
     }
 
     private void Worker() {
-        while (running) {
+        while (true) {
             _signal.Wait();
+
+            if (stopping) {
+                break;
+            }
 
             while (_queue.TryDequeue(out var action)) {
                 action();
