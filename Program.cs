@@ -9,9 +9,14 @@ MatchCollection? comments = Regex.Matches(source, @"///.*\n");
 foreach (Match comment in comments) {
     string commentText = comment.Value.Trim();
 
+    string region = Regex.Match(commentText, @"<region>(.*?)<\/region>").Groups[1].Value.Trim();
+    if (!string.IsNullOrEmpty(region)) {
+        docs.AppendLine($"## {region}");
+    }
+
     string name = Regex.Match(commentText, @"<name>(.*?)<\/name>").Groups[1].Value.Trim();
     if (!string.IsNullOrEmpty(name)) {
-        docs.Append($"## {name}");
+        docs.Append($"### {name}");
     }
     
     string summary = Regex.Match(commentText, @"<summary>(.*?)<\/summary>").Groups[1].Value.Trim();
