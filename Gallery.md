@@ -12,10 +12,10 @@ A gallery of interesting projects made with Fraglib.
 
 ## [Raycaster](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raycaster/Raycaster.cs)
 
-![Pixel Size 4 Raycaster](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raycaster/Raycaster1.png)
-![Pixel Size 1 Raycaster](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raycaster/Raycaster2.png)
+![Pixel Size 4 Raycaster ss](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raycaster/Raycaster1.png)
+![Pixel Size 1 Raycaster ss](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raycaster/Raycaster2.png)
 
 ## [Rotating Cube](https://github.com/cyprus327/Fraglib/blob/main/Gallery/RotatingCube/RotatingCube.cs)
 
-![Pixel Size 4 Raycaster](https://github.com/cyprus327/Fraglib/blob/main/Gallery/RotatingCube/RotatingCube1.png)
-![Pixel Size 1 Raycaster](https://github.com/cyprus327/Fraglib/blob/main/Gallery/RotatingCube/RotatingCube2.png)
+![Rotating Cube ss 1](https://github.com/cyprus327/Fraglib/blob/main/Gallery/RotatingCube/RotatingCube1.png)
+![Rotating Cube ss 2](https://github.com/cyprus327/Fraglib/blob/main/Gallery/RotatingCube/RotatingCube2.png)

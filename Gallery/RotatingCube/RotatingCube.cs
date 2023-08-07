@@ -1,24 +1,24 @@
 using Fraglib;
 using System.Numerics;
 
-namespace Gallery;
+namespace Fraglib.Gallery;
 
-internal sealed class RotatingCube {
+public sealed class RotatingCube {
     private static Vector3[] cubeVertices = {
-            new(-0.5f, -0.5f, -0.5f),
-            new(0.5f, -0.5f, -0.5f),
-            new(0.5f, 0.5f, -0.5f),
-            new(-0.5f, 0.5f, -0.5f),
-            new(-0.5f, -0.5f, 0.5f),
-            new(0.5f, -0.5f, 0.5f),
-            new(0.5f, 0.5f, 0.5f),
-            new(-0.5f, 0.5f, 0.5f),
+        new(-0.5f, -0.5f, -0.5f),
+        new(0.5f, -0.5f, -0.5f),
+        new(0.5f, 0.5f, -0.5f),
+        new(-0.5f, 0.5f, -0.5f),
+        new(-0.5f, -0.5f, 0.5f),
+        new(0.5f, -0.5f, 0.5f),
+        new(0.5f, 0.5f, 0.5f),
+        new(-0.5f, 0.5f, 0.5f),
     };
 
     private static int[][] cubeEdges = {
-            new int[] { 0, 1 }, new int[] { 1, 2 }, new int[] { 2, 3 }, new int[] { 3, 0 },
-            new int[] { 4, 5 }, new int[] { 5, 6 }, new int[] { 6, 7 }, new int[] { 7, 4 },
-            new int[] { 0, 4 }, new int[] { 1, 5 }, new int[] { 2, 6 }, new int[] { 3, 7 }
+        new int[] { 0, 1 }, new int[] { 1, 2 }, new int[] { 2, 3 }, new int[] { 3, 0 },
+        new int[] { 4, 5 }, new int[] { 5, 6 }, new int[] { 6, 7 }, new int[] { 7, 4 },
+        new int[] { 0, 4 }, new int[] { 1, 5 }, new int[] { 2, 6 }, new int[] { 3, 7 }
     };
     
     private Vector3 camPos = new(0f, 0f, -8f);

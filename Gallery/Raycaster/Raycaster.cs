@@ -1,17 +1,15 @@
 using System.Numerics;
 using Fraglib;
 
-namespace Gallery;
+namespace Fraglib.Gallery;
 
-internal sealed class Raycaster {
-    public Raycaster(int width, int height, int pixelSize) {
-        _width = width / pixelSize;
-        _height = height / pixelSize;
-        _pixelSize = pixelSize;
+public sealed class Raycaster {
+    public Raycaster(int scaledWidth, int scaledHeight) {
+        _width = scaledWidth;
+        _height = scaledHeight;
     }
 
     private readonly int _width, _height;
-    private readonly int _pixelSize;
 
     private readonly int[,] _world = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
