@@ -5,7 +5,7 @@ A gallery of interesting projects made with Fraglib.
 ## How to Contribute
 
 1. Fork this repository.
-2. Create a folder in `Gallery` and add your project files to it.
+2. Create a folder in `Gallery` and add your project files to it (optional, a link to your repo is good as well).
 3. Add some media for your project in the folder you just made.
 4. Add to this file your project and the media.
 5. Create a pull request to merge your changes into the main repository.
