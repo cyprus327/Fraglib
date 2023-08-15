@@ -165,7 +165,7 @@ Creates a color from a Vector3 and additional float, either RGBA (0xRRGGBBAA) or
 - **a**: The A channel between [0.0, 1.0].
 ### NewColor (uint)
 Creates a color from a Vector4, either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness. 
-- **col**: The R, B, B, and A channels, all between [0.0, 1.0].
+- **col**: The R, G, B, and A channels, all between [0.0, 1.0].
 ### GetR (byte)
 An extension method that extracts the red channel of the specified color in the range [0, 255]. 
 - **color**: An optional parameter representing the color of which to extract the channel.

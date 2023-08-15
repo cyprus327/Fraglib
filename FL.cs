@@ -818,7 +818,7 @@ public static class FL {
     /// <name>NewColor</name>
     /// <returns>uint</returns>
     /// <summary>Creates a color from a Vector4, either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</summary>
-    /// <param name="col">The R, B, B, and A channels, all between [0.0, 1.0].</param>
+    /// <param name="col">The R, G, B, and A channels, all between [0.0, 1.0].</param>
     public static uint NewColor(Vector4 col) {
         return NewColor(col.X, col.Y, col.Z, col.W);
     }
