@@ -38,42 +38,42 @@ internal sealed class PerPixelEngine : Engine {
                 }
             });
 
-            unsafe {
-                int vectorSize = Vector<uint>.Count;
-                int iterations = width * height;
-                int iterationsPerVector = iterations / vectorSize;
+            // unsafe {
+            //     int vectorSize = Vector<uint>.Count;
+            //     int iterations = width * height;
+            //     int iterationsPerVector = iterations / vectorSize;
 
-                Vector<uint>[] resultVectors = new Vector<uint>[iterationsPerVector];
+            //     Vector<uint>[] resultVectors = new Vector<uint>[iterationsPerVector];
 
-                Parallel.For(0, iterationsPerVector, _options, i => {
-                    int baseIndex = i * vectorSize;
-                    resultVectors[i] = new Vector<uint>(_perPixel(baseIndex % width, baseIndex / width, uniforms));
-                });
+            //     Parallel.For(0, iterationsPerVector, _options, i => {
+            //         int baseIndex = i * vectorSize;
+            //         resultVectors[i] = new Vector<uint>(_perPixel(baseIndex % width, baseIndex / width, uniforms));
+            //     });
 
-                fixed (Vector<uint>* resultPtr = resultVectors)
-                fixed (uint* screenPtr = &Screen[0]) {
-                    for (int i = 0; i < iterationsPerVector; i++) {
-                        Vector<uint> result = resultPtr[i];
+            //     fixed (Vector<uint>* resultPtr = resultVectors)
+            //     fixed (uint* screenPtr = &Screen[0]) {
+            //         for (int i = 0; i < iterationsPerVector; i++) {
+            //             Vector<uint> result = resultPtr[i];
 
-                        for (int j = 1; j < vectorSize; j++) {
-                            result = Vector.ConditionalSelect(
-                                Vector.GreaterThan(Vector<uint>.Zero, result),
-                                new Vector<uint>(_perPixel((i * vectorSize + j) % width, (i * vectorSize + j) / width, uniforms)),
-                                result
-                            );
-                        }
+            //             for (int j = 1; j < vectorSize; j++) {
+            //                 result = Vector.ConditionalSelect(
+            //                     Vector.GreaterThan(Vector<uint>.Zero, result),
+            //                     new Vector<uint>(_perPixel((i * vectorSize + j) % width, (i * vectorSize + j) / width, uniforms)),
+            //                     result
+            //                 );
+            //             }
 
-                        uint* resultElementPtr = (uint*)&result;
-                        for (int j = 0; j < vectorSize; j++) {
-                            screenPtr[i * vectorSize + j] = resultElementPtr[j];
-                        }
-                    }
-                }
+            //             uint* resultElementPtr = (uint*)&result;
+            //             for (int j = 0; j < vectorSize; j++) {
+            //                 screenPtr[i * vectorSize + j] = resultElementPtr[j];
+            //             }
+            //         }
+            //     }
 
-                for (int i = iterationsPerVector * vectorSize; i < iterations; i++) {
-                    Screen[i] = _perPixel(i % width, i / width, uniforms);
-                }
-            }
+            //     for (int i = iterationsPerVector * vectorSize; i < iterations; i++) {
+            //         Screen[i] = _perPixel(i % width, i / width, uniforms);
+            //     }
+            // }
             return;
         }
 
