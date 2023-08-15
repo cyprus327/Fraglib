@@ -15,7 +15,6 @@ internal sealed class PerPixelEngine : Engine {
 
     private readonly Func<int, int, Uniforms, uint> _perPixel;
     private readonly Action _perFrame;
-    private readonly ParallelOptions _options = new() { MaxDegreeOfParallelism = Environment.ProcessorCount };
     private Uniforms uniforms = new();
 
     public override void Update(FrameEventArgs args) {
@@ -26,17 +25,24 @@ internal sealed class PerPixelEngine : Engine {
         
         int width = ScaledWidth, height = ScaledHeight;
         if (PixelSize == 1) {
-            const int batchSize = 64;
-
+            const int batchSize = 128;
             int length = width * height;
-            Parallel.For(0, (length + batchSize - 1) / batchSize, _options, batchIndex => {
+
+            int numTasks = (length + batchSize - 1) / batchSize;
+            Task[] tasks = new Task[numTasks];
+
+            for (int batchIndex = 0; batchIndex < numTasks; batchIndex++) {
                 int start = batchIndex * batchSize;
                 int end = Math.Min(start + batchSize, length);
 
-                for (int i = start; i < end; i++) {
-                    Screen[i] = _perPixel(i % width, i / width, uniforms);
-                }
-            });
+                tasks[batchIndex] = Task.Run(() => {
+                    for (int i = start; i < end; i++) {
+                        Screen[i] = _perPixel(i % width, i / width, uniforms);
+                    }
+                });
+            }
+
+            Task.WaitAll(tasks);
 
             // unsafe {
             //     int vectorSize = Vector<uint>.Count;

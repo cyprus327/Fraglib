@@ -157,6 +157,7 @@ internal abstract class Engine : GameWindow {
         GL.BindVertexArray(vertexArrayHandle);
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBufferHandle);
         GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+        GL.BindTexture(TextureTarget.Texture2D, 0);
 
         SwapBuffers();
     }
