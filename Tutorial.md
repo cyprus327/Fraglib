@@ -23,7 +23,7 @@ private static void Main() {
 }
 ```
 
-When you run this, you should see a black window open with your specified resolution and title, something like the image below.
+When you run this, you should see a black window open with your specified resolution and title, something like the image below. Note: VSync is disabled in the screenshot below, but is enabled for the rest of this tutorial. The default value for VSync is enabled.
 
 ![Window VSync Off](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/BlackWindow.png)
 
@@ -156,8 +156,9 @@ internal sealed class Tutorial {
     }
 
     private static void Program() {
-        // clear the window
-        FL.Clear(FL.Black);
+        // clear the window to black, you can pass
+        // any color here to clear it to that color
+        FL.Clear();
 
         float st = (float)Math.Sin(FL.ElapsedTime) * 0.5f + 0.5f;
         for (int i = 0; i < FL.Height; i++) {
@@ -186,7 +187,7 @@ float ballSpeedY = 700f;
 ```csharp
 private static void Program() {
     // clear the last frame
-    FL.Clear(FL.Black);
+    FL.Clear();
 
     // update ball position
     ballX += ballSpeedX * FL.DeltaTime;
@@ -282,7 +283,7 @@ internal sealed class Tutorial {
 ```
 ![Vertex colors gif](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/UVGradient.png)
 
-You may have noticed that in this code I use u.Width and u.Height instead of FL.Width and FL.Height. Using FL.Width/Height would work perfectly here, however there is a slight performance gain when using u.Width/Height instead. The same thing goes for u.Time instead of FL.ElapsedTime, except there is a quite noticeable performance difference here.
+You may have noticed that in this code I use u.Width and u.Height instead of FL.Width and FL.Height. Using FL.Width/Height would work perfectly here, however there is a slight performance gain when using u.Width/Height instead. The same thing goes for other all other Uniform variables such as u.Time instead of FL.ElapsedTime.
 
 Lets make a little shader, how about a spinning pinwheel?
 
@@ -429,4 +430,4 @@ internal sealed class Tutorial {
 
 ![Mandelbrot Zoom](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/MandelbrotGIF.gif)
 
-With that, this tutorial comes to an end. If you'd like to see some more things made with Fraglib, check out the [gallery](https://github.com/cyprus327/Fraglib/blob/main/Gallery.md)
+With that, this tutorial comes to an end. If you'd like to see some more things made with Fraglib, check out the [gallery](https://github.com/cyprus327/Fraglib/blob/main/Gallery.md).
