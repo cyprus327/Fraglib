@@ -326,6 +326,13 @@ float uvx = (-u.Width + 2.0f * x) / u.Height;
 float uvy = (-u.Height + 2.0f * y) / u.Height;
 ```
 
+NOTE: here's a better way to do this:
+```csharp
+float aspectRatio = (float)u.Width / u.Height;
+float uvx = (2f * (x + 0.5f) / u.Width - 1f) * aspectRatio;
+float uvy = 1f - 2f * (y + 0.5f) / u.Height;
+```
+
 ![Zoomed out pinwheel](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/FixedPinwheel1.png)
 
 But now it's like we've zoomed out, and the pinwheel is no longer in the center. :(
