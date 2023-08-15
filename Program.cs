@@ -6,7 +6,7 @@ StringBuilder docs = new("# Fraglib Documentation\n");
 
 MatchCollection? comments = Regex.Matches(source, @"///.*\n");
 
-foreach (Match comment in comments) {
+foreach (Match comment in comments.Cast<Match>()) {
     string commentText = comment.Value.Trim();
 
     string region = Regex.Match(commentText, @"<region>(.*?)<\/region>").Groups[1].Value.Trim();
@@ -25,7 +25,7 @@ foreach (Match comment in comments) {
     }
 
     MatchCollection? parameters = Regex.Matches(commentText, @"<param name=""(.*?)"".*?>(.*?)<\/param>");
-    foreach (Match parameter in parameters) {
+    foreach (Match parameter in parameters.Cast<Match>()) {
         string paramName = parameter.Groups[1].Value.Trim();
         string paramDescription = parameter.Groups[2].Value.Trim();
 
