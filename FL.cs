@@ -90,7 +90,7 @@ public static class FL {
     /// <summary>Sets the pixel at the specified position to the given color.</summary>
     /// <param name="x">The x coordinate of the pixel.</param>
     /// <param name="y">The y coordinate of the pixel.</param>
-    /// <param name="color">The color of the pixel in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the pixel in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void SetPixel(int x, int y, uint color) {
         if (!isDrawClear || x < 0 || x >= scaledWidth || y < 0 || y >= scaledHeight) {
             return;
@@ -168,7 +168,7 @@ public static class FL {
     /// <name>Clear</name>
     /// <returns>void</returns>
     /// <summary>Clears the window to the specified color.</summary>
-    /// <param name="color">The color the window will get cleared to in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color the window will get cleared to in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void Clear(uint color) {
         if (!isDrawClear) {
             return; 
@@ -186,7 +186,7 @@ public static class FL {
     /// <param name="y">The starting point of the rectangle's y coordinate.</param>
     /// <param name="width">The width of the rectangle.</param>
     /// <param name="height">The height of the rectangle.</param>
-    /// <param name="color">The color of the rectangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the rectangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void FillRect(int x, int y, int width, int height, uint color) {
         if (!isDrawClear) {
             return;
@@ -227,7 +227,7 @@ public static class FL {
     /// <param name="centerX">The center coordinate of the circle along the x-axis.</param>
     /// <param name="centerY">The center coordinate of the cirlce along the y-axis.</param>
     /// <param name="radius">The radius of the circle.</param>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void DrawCircle(float centerX, float centerY, float radius, uint color) {
         if (!isDrawClear) {
             return;
@@ -275,7 +275,7 @@ public static class FL {
     /// <param name="centerX">The center coordinate of the circle along the x-axis.</param>
     /// <param name="centerY">The center coordinate of the cirlce along the y-axis.</param>
     /// <param name="radius">The radius of the circle.</param>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void FillCircle(float centerX, float centerY, float radius, uint color) {
         if (!isDrawClear) {
             return;
@@ -317,7 +317,7 @@ public static class FL {
     /// <param name="y0">The starting y coordinate of the line.</param>
     /// <param name="x1">The ending x coordinate of the line.</param>
     /// <param name="y1">The ending y coordinate of the line.</param>
-    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void DrawLine(int x0, int y0, int x1, int y1, uint color) {
         if (!isDrawClear) {
             return;
@@ -367,7 +367,7 @@ public static class FL {
     /// <param name="x">The x coordinate of the line.</param>
     /// <param name="y0">The starting y coordinate of the line.</param>
     /// <param name="y1">The ending y coordinate of the line.</param>
-    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void DrawVerticalLine(int x, int y0, int y1, uint color) {
         if (!isDrawClear) {
             return;
@@ -420,7 +420,7 @@ public static class FL {
     /// <param name="x0">The starting x coordinate of the line.</param>
     /// <param name="x1">The ending x coordinate of the line.</param>
     /// <param name="y">The y coordinate of the line.</param>
-    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void DrawHorizontalLine(int x0, int x1, int y, uint color) {
         if (!isDrawClear) {
             return;
@@ -481,7 +481,7 @@ public static class FL {
     /// <param name="y1">The y coordinate of the 2nd vertex.</param>
     /// <param name="x2">The x coordinate of the 3rd vertex.</param>
     /// <param name="y2">The y coordinate of the 3rd vertex.</param>
-    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void DrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
         if (!isDrawClear) {
             return;
@@ -496,7 +496,7 @@ public static class FL {
     /// <param name="v0">The 1st vertex.</param>
     /// <param name="v1">The 2nd vertex.</param>
     /// <param name="v2">The 3rd vertex.</param>
-    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void DrawTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
         DrawTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
     }
@@ -516,7 +516,7 @@ public static class FL {
     /// <param name="y1">The y coordinate of the 2nd vertex.</param>
     /// <param name="x2">The x coordinate of the 3rd vertex.</param>
     /// <param name="y2">The y coordinate of the 3rd vertex.</param>
-    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void FillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
         if (!isDrawClear) {
             return;
@@ -531,7 +531,7 @@ public static class FL {
     /// <param name="v0">The 1st vertex.</param>
     /// <param name="v1">The 2nd vertex.</param>
     /// <param name="v2">The 3rd vertex.</param>
-    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     public static void FillTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
         FillTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
     }
@@ -577,7 +577,7 @@ public static class FL {
     /// <name>DrawPolygon</name>
     /// <returns>void</returns>
     /// <summary>Draws the outline of a polygon of specified color with specified vertices.</summary>
-    /// <param name="color">The color of the polygon in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the polygon in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
     public static void DrawPolygon(uint color, params Vector2[] vertices) {
         if (!isDrawClear) {
@@ -602,7 +602,7 @@ public static class FL {
     /// <name>FillPolygon</name>
     /// <returns>void</returns>
     /// <summary>Fills a solid polygon of specified color with specified vertices.</summary>
-    /// <param name="color">The color of the polygon in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</param>
+    /// <param name="color">The color of the polygon in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
     public static void FillPolygon(uint color, params Vector2[] vertices) {
         if (!isDrawClear) {
@@ -780,11 +780,11 @@ public static class FL {
     /// <returns>uint</returns>
     /// <summary>A color that cycles through all the full rainbow based on ElapsedTime.</summary>
     /// <param name="timeScale">Optional parameter that controls how fast the color changes.</param>
-    public static uint Rainbow(float timeScale = 1f) => HslToRgb((ElapsedTime * 60f * Math.Abs(timeScale)) % 360f, 1f, 0.5f);
+    public static uint Rainbow(float timeScale = 1f) => HslToRgb(ElapsedTime * 60f * Math.Abs(timeScale) % 360f, 1f, 0.5f);
 
     /// <name>NewColor</name>
     /// <returns>uint</returns>
-    /// <summary>Creates a color from 4 bytes, either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</summary>
+    /// <summary>Creates a color from 4 bytes, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
     /// <param name="r">The R channel's value between [0, 255].</param>
     /// <param name="g">The G channel's value between [0, 255].</param>
     /// <param name="b">The B channel's value between [0, 255].</param>
@@ -797,7 +797,7 @@ public static class FL {
 
     /// <name>NewColor</name>
     /// <returns>uint</returns>
-    /// <summary>Creates a color from 4 floats, either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</summary>
+    /// <summary>Creates a color from 4 floats, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
     /// <param name="r">The R channel's value between [0.0, 1.0].</param>
     /// <param name="g">The G channel's value between [0.0, 1.0].</param>
     /// <param name="b">The B channel's value between [0.0, 1.0].</param>
@@ -808,7 +808,7 @@ public static class FL {
 
     /// <name>NewColor</name>
     /// <returns>uint</returns>
-    /// <summary>Creates a color from a Vector3 and additional float, either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</summary>
+    /// <summary>Creates a color from a Vector3 and additional float, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
     /// <param name="col">The R, G, and B channels, all between [0.0, 1.0].</param>
     /// <param name="a">The A channel between [0.0, 1.0].</param>
     public static uint NewColor(Vector3 col, float a = 1f) {
@@ -817,10 +817,56 @@ public static class FL {
 
     /// <name>NewColor</name>
     /// <returns>uint</returns>
-    /// <summary>Creates a color from a Vector4, either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</summary>
+    /// <summary>Creates a color from a Vector4, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
     /// <param name="col">The R, G, B, and A channels, all between [0.0, 1.0].</param>
     public static uint NewColor(Vector4 col) {
         return NewColor(col.X, col.Y, col.Z, col.W);
+    }
+
+    /// <name>AverageColors</name>
+    /// <returns>uint</returns>
+    /// <summary>Creates a color from averaging two provided colors, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
+    /// <summary>The order in which parameters are supplied doesn't matter.</summary>
+    /// <param name="color1">The first color to average with.</param>
+    /// <param name="color2">The second color to average with.</param>
+    public static uint AverageColors(uint color1, uint color2) {
+        byte c01 = (byte)((color1 >> 0) & 0xFF);
+        byte c02 = (byte)((color1 >> 8) & 0xFF);
+        byte c03 = (byte)((color1 >> 16) & 0xFF);
+        byte c04 = (byte)((color1 >> 24) & 0xFF);
+
+        byte c11 = (byte)((color2 >> 0) & 0xFF);
+        byte c12 = (byte)((color2 >> 8) & 0xFF);
+        byte c13 = (byte)((color2 >> 16) & 0xFF);
+        byte c14 = (byte)((color2 >> 24) & 0xFF);
+
+        byte a1 = (byte)((c01 + c11) / 2);
+        byte a2 = (byte)((c02 + c12) / 2);
+        byte a3 = (byte)((c03 + c13) / 2);
+        byte a4 = (byte)((c04 + c14) / 2);
+
+        return _isLittleEndian ?
+            ((uint)a4 << 24) | ((uint)a3 << 16) | ((uint)a2 << 8) | a1 :
+            ((uint)a1 << 24) | ((uint)a2 << 16) | ((uint)a3 << 8) | a4;
+    }
+
+    /// <name>LerpColors</name>
+    /// <returns>uint</returns>
+    /// <summary>Linearly interpolates between two colors, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
+    /// <param name="color1">The first color to interpolate from.</param>
+    /// <param name="color2">The second color to interpolate to.</param>
+    /// <param name="t">The interpolation factor between [0, 1], where 0 represents color1 and 1 represents color2.</param>
+    public static uint LerpColors(uint color1, uint color2, float t) {
+        byte r1 = color1.GetR();
+        byte g1 = color1.GetG();
+        byte b1 = color1.GetB();
+        byte a1 = color1.GetA();
+
+        return NewColor(
+            (byte)(r1 + (color2.GetR() - r1) * t), 
+            (byte)(g1 + (color2.GetG() - g1) * t), 
+            (byte)(b1 + (color2.GetB() - b1) * t), 
+            (byte)(a1 + (color2.GetA() - a1) * t));
     }
 
     /// <name>GetR</name>
@@ -964,7 +1010,7 @@ public static class FL {
 
     /// <name>HslToRgb</name>
     /// <returns>uint</returns>
-    /// <summary>Converts a color from HSL color space to either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.</summary>
+    /// <summary>Converts a color from HSL format to either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
     /// <param name="hue">The H channel's value.</param>
     /// <param name="saturation">The S channel's value.</param>
     /// <param name="lightness">The L channel's value.</param>
@@ -1013,7 +1059,6 @@ public static class FL {
 #region common
     //===========================================================
     // Properties
-    private static int pixelSize = 1;
     /// <name>PixelSize</name>
     /// <returns>int</returns>
     /// <summary>The pixel size of the window. Locked between [1, 100].</summary>
@@ -1021,6 +1066,7 @@ public static class FL {
         get => pixelSize;
         set => pixelSize = Math.Clamp(value, 1, 100);
     }
+    private static int pixelSize = 1;
 
     /// <name>VSync</name>
     /// <returns>bool</returns>
@@ -1032,6 +1078,18 @@ public static class FL {
     /// <summary>Gets or sets whether or not the engine is multithreaded. Only applicable in DrawClear mode.</summary>
     public static bool Multithreaded { get; set; } = false;
     
+    /// <name>Accumulate</name>
+    /// <returns>bool</returns>
+    /// <summary>Gets or sets whether or not the engine accumulates previous frames with the current frame. Only applicable in PerPixel mode. Can be changed during runtime.</summary>
+    public static bool Accumulate { 
+        get => e is PerPixelEngine p && p.Accumulate; 
+        set {
+            if (e is PerPixelEngine p) {
+                p.Accumulate = value;
+            }
+        }
+    }
+
     /// <name>ElapsedTime</name>
     /// <returns>float</returns>
     /// <summary>The total time since Run was called.</summary>
