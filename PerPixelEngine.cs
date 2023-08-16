@@ -12,6 +12,8 @@ internal sealed class PerPixelEngine : Engine {
         uniforms.Width = w;
         uniforms.Height = h;
     }
+    
+    public bool Accumulate { get; set; } = false;
 
     private readonly Func<int, int, Uniforms, uint> _perPixel;
     private readonly Action _perFrame;
@@ -23,6 +25,7 @@ internal sealed class PerPixelEngine : Engine {
         
         _perFrame();
         
+        const float T = 0.01f;
         int width = ScaledWidth, height = ScaledHeight;
         if (PixelSize == 1) {
             const int batchSize = 128;
@@ -37,7 +40,9 @@ internal sealed class PerPixelEngine : Engine {
 
                 tasks[batchIndex] = Task.Run(() => {
                     for (int i = start; i < end; i++) {
-                        Screen[i] = _perPixel(i % width, i / width, uniforms);
+                        Screen[i] = Accumulate ? 
+                            FL.LerpColors(Screen[i], _perPixel(i % width, i / width, uniforms), T) : 
+                            _perPixel(i % width, i / width, uniforms);
                     }
                 });
             }
@@ -97,7 +102,10 @@ internal sealed class PerPixelEngine : Engine {
                 for (int px = 0; px < PixelSize; px++) {
                     int x = startX + px;
                     if (x >= width || y >= height) continue;
-                    Screen[y * width + x] = fragColor;
+                    int ind = y * width + x;
+                    Screen[ind] = Accumulate ? 
+                        FL.LerpColors(Screen[ind], fragColor, T) : 
+                        fragColor;
                 }
             }
         });
