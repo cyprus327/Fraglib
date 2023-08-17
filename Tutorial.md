@@ -393,7 +393,6 @@ using Fraglib;
 internal sealed class Tutorial {
     private static float zoom = 0.07f;
     private static Vector2 center = new(-1.555466652f, 0f);
-    private static readonly float _log2 = MathF.Log(2f);
 
     private static void Main() {
         FL.Init(800, 450, "Mandelbrot Renderer", PerPixel, PerFrame);
@@ -401,7 +400,11 @@ internal sealed class Tutorial {
     }
 
     private static void PerFrame() {
-        zoom *= MathF.Pow(2f, FL.DeltaTime);
+        if (FL.GetKeyDown('W')) {
+            zoom *= MathF.Pow(2f, FL.DeltaTime);
+        } else if (FL.GetKeyDown('S')) {
+            zoom *= MathF.Pow(0.5f, FL.DeltaTime);
+        }
     }
 
     private static uint PerPixel(int x, int y, Uniforms u) {
