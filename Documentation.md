@@ -20,7 +20,7 @@ Any settings changed after this (PixelSize, VSync, etc.) won't affect anything.
 Sets the pixel at the specified position to the given color. 
 - **x**: The x coordinate of the pixel.
 - **y**: The y coordinate of the pixel.
-- **color**: The color of the pixel in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the pixel in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### GetPixel (uint)
 Gets the pixel's color at the specified position. 
 - **x**: The x coordinate of the pixel.
@@ -29,47 +29,47 @@ Gets the pixel's color at the specified position.
 Clears the window to black. 
 ### Clear (void)
 Clears the window to the specified color. 
-- **color**: The color the window will get cleared to in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color the window will get cleared to in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### FillRect (void)
 Fills a solid rectangle of specified size and color at the specified coordinates. 
 - **x**: The starting point of the rectangle's x coordinate.
 - **y**: The starting point of the rectangle's y coordinate.
 - **width**: The width of the rectangle.
 - **height**: The height of the rectangle.
-- **color**: The color of the rectangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the rectangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### DrawCircle (void)
 Draws the outline of a circle of specified size and color at the specified coordinates. 
 - **centerX**: The center coordinate of the circle along the x-axis.
 - **centerY**: The center coordinate of the cirlce along the y-axis.
 - **radius**: The radius of the circle.
-- **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### FillCircle (void)
 Fills a solid circle of specified size and color at the specified coordinates. 
 - **centerX**: The center coordinate of the circle along the x-axis.
 - **centerY**: The center coordinate of the cirlce along the y-axis.
 - **radius**: The radius of the circle.
-- **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### DrawLine (void)
 Draws a line of specified color along the specified path. 
 - **x0**: The starting x coordinate of the line.
 - **y0**: The starting y coordinate of the line.
 - **x1**: The ending x coordinate of the line.
 - **y1**: The ending y coordinate of the line.
-- **color**: The color of the line in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### DrawVerticalLine (void)
 Draws a vertical line of specified color along the specified path. 
 Should be used over DrawLine if the line is vertical. 
 - **x**: The x coordinate of the line.
 - **y0**: The starting y coordinate of the line.
 - **y1**: The ending y coordinate of the line.
-- **color**: The color of the line in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### DrawHorizontalLine (void)
 Draws a horizontal line of specified color along the specified path. 
 Should be used over DrawLine if the line is horizontal. 
 - **x0**: The starting x coordinate of the line.
 - **x1**: The ending x coordinate of the line.
 - **y**: The y coordinate of the line.
-- **color**: The color of the line in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### DrawTriangle (void)
 Draws the outline of a triangle of specified color with specified vertices. Should be used over DrawPolygon if the polygon is a triangle. 
 - **x0**: The x coordinate of the 1st vertex.
@@ -78,13 +78,13 @@ Draws the outline of a triangle of specified color with specified vertices. Shou
 - **y1**: The y coordinate of the 2nd vertex.
 - **x2**: The x coordinate of the 3rd vertex.
 - **y2**: The y coordinate of the 3rd vertex.
-- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### DrawTriangle (void)
 Draws the outline of a triangle of specified color with specified vertices. Should be used over DrawPolygon if the polygon is a triangle. 
 - **v0**: The 1st vertex.
 - **v1**: The 2nd vertex.
 - **v2**: The 3rd vertex.
-- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### FillTriangle (void)
 Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle. 
 - **x0**: The x coordinate of the 1st vertex.
@@ -93,20 +93,20 @@ Fills a solid triangle of specified color with specified vertices. Should be use
 - **y1**: The y coordinate of the 2nd vertex.
 - **x2**: The x coordinate of the 3rd vertex.
 - **y2**: The y coordinate of the 3rd vertex.
-- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### FillTriangle (void)
 Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle. 
 - **v0**: The 1st vertex.
 - **v1**: The 2nd vertex.
 - **v2**: The 3rd vertex.
-- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 ### DrawPolygon (void)
 Draws the outline of a polygon of specified color with specified vertices. 
-- **color**: The color of the polygon in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the polygon in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 - **vertices**: The vertices of the polygon to draw. Must have a length >= 3.
 ### FillPolygon (void)
 Fills a solid polygon of specified color with specified vertices. 
-- **color**: The color of the polygon in either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness.
+- **color**: The color of the polygon in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 - **vertices**: The vertices of the polygon to draw. Must have a length >= 3.
 ## States
 ### SaveScreen (void)
@@ -148,24 +148,40 @@ The color crimson, either 4282127580 or 3692313855.
 A color that cycles through all the full rainbow based on ElapsedTime. 
 - **timeScale**: Optional parameter that controls how fast the color changes.
 ### NewColor (uint)
-Creates a color from 4 bytes, either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness. 
+Creates a color from 4 bytes, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
 - **r**: The R channel's value between [0, 255].
 - **g**: The G channel's value between [0, 255].
 - **b**: The B channel's value between [0, 255].
 - **a**: The A channel's value between [0, 255].
 ### NewColor (uint)
-Creates a color from 4 floats, either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness. 
+Creates a color from 4 floats, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
 - **r**: The R channel's value between [0.0, 1.0].
 - **g**: The G channel's value between [0.0, 1.0].
 - **b**: The B channel's value between [0.0, 1.0].
 - **a**: The A channel's value between [0.0, 1.0].
 ### NewColor (uint)
-Creates a color from a Vector3 and additional float, either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness. 
+Creates a color from a Vector3 and additional float, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
 - **col**: The R, G, and B channels, all between [0.0, 1.0].
 - **a**: The A channel between [0.0, 1.0].
 ### NewColor (uint)
-Creates a color from a Vector4, either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness. 
+Creates a color from a Vector4, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
 - **col**: The R, G, B, and A channels, all between [0.0, 1.0].
+### ToVec3 (Vector3)
+Creates a Vector3 from a color, will always return in RGB format. 
+- **color**: Optional parameter representing the color to convert to a Vector3.
+### ToVec4 (Vector4)
+Creates a Vector4 from a color, will always return in RGBA format. 
+- **color**: Optional parameter representing the color to convert to a Vector4.
+### AverageColors (uint)
+Creates a color from averaging two provided colors, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
+The order in which parameters are supplied doesn't matter. 
+- **color1**: The first color to average with.
+- **color2**: The second color to average with.
+### LerpColors (uint)
+Linearly interpolates between two colors, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
+- **color1**: The first color to interpolate from.
+- **color2**: The second color to interpolate to.
+- **t**: The interpolation factor between [0, 1], where 0 represents color1 and 1 represents color2.
 ### GetR (byte)
 An extension method that extracts the red channel of the specified color in the range [0, 255]. 
 - **color**: An optional parameter representing the color of which to extract the channel.
@@ -219,7 +235,7 @@ Modifies the underlying variable.
 - **color**: An optional parameter representing the color of which to set the alpha channel.
 - **newA**: The new value for the A channel of the color, in the range [0.0, 1.0].
 ### HslToRgb (uint)
-Converts a color from HSL color space to either RGBA (0xRRGGBBAA) or ARGB format (0xAARRGGBB) depending on the system's endianness. 
+Converts a color from HSL format to either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
 - **hue**: The H channel's value.
 - **saturation**: The S channel's value.
 - **lightness**: The L channel's value.
@@ -230,6 +246,8 @@ The pixel size of the window. Locked between [1, 100].
 Gets or sets whether or not VSync is enabled. 
 ### Multithreaded (bool)
 Gets or sets whether or not the engine is multithreaded. Only applicable in DrawClear mode. 
+### Accumulate (bool)
+Gets or sets whether or not the engine accumulates previous frames with the current frame. Only applicable in PerPixel mode. Can be changed during runtime. 
 ### ElapsedTime (float)
 The total time since Run was called. 
 ### DeltaTime (float)
@@ -252,6 +270,8 @@ Generates a random integer within the specified range [min, max].
 Generates a random float within the specified range [min, max]. 
 - **min**: The minimum possible value of a number that could be generated.
 - **max**: The maximum possible value of a number that could be generated.
+### RandInUnitSphere (Vector3)
+Generates a random Vector3 on the unit sphere. 
 ### GetKeyDown (bool)
 Returns whether or not the specified key is currently being held down. 
 - **char**: The key to check represented by a key's keycode, e.g. 'Q' or 81 for the Q key.
