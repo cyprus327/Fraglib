@@ -11,21 +11,40 @@ internal sealed class PerPixelEngine : Engine {
         uniforms.Time = uniforms.DeltaTime = 0f;
         uniforms.Width = w;
         uniforms.Height = h;
+
+        _accumulationData = new Vector4[w * h];
     }
     
-    public bool Accumulate { get; set; } = false;
+    private bool accumulate = false;
+    public bool Accumulate { 
+        get {
+            return accumulate;
+        } set {
+            accumulate = value;
+            if (!value) {
+                frameInd = 0;
+            }
+        }
+    }
 
     private readonly Func<int, int, Uniforms, uint> _perPixel;
     private readonly Action _perFrame;
     private Uniforms uniforms = new();
+
+    private readonly Vector4[] _accumulationData;
+    private uint frameInd = 0;
 
     public override void Update(FrameEventArgs args) {
         uniforms.Time += (float)args.Time;
         uniforms.DeltaTime = (float)args.Time;
         
         _perFrame();
-        
-        const float T = 0.01f;
+        frameInd++;
+
+        if (frameInd == 1) {
+            Array.Fill(_accumulationData, Vector4.Zero);
+        }
+
         int width = ScaledWidth, height = ScaledHeight;
         if (PixelSize == 1) {
             const int batchSize = 128;
@@ -40,51 +59,14 @@ internal sealed class PerPixelEngine : Engine {
 
                 tasks[batchIndex] = Task.Run(() => {
                     for (int i = start; i < end; i++) {
-                        Screen[i] = Accumulate ? 
-                            FL.LerpColors(Screen[i], _perPixel(i % width, i / width, uniforms), T) : 
-                            _perPixel(i % width, i / width, uniforms);
+                        _accumulationData[i] += _perPixel(i % width, i / width, uniforms).ToVec4();
+                        Vector4 accumulatedCol = _accumulationData[i] / frameInd;
+                        Screen[i] = FL.NewColor(accumulatedCol);
                     }
                 });
             }
 
             Task.WaitAll(tasks);
-
-            // unsafe {
-            //     int vectorSize = Vector<uint>.Count;
-            //     int iterations = width * height;
-            //     int iterationsPerVector = iterations / vectorSize;
-
-            //     Vector<uint>[] resultVectors = new Vector<uint>[iterationsPerVector];
-
-            //     Parallel.For(0, iterationsPerVector, _options, i => {
-            //         int baseIndex = i * vectorSize;
-            //         resultVectors[i] = new Vector<uint>(_perPixel(baseIndex % width, baseIndex / width, uniforms));
-            //     });
-
-            //     fixed (Vector<uint>* resultPtr = resultVectors)
-            //     fixed (uint* screenPtr = &Screen[0]) {
-            //         for (int i = 0; i < iterationsPerVector; i++) {
-            //             Vector<uint> result = resultPtr[i];
-
-            //             for (int j = 1; j < vectorSize; j++) {
-            //                 result = Vector.ConditionalSelect(
-            //                     Vector.GreaterThan(Vector<uint>.Zero, result),
-            //                     new Vector<uint>(_perPixel((i * vectorSize + j) % width, (i * vectorSize + j) / width, uniforms)),
-            //                     result
-            //                 );
-            //             }
-
-            //             uint* resultElementPtr = (uint*)&result;
-            //             for (int j = 0; j < vectorSize; j++) {
-            //                 screenPtr[i * vectorSize + j] = resultElementPtr[j];
-            //             }
-            //         }
-            //     }
-
-            //     for (int i = iterationsPerVector * vectorSize; i < iterations; i++) {
-            //         Screen[i] = _perPixel(i % width, i / width, uniforms);
-            //     }
-            // }
             return;
         }
 
@@ -100,12 +82,11 @@ internal sealed class PerPixelEngine : Engine {
             for (int py = 0; py < PixelSize; py++) {
                 int y = startY + py;
                 for (int px = 0; px < PixelSize; px++) {
-                    int x = startX + px;
-                    if (x >= width || y >= height) continue;
-                    int ind = y * width + x;
-                    Screen[ind] = Accumulate ? 
-                        FL.LerpColors(Screen[ind], fragColor, T) : 
-                        fragColor;
+                    if (startX + px >= width || y >= height) continue;
+                    int ind = y * width + startX + px;
+                    _accumulationData[ind] += _perPixel(i % width, i / width, uniforms).ToVec4();
+                    Vector4 accumulatedCol = _accumulationData[ind] / frameInd;
+                    Screen[ind] = FL.NewColor(accumulatedCol);
                 }
             }
         });
