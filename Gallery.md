@@ -10,6 +10,11 @@ A gallery of interesting projects made with Fraglib.
 4. Add your project and the media to this file.
 5. Create a pull request to merge your changes into the main repository.
 
+## [Raytracer](https://github.com/cyprus327/FL-Raytracer)
+
+![Raytracer no mirrors](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raytracer/noMirrors.png)
+![Raytracer with mirrors](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raytracer/mirrors.png)
+
 ## [Raycaster](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raycaster/Raycaster.cs)
 
 ![Pixel Size 4 Raycaster ss](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raycaster/Raycaster1.png)
