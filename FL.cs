@@ -823,6 +823,48 @@ public static class FL {
         return NewColor(col.X, col.Y, col.Z, col.W);
     }
 
+    /// <name>ToVec3</name>
+    /// <returns>Vector3</returns>
+    /// <summary>Creates a Vector3 from a color, will always return in RGB format.</summary>
+    /// <param name="color">Optional parameter representing the color to convert to a Vector3.</param>
+    public static Vector3 ToVec3(this uint color) {
+        byte r, g, b;
+
+        if (_isLittleEndian) {
+            b = (byte)(color >> 16);
+            g = (byte)(color >> 8);
+            r = (byte)color;
+        } else {
+            r = (byte)(color >> 24);
+            g = (byte)(color >> 16);
+            b = (byte)(color >> 8);
+        }
+
+        return new Vector3(r / 255f, g / 255f, b / 255f);
+    }
+
+    /// <name>ToVec4</name>
+    /// <returns>Vector4</returns>
+    /// <summary>Creates a Vector4 from a color, will always return in RGBA format.</summary>
+    /// <param name="color">Optional parameter representing the color to convert to a Vector4.</param>
+    public static Vector4 ToVec4(this uint color) {
+        byte r, g, b, a;
+
+        if (_isLittleEndian) {
+            a = (byte)(color >> 24);
+            b = (byte)(color >> 16);
+            g = (byte)(color >> 8);
+            r = (byte)color;
+        } else {
+            r = (byte)(color >> 24);
+            g = (byte)(color >> 16);
+            b = (byte)(color >> 8);
+            a = (byte)color;
+        }
+
+        return new Vector4(r / 255f, g / 255f, b / 255f, a / 255f);
+    }
+
     /// <name>AverageColors</name>
     /// <returns>uint</returns>
     /// <summary>Creates a color from averaging two provided colors, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
@@ -953,7 +995,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the green  channel.</param>
     /// <param name="newG">The new value for the G channel of the color, in the range [0.0, 1.0].</param>
     public static uint SetG(this ref uint color, float newG) {
-        color.SetR((byte)(newG * 255f));
+        color.SetG((byte)(newG * 255f));
         return color;
     }
 
@@ -966,7 +1008,7 @@ public static class FL {
     public static uint SetB(this ref uint color, byte newB) {
         color = _isLittleEndian ?
             (color & 0xFF00FFFF) | ((uint)newB << 16) :
-            color = (color & 0xFFFFFF00) | newB;
+            (color & 0xFFFFFF00) | newB;
         
         return color;
     }
@@ -978,7 +1020,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the blue channel.</param>
     /// <param name="newB">The new value for the B channel of the color, in the range [0.0, 1.0].</param>
     public static uint SetB(this ref uint color, float newB) {
-        color.SetR((byte)(newB * 255f));
+        color.SetB((byte)(newB * 255f));
         return color;
     }
 
@@ -1003,7 +1045,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the alpha channel.</param>
     /// <param name="newA">The new value for the A channel of the color, in the range [0.0, 1.0].</param>
     public static uint SetA(this ref uint color, float newA) {
-        color.SetR((byte)(newA * 255f));
+        color.SetA((byte)(newA * 255f));
         return color;
     }
 
@@ -1147,6 +1189,9 @@ public static class FL {
     /// <param name="min">The minimum possible value of a number that could be generated.</param>
     /// <param name="max">The maximum possible value of a number that could be generated.</param>
     public static int Rand(int min, int max) {
+        if (min >= max) {
+            return 0;
+        }
         return (int)(Rand() % (max - min)) + min;
     }
 
@@ -1156,7 +1201,22 @@ public static class FL {
     /// <param name="min">The minimum possible value of a number that could be generated.</param>
     /// <param name="max">The maximum possible value of a number that could be generated.</param>
     public static float Rand(float min, float max) {
-        return (float)Rand() / (float)uint.MaxValue * (max - min) + min;
+        if (min >= max) {
+            return 0f;
+        }
+
+        return (float)(min + Rand() / (double)uint.MaxValue * ((double)max - (double)min));
+    }
+
+    /// <name>RandInUnitSphere</name>
+    /// <returns>Vector3</returns>
+    /// <summary>Generates a random Vector3 on the unit sphere.</summary>
+    public static Vector3 RandInUnitSphere() {
+        return Vector3.Normalize(new Vector3(
+            Rand(-1f, 1f),
+            Rand(-1f, 1f),
+            Rand(-1f, 1f)
+        ));
     }
 
     //===========================================================
