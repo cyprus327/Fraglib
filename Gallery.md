@@ -13,8 +13,8 @@ A gallery of interesting projects made with Fraglib.
 ## [Raytracer](https://github.com/cyprus327/FL-Raytracer)
 
 ![Raytracer aabbs](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raytracer/aabbs.png)
-![Raytracer no mirrors](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raytracer/noMirrors.png)
 ![Raytracer with mirrors](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raytracer/mirrors.png)
+![Raytracer no mirrors](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raytracer/noMirrors.png)
 
 ## [Raycaster](https://github.com/cyprus327/Fraglib/blob/main/Gallery/Raycaster/Raycaster.cs)
 
