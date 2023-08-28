@@ -1549,8 +1549,8 @@ public static class FL {
     /// <summary>Extension method to translate a Vector2 by the specified amount.</summary>
     /// <summary>Modifies the underlying variable.</summary>
     /// <param name="vec">Optional parameter representing the Vector2 to modify.</param>
-    /// <param name="offsetX">The amount to move 'vec' by on the x-axis..</param>
-    /// <param name="offsetY">The amount to move 'vec' by on the y-axis..</param>
+    /// <param name="offsetX">The amount to move 'vec' by on the x-axis.</param>
+    /// <param name="offsetY">The amount to move 'vec' by on the y-axis.</param>
     public static Vector2 Translate(this ref Vector2 vec, float offsetX, float offsetY) {
         vec.X += offsetX / PixelSize;
         vec.Y += offsetY / PixelSize;
@@ -1563,8 +1563,8 @@ public static class FL {
     /// <summary>Extension method to translate all Vector2s in an array by the specified amount.</summary>
     /// <summary>Modifies the underlying array.</summary>
     /// <param name="arr">Optional parameter representing the array of Vector2s to modify.</param>
-    /// <param name="offsetX">The amount to move the Vector2s in 'arr' by on the x-axis..</param>
-    /// <param name="offsetY">The amount to move the Vector2s in 'arr' by on the y-axis..</param>
+    /// <param name="offsetX">The amount to move the Vector2s in 'arr' by on the x-axis.</param>
+    /// <param name="offsetY">The amount to move the Vector2s in 'arr' by on the y-axis.</param>
     public static Vector2[] Translate(this Vector2[] arr, float offsetX, float offsetY) {
         for (int i = 0; i < arr.Length; i++) {
             arr[i].Translate(offsetX, offsetY);
