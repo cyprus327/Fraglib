@@ -663,6 +663,11 @@ public static class FL {
         }
     }
 
+    /// <name>DrawTexture</name>
+    /// <returns>void</returns>
+    /// <summary>Draws a texture to the window at the specified coordinates.</summary>
+    /// <param name="x">The x coordinate to draw the texture at.</param>
+    /// <param name="y">The y coordinate to draw the texture at.</param>
     public static void DrawTexture(int x, int y, Texture texture) {
         if (!isDrawClear) {
             return;
@@ -678,12 +683,35 @@ public static class FL {
                 SetPixel(tx, y + height - 1 - ty, texture.GetPixel(tx - x, ty));
             }
         }
+
+        // unsafe {
+        //     fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+        //         CopyTextureToScreen(screenPtr, texturePtr, texture.Width, texture.Height);
+        //     }
+        // }
     }
+
+    // private static unsafe void CopyTextureToScreen(uint* screenPtr, uint* texturePtr, int texWidth, int texHeight) {
+    //     int texByteWidth = texWidth * 4;
+
+    //     for (int y = 0; y < texHeight; y++) {
+    //         Buffer.MemoryCopy(texturePtr, screenPtr, texByteWidth, texByteWidth);
+    //         texturePtr += texWidth;
+    //         screenPtr += windowWidth;
+    //     }
+    // }
 #endregion drawclear methods
 
 /// <region>Textures</region>
 #region textures
+    /// <name>Texture</name>
+    /// <returns>struct</returns>
+    /// <summary>The texture struct for Fraglib.</summary>
     public readonly struct Texture {
+        /// <name>Texture</name>
+        /// <returns>Texture</returns>
+        /// <summary>Creates a Texture from a Bitmap image.</summary>
+        /// <param name="bmpImagePath">The x coordinate to draw the texture at.</param>
         public Texture(string bmpImagePath) {
             if (!File.Exists(bmpImagePath)) {
                 throw new FileNotFoundException("Specified image not found.");
@@ -720,6 +748,10 @@ public static class FL {
             }
         }
 
+        /// <name>Texture</name>
+        /// <returns>Texture</returns>
+        /// <summary>Clones a Texture.</summary>
+        /// <param name="texture">The texture to create a copy of.</param>
         public Texture(Texture texture) {
             Width = texture.Width;
             Height = texture.Height;
@@ -728,6 +760,11 @@ public static class FL {
             Array.Copy(texture.GetPixels, pixels, texture.GetPixels.Length);
         }
 
+        /// <name>Texture</name>
+        /// <returns>Texture</returns>
+        /// <summary>Creates an empty Texture of specified width and height.</summary>
+        /// <param name="width">The width of the texture.</param>
+        /// <param name="height">The height of the texture.</param>
         public Texture(int width, int height) {
             Width = width;
             Height = height;
@@ -735,13 +772,28 @@ public static class FL {
             pixels = new uint[width * height];
         }
 
+        /// <name>Width</name>
+        /// <returns>int</returns>
+        /// <summary>The texture's width.</summary>
         public int Width { get; }
+        /// <name>Height</name>
+        /// <returns>int</returns>
+        /// <summary>The texture's height.</summary>
         public int Height { get; }
 
         private readonly uint[] pixels;
 
+        /// <name>GetPixels</name>
+        /// <returns>uint[]</returns>
+        /// <summary>Gets the pixels of the texture.</summary>
         public readonly uint[] GetPixels => pixels;
 
+        /// <name>SetPixel</name>
+        /// <returns>void</returns>
+        /// <summary>Sets a pixel in the texture at specified coordinates to specified color.</summary>
+        /// <param name="x">The x coordinate of the pixel.</param>
+        /// <param name="y">The y coordinate of the pixel.</param>
+        /// <param name="color">The color to set the pixel.</param>
         public void SetPixel(int x, int y, uint color) {
             int ind = y * Height + x;
 
@@ -752,6 +804,11 @@ public static class FL {
             pixels[ind] = color;
         }
 
+        /// <name>GetPixel</name>
+        /// <returns>uint</returns>
+        /// <summary>Gets a pixel in the texture at specified coordinates.</summary>
+        /// <param name="x">The x coordinate of the pixel.</param>
+        /// <param name="y">The y coordinate of the pixel.</param>
         public uint GetPixel(int x, int y) {
             int ind = y * Height + x;
 
