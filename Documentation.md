@@ -108,6 +108,38 @@ Draws the outline of a polygon of specified color with specified vertices.
 Fills a solid polygon of specified color with specified vertices. 
 - **color**: The color of the polygon in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
 - **vertices**: The vertices of the polygon to draw. Must have a length >= 3.
+### DrawTexture (void)
+Draws a texture to the window at the specified coordinates. 
+- **x**: The x coordinate to draw the texture at.
+- **y**: The y coordinate to draw the texture at.
+## Textures
+### Texture (struct)
+The texture struct for Fraglib. 
+### Texture (Texture)
+Creates a Texture from a Bitmap image. 
+- **bmpImagePath**: The x coordinate to draw the texture at.
+### Texture (Texture)
+Clones a Texture. 
+- **texture**: The texture to create a copy of.
+### Texture (Texture)
+Creates an empty Texture of specified width and height. 
+- **width**: The width of the texture.
+- **height**: The height of the texture.
+### Width (int)
+The texture's width. 
+### Height (int)
+The texture's height. 
+### GetPixels (uint[])
+Gets the pixels of the texture. 
+### SetPixel (void)
+Sets a pixel in the texture at specified coordinates to specified color. 
+- **x**: The x coordinate of the pixel.
+- **y**: The y coordinate of the pixel.
+- **color**: The color to set the pixel.
+### GetPixel (uint)
+Gets a pixel in the texture at specified coordinates. 
+- **x**: The x coordinate of the pixel.
+- **y**: The y coordinate of the pixel.
 ## States
 ### SaveScreen (void)
 Saves the current state of the window to a buffer. 
