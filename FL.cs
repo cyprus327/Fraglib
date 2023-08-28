@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 
 namespace Fraglib;
@@ -631,7 +632,7 @@ public static class FL {
             fixed (uint* ptr = e!.Screen) {
                 int length = vertices.Length;
                 for (int y = minY; y <= maxY; y++) {
-                    List<int> intersections = new List<int>();
+                    List<int> intersections = new();
 
                     int j = length - 1;
                     for (int i = 0; i < length; i++) {
@@ -661,7 +662,107 @@ public static class FL {
             }
         }
     }
+
+    public static void DrawTexture(int x, int y, Texture texture) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => DrawTextureAction(x, y, texture));
+    }
+
+    private static void DrawTextureAction(int x, int y, Texture texture) {
+        int height = texture.Height, width = texture.Width;
+        for (int ty = 0; ty < height; ty++) {
+            for (int tx = x; tx < width; tx++) {
+                SetPixel(tx, y + height - 1 - ty, texture.GetPixel(tx - x, ty));
+            }
+        }
+    }
 #endregion drawclear methods
+
+/// <region>Textures</region>
+#region textures
+    public readonly struct Texture {
+        public Texture(string bmpImagePath) {
+            if (!File.Exists(bmpImagePath)) {
+                throw new FileNotFoundException("Specified image not found.");
+            }
+
+            using FileStream fs = new(bmpImagePath, FileMode.Open);
+
+            byte[] header = new byte[54];
+            fs.Read(header, 0, 54);
+            
+            if (header[0] != 'B' && header[1] != 'M') {
+                throw new FileLoadException("File specified is not a bitmap (.bmp).");
+            }
+
+            Width = BitConverter.ToInt32(header, 18);
+            Height = BitConverter.ToInt32(header, 22);
+
+            int bpp = BitConverter.ToInt16(header, 28);
+            if (bpp != 32) {
+                throw new NotSupportedException($"Only 32 bit bitmaps are supported. Your bitmap is {bpp} bit.");
+            }
+
+            pixels = new uint[Width * Height];
+
+            int pixelDataOffset = BitConverter.ToInt32(header, 10);
+            fs.Seek(pixelDataOffset, SeekOrigin.Begin);
+
+            byte[] buffer = new byte[4];
+            for (int y = Height - 1; y >= 0; y--) {
+                for (int x = 0; x < Width; x++) {
+                    fs.Read(buffer, 0, buffer.Length);
+                    SetPixel(x, y, NewColor(buffer[2], buffer[1], buffer[0], buffer[3]));
+                }
+            }
+        }
+
+        public Texture(Texture texture) {
+            Width = texture.Width;
+            Height = texture.Height;
+
+            pixels = new uint[Width * Height];
+            Array.Copy(texture.GetPixels, pixels, texture.GetPixels.Length);
+        }
+
+        public Texture(int width, int height) {
+            Width = width;
+            Height = height;
+
+            pixels = new uint[width * height];
+        }
+
+        public int Width { get; }
+        public int Height { get; }
+
+        private readonly uint[] pixels;
+
+        public readonly uint[] GetPixels => pixels;
+
+        public void SetPixel(int x, int y, uint color) {
+            int ind = y * Height + x;
+
+            if (ind < 0 || ind >= pixels.Length) {
+                return;
+            }
+
+            pixels[ind] = color;
+        }
+
+        public uint GetPixel(int x, int y) {
+            int ind = y * Height + x;
+
+            if (ind < 0 || ind >= pixels.Length) {
+                return Black;
+            }
+
+            return pixels[ind];
+        }
+    }
+#endregion textures
 
 /// <region>States</region>
 #region states
