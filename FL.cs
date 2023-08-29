@@ -120,28 +120,6 @@ public static class FL {
         });
     }
 
-    private static unsafe void SetPixel(int x, int y, uint color, uint* ptr) {
-        if (x < 0 || x >= scaledWidth || y < 0 || y >= scaledHeight) {
-            return;
-        }
-
-        if (PixelSize == 1) {
-            ptr[y * windowWidth + x] = color;
-            return;
-        }
-
-        x *= PixelSize;
-        y *= PixelSize;
-        int xMax = Math.Min(x + PixelSize, windowWidth);
-        int yMax = Math.Min(y + PixelSize, windowHeight);
-        for (int py = y; py < yMax; py++) {
-            int yo = py * windowWidth;
-            for (int px = x; px < xMax; px++) {
-                ptr[yo + px] = color;
-            }
-        }
-    }
-
     /// <name>GetPixel</name>
     /// <returns>uint</returns>
     /// <summary>Gets the pixel's color at the specified position.</summary>
@@ -196,11 +174,11 @@ public static class FL {
         ((DrawClearEngine)e!).AddAction(() => FillRectAction(x, y, width, height, color));
     }
 
-    private static void FillRectAction(int x, int y, int width, int height, uint color) {
+    private static unsafe void FillRectAction(int x, int y, int width, int height, uint color) {
         x = Math.Max(x, 0);
         y = Math.Max(y, 0);
-        width = Math.Min(x + width, windowWidth);
-        height = Math.Min(y + height, windowHeight);
+        width = Math.Min(width, windowWidth);
+        height = Math.Min(height, windowHeight);
         
         if (width <= 0 || height <= 0) {
             return;
@@ -210,16 +188,25 @@ public static class FL {
         y *= PixelSize;
         width *= PixelSize;
         height *= PixelSize;
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                for (int r = y; r < height; r++) {
-                    int ro = r * windowWidth;
-                    for (int c = x; c < width; c++) {
-                        ptr[ro + c] = color;
-                    }
+        
+        fixed (uint* screenPtr = e!.Screen) {
+            int numBytes = width * sizeof(uint);
+            for (int sy = 0; sy < height; sy++) {
+                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
+                for (int sx = 0; sx < width; sx++) {
+                    *(screenRowPtr + sx) = color;
                 }
             }
         }
+
+        // TODO: make this work somehow, ~20x faster for big rects
+        // fixed (uint* screenPtr = e!.Screen) {
+        //     int numBytes = width * sizeof(uint);
+        //     for (int sy = 0; sy < height; sy++) {
+        //         uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;            
+        //         Buffer.MemoryCopy(&color, screenRowPtr, width, width);
+        //     }
+        // }
     }
 
     /// <name>DrawCircle</name>
@@ -237,37 +224,56 @@ public static class FL {
         ((DrawClearEngine)e!).AddAction(() => DrawCircleAction(centerX, centerY, radius, color));
     }
 
-    private static void DrawCircleAction(float centerX, float centerY, float radius, uint color) {
+    private static unsafe void DrawCircleAction(float centerX, float centerY, float radius, uint color) {
         int x = (int)radius, y = 0;
         int decisionOver2 = 1 - x;
 
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                while (y <= x) {
-                    SetCirclePixels(centerX, centerY, x, y, color, ptr);
+        fixed (uint* ptr = e!.Screen) {
+            while (y <= x) {
+                int i1 = (int)(centerY + y) * windowWidth + (int)(centerX + x);
+                int i2 = (int)(centerY - y) * windowWidth + (int)(centerX + x);
+                int i3 = (int)(centerY + y) * windowWidth + (int)(centerX - x);
+                int i4 = (int)(centerY - y) * windowWidth + (int)(centerX - x);
+                int i5 = (int)(centerY + x) * windowWidth + (int)(centerX + y);
+                int i6 = (int)(centerY - x) * windowWidth + (int)(centerX + y);
+                int i7 = (int)(centerY + x) * windowWidth + (int)(centerX - y);
+                int i8 = (int)(centerY - x) * windowWidth + (int)(centerX - y);
 
-                    if (decisionOver2 <= 0) {
-                        decisionOver2 += 2 * y + 1;
-                    } else {
-                        x--;
-                        decisionOver2 += 2 * (y - x) + 1;
-                    }
-
-                    y++;
+                if (i1 >= 0 && i1 < windowWidth * windowHeight) {
+                    ptr[i1] = color;
                 }
+                if (i2 >= 0 && i2 < windowWidth * windowHeight) {
+                    ptr[i2] = color;
+                }
+                if (i3 >= 0 && i3 < windowWidth * windowHeight) {
+                    ptr[i3] = color;
+                }
+                if (i4 >= 0 && i4 < windowWidth * windowHeight) {
+                    ptr[i4] = color;
+                }
+                if (i5 >= 0 && i5 < windowWidth * windowHeight) {
+                    ptr[i5] = color;
+                }
+                if (i6 >= 0 && i6 < windowWidth * windowHeight) {
+                    ptr[i6] = color;
+                }
+                if (i7 >= 0 && i7 < windowWidth * windowHeight) {
+                    ptr[i7] = color;
+                }
+                if (i8 >= 0 && i8 < windowWidth * windowHeight) {
+                    ptr[i8] = color;
+                }
+
+                if (decisionOver2 <= 0) {
+                    decisionOver2 += 2 * y + 1;
+                } else {
+                    x--;
+                    decisionOver2 += 2 * (y - x) + 1;
+                }
+
+                y++;
             }
         }
-    }
-
-    private static unsafe void SetCirclePixels(float cx, float cy, int ox, int oy, uint color, uint* ptr) {
-        SetPixel((int)(cx + ox), (int)(cy + oy), color, ptr);
-        SetPixel((int)(cx - ox), (int)(cy + oy), color, ptr);
-        SetPixel((int)(cx + ox), (int)(cy - oy), color, ptr);
-        SetPixel((int)(cx - ox), (int)(cy - oy), color, ptr);
-        SetPixel((int)(cx + oy), (int)(cy + ox), color, ptr);
-        SetPixel((int)(cx - oy), (int)(cy + ox), color, ptr);
-        SetPixel((int)(cx + oy), (int)(cy - ox), color, ptr);
-        SetPixel((int)(cx - oy), (int)(cy - ox), color, ptr);
     }
 
     /// <name>FillCircle</name>
@@ -285,7 +291,7 @@ public static class FL {
         ((DrawClearEngine)e!).AddAction(() => FillCircleAction(centerX, centerY, radius, color));
     }
 
-    private static void FillCircleAction(float centerX, float centerY, float radius, uint color) {
+    private static unsafe void FillCircleAction(float centerX, float centerY, float radius, uint color) {
         if (radius == 0) {
             return;
         }
@@ -296,15 +302,13 @@ public static class FL {
         int yEnd = (int)(centerY + radius);
         float radiusSquared = radius * radius;
 
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                for (int x = xStart; x <= xEnd; x++) {
-                    for (int y = yStart; y <= yEnd; y++) {
-                        float dx = x - centerX;
-                        float dy = y - centerY;
-                        if ((dx * dx + dy * dy) <= radiusSquared) {
-                            SetPixel(x, y, color, ptr);
-                        }
+        fixed (uint* ptr = e!.Screen) {
+            for (int x = xStart; x <= xEnd; x++) {
+                for (int y = yStart; y <= yEnd; y++) {
+                    float dx = x - centerX;
+                    float dy = y - centerY;
+                    if ((dx * dx + dy * dy) <= radiusSquared) {
+                        //SetPixel(x, y, color, ptr);
                     }
                 }
             }
@@ -327,35 +331,78 @@ public static class FL {
         ((DrawClearEngine)e!).AddAction(() => DrawLineAction(x0, y0, x1, y1, color));
     }
 
-    private static void DrawLineAction(int x0, int y0, int x1, int y1, uint color) {
+    private static unsafe void DrawLineAction(int x0, int y0, int x1, int y1, uint color) {
+        if (x0 < 0 || x0 >= windowWidth || y0 < 0 || y0 >= windowHeight ||
+            x1 < 0 || x1 >= windowWidth || y1 < 0 || y1 >= windowHeight) {
+
+            if (x0 != x1) {
+                float m = (float)(y1 - y0) / (x1 - x0);
+
+                if (x0 < 0) {
+                    y0 += (int)(-x0 * m);
+                    x0 = 0;
+                } else if (x0 >= windowWidth) {
+                    y0 += (int)((windowWidth - 1 - x0) * m);
+                    x0 = windowWidth - 1;
+                }
+
+                if (x1 < 0) {
+                    y1 += (int)(-x1 * m);
+                    x1 = 0;
+                } else if (x1 >= windowWidth) {
+                    y1 += (int)((windowWidth - 1 - x1) * m);
+                    x1 = windowWidth - 1;
+                }
+            }
+
+            if (y0 < 0) {
+                x0 += (int)(-y0 / (float)(y1 - y0) * (x1 - x0));
+                y0 = 0;
+            } else if (y0 >= windowHeight) {
+                x0 += (int)((windowHeight - 1 - y0) / (float)(y1 - y0) * (x1 - x0));
+                y0 = windowHeight - 1;
+            }
+
+            if (y1 < 0) {
+                x1 += (int)(-y1 / (float)(y0 - y1) * (x0 - x1));
+                y1 = 0;
+            } else if (y1 >= windowHeight) {
+                x1 += (int)((windowHeight - 1 - y1) / (float)(y0 - y1) * (x0 - x1));
+                y1 = windowHeight - 1;
+            }
+        }
+
         int dx = Math.Abs(x1 - x0);
         int dy = Math.Abs(y1 - y0);
 
         int sx = x0 < x1 ? 1 : -1;
         int sy = y0 < y1 ? 1 : -1;
+        int syw = sy * windowWidth;
 
         int er = dx - dy;
 
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                while (true) {
-                    SetPixel(x0, y0, color, ptr);
+        fixed (uint* screenPtr = e!.Screen) {
+            uint* ptr = screenPtr + y0 * windowWidth + x0;
 
-                    if (x0 == x1 && y0 == y1) {
-                        break;
-                    }
+            while (true) {
+                *ptr = color;
 
-                    int e2 = 2 * er;
+                if (x0 == x1 && y0 == y1) {
+                    break;
+                }
 
-                    if (e2 > -dy) {
-                        er -= dy;
-                        x0 += sx;
-                    }
+                int e2 = 2 * er;
 
-                    if (e2 < dx) {
-                        er += dx;
-                        y0 += sy;
-                    }
+                if (e2 > -dy) {
+                    er -= dy;
+                    x0 += sx;
+                    ptr += sx;
+                }
+
+                if (e2 < dx) {
+                    er += dx;
+                    y0 += sy;
+                    ptr += syw;
                 }
             }
         }
@@ -377,19 +424,18 @@ public static class FL {
         ((DrawClearEngine)e!).AddAction(() => DrawVerticalLineAction(x, y0, y1, color));
     }
 
-    private static void DrawVerticalLineAction(int x, int y0, int y1, uint color) {
+    private static unsafe void DrawVerticalLineAction(int x, int y0, int y1, uint color) {
         if (x < 0 || x >= scaledWidth || y0 < 0 || y1 >= scaledHeight || y0 > y1) {
             return;
         }
 
-        // NOTE: don't replace with SetPixel, ~110fps faster to do it like this
         if (PixelSize == 1) {
-            unsafe { 
-                fixed (uint* ptr = e!.Screen) {
-                    int stride = Width;
-                    for (int y = y0; y <= y1; y++) {
-                        ptr[y * stride + x] = color;
-                    }
+            fixed (uint* screenPtr = e!.Screen) {
+                int stride = Width;
+                uint* rowPtr = screenPtr + y0 * stride + x;
+                for (int y = y0; y <= y1; y++) {
+                    *rowPtr = color;
+                    rowPtr += stride;
                 }
             }
             return;
@@ -402,17 +448,18 @@ public static class FL {
         int xBounds = Math.Min(x + PixelSize, windowWidth);
         int yBounds = Math.Min(y1 + PixelSize, windowHeight);
 
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                for (int sy = y0; sy < yBounds; sy++) {
-                    int yo = sy * windowWidth;
-                    for (int sx = x; sx < xBounds; sx++) {
-                        ptr[yo + sx] = color;
-                    }
+        fixed (uint* screenPtr = e!.Screen) {
+            uint* baseRowPtr = screenPtr + y0 * windowWidth;
+            for (int sy = y0; sy < yBounds; sy += PixelSize) {
+                uint* rowPtr = baseRowPtr + sy * windowWidth + x;
+                for (int sx = x; sx < xBounds; sx += PixelSize) {
+                    *rowPtr = color;
+                    rowPtr += PixelSize;
                 }
             }
         }
     }
+
 
     /// <name>DrawHorizontalLine</name>
     /// <returns>void</returns>
@@ -613,7 +660,7 @@ public static class FL {
         ((DrawClearEngine)e!).AddAction(() => FillPolygonAction(color, vertices));
     }
 
-    private static void FillPolygonAction(uint color, params Vector2[] vertices) {
+    private static unsafe void FillPolygonAction(uint color, params Vector2[] vertices) {
         if (vertices.Length < 3) {
             return;
         }
@@ -628,35 +675,41 @@ public static class FL {
 
         Array.Sort(vertices, (v1, v2) => v1.Y.CompareTo(v2.Y));
 
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                int length = vertices.Length;
-                for (int y = minY; y <= maxY; y++) {
-                    List<int> intersections = new();
+        int minYBound = Math.Max(minY, 0);
+        int maxYBound = Math.Min(maxY, scaledHeight - 1);
+        int maxXBound = windowWidth - 1;
 
-                    int j = length - 1;
-                    for (int i = 0; i < length; i++) {
-                        Vector2 currentVertex = vertices[i];
-                        Vector2 nextVertex = vertices[j];
+        fixed (uint* screenPtr = e!.Screen) {
+            int length = vertices.Length;
+            for (int y = minYBound; y <= maxYBound; y++) {
+                List<int> intersections = new();
 
-                        if (currentVertex.Y < y && nextVertex.Y >= y || nextVertex.Y < y && currentVertex.Y >= y) {
-                            int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
-                            intersections.Add(intersectionX);
-                        }
+                int j = length - 1;
+                for (int i = 0; i < length; i++) {
+                    Vector2 currentVertex = vertices[i];
+                    Vector2 nextVertex = vertices[j];
 
-                        j = i;
+                    if ((currentVertex.Y < y && nextVertex.Y >= y) || (nextVertex.Y < y && currentVertex.Y >= y)) {
+                        int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
+                        intersections.Add(intersectionX);
                     }
 
-                    intersections.Sort();
+                    j = i;
+                }
 
-                    int count = intersections.Count;
-                    for (int i = 0; i < count; i += 2) {
-                        int xStart = intersections[i];
-                        int xEnd = intersections[Math.Min(i + 1, count - 1)];
+                intersections.Sort();
 
-                        for (int x = xStart; x <= xEnd; x++) {
-                            SetPixel(x, y, color, ptr);
-                        }
+                int count = intersections.Count;
+                uint* rowPtr = screenPtr + y * windowWidth;
+                for (int i = 0; i < count; i += 2) {
+                    int xStart = Math.Max(intersections[i], 0);
+                    int xEnd = Math.Min(intersections[Math.Min(i + 1, count - 1)], maxXBound);
+
+                    uint* pixelPtr = rowPtr + xStart;
+                    int numPixels = xEnd - xStart + 1;
+                    for (int p = 0; p < numPixels; p++) {
+                        *pixelPtr = color;
+                        pixelPtr++;
                     }
                 }
             }
@@ -677,7 +730,7 @@ public static class FL {
     }
 
     private static unsafe void DrawTextureAction(int x, int y, Texture texture) {
-        fixed (uint* screenPtr = &e!.Screen[0], texturePtr = &texture.GetPixels[0]) { 
+        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) { 
             int textureWidth = texture.Width, textureHeight = texture.Height;
             int numBytes = textureWidth * sizeof(uint);
             for (int sy = 0; sy < textureHeight; sy++) {
@@ -718,7 +771,7 @@ public static class FL {
 
             int bpp = BitConverter.ToInt16(header, 28);
             if (bpp != 32) {
-                throw new NotSupportedException($"Only 32 bit bitmaps are supported. Your bitmap is {bpp} bit.");
+                throw new NotSupportedException($"Only 32 bit bitmaps are supported. Your bitmap is {bpp} bit. Here's a simple converter: https://online-converting.com/image/convert2bmp/");
             }
 
             int bmpSize = Height * Width;
