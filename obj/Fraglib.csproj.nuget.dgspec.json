@@ -1,15 +1,15 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Common\\Repos\\Fraglib\\Fraglib.csproj": {}
+    "D:\\Common\\Repos\\Fraglib\\FragLib.csproj": {}
   },
   "projects": {
-    "D:\\Common\\Repos\\Fraglib\\Fraglib.csproj": {
+    "D:\\Common\\Repos\\Fraglib\\FragLib.csproj": {
       "version": "0.1.6",
       "restore": {
-        "projectUniqueName": "D:\\Common\\Repos\\Fraglib\\Fraglib.csproj",
+        "projectUniqueName": "D:\\Common\\Repos\\Fraglib\\FragLib.csproj",
         "projectName": "Fraglib",
-        "projectPath": "D:\\Common\\Repos\\Fraglib\\Fraglib.csproj",
+        "projectPath": "D:\\Common\\Repos\\Fraglib\\FragLib.csproj",
         "packagesPath": "C:\\Users\\Main\\.nuget\\packages\\",
         "outputPath": "D:\\Common\\Repos\\Fraglib\\obj\\",
         "projectStyle": "PackageReference",
