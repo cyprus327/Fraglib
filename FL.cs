@@ -676,30 +676,17 @@ public static class FL {
         ((DrawClearEngine)e!).AddAction(() => DrawTextureAction(x, y, texture));
     }
 
-    private static void DrawTextureAction(int x, int y, Texture texture) {
-        int height = texture.Height, width = texture.Width;
-        for (int ty = 0; ty < height; ty++) {
-            for (int tx = x; tx < width; tx++) {
-                SetPixel(tx, y + height - 1 - ty, texture.GetPixel(tx - x, ty));
+    private static unsafe void DrawTextureAction(int x, int y, Texture texture) {
+        fixed (uint* screenPtr = &e!.Screen[0], texturePtr = &texture.GetPixels[0]) { 
+            int textureWidth = texture.Width, textureHeight = texture.Height;
+            int numBytes = textureWidth * sizeof(uint);
+            for (int sy = 0; sy < textureHeight; sy++) {
+                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
+                uint* textureRowPtr = texturePtr + sy * textureWidth;
+                Buffer.MemoryCopy(textureRowPtr, screenRowPtr, numBytes, numBytes);
             }
         }
-
-        // unsafe {
-        //     fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
-        //         CopyTextureToScreen(screenPtr, texturePtr, texture.Width, texture.Height);
-        //     }
-        // }
     }
-
-    // private static unsafe void CopyTextureToScreen(uint* screenPtr, uint* texturePtr, int texWidth, int texHeight) {
-    //     int texByteWidth = texWidth * 4;
-
-    //     for (int y = 0; y < texHeight; y++) {
-    //         Buffer.MemoryCopy(texturePtr, screenPtr, texByteWidth, texByteWidth);
-    //         texturePtr += texWidth;
-    //         screenPtr += windowWidth;
-    //     }
-    // }
 #endregion drawclear methods
 
 /// <region>Textures</region>
@@ -710,7 +697,7 @@ public static class FL {
     public readonly struct Texture {
         /// <name>Texture</name>
         /// <returns>Texture</returns>
-        /// <summary>Creates a Texture from a Bitmap image.</summary>
+        /// <summary>Creates a Texture from a Bitmap image. The alpha channel of the bitmap isn't taken into account for now.</summary>
         /// <param name="bmpImagePath">The x coordinate to draw the texture at.</param>
         public Texture(string bmpImagePath) {
             if (!File.Exists(bmpImagePath)) {
@@ -734,17 +721,16 @@ public static class FL {
                 throw new NotSupportedException($"Only 32 bit bitmaps are supported. Your bitmap is {bpp} bit.");
             }
 
-            pixels = new uint[Width * Height];
+            int bmpSize = Height * Width;
+            pixels = new uint[bmpSize];
 
             int pixelDataOffset = BitConverter.ToInt32(header, 10);
             fs.Seek(pixelDataOffset, SeekOrigin.Begin);
 
             byte[] buffer = new byte[4];
-            for (int y = Height - 1; y >= 0; y--) {
-                for (int x = 0; x < Width; x++) {
-                    fs.Read(buffer, 0, buffer.Length);
-                    SetPixel(x, y, NewColor(buffer[2], buffer[1], buffer[0], buffer[3]));
-                }
+            for (int i = 0; i < bmpSize; i++) {
+                fs.Read(buffer, 0, buffer.Length);
+                pixels[i] = NewColor(buffer[2], buffer[1], buffer[0], buffer[3]);
             }
         }
 
