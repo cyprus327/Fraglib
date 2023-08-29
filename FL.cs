@@ -91,7 +91,7 @@ public static class FL {
     /// <summary>Sets the pixel at the specified position to the given color.</summary>
     /// <param name="x">The x coordinate of the pixel.</param>
     /// <param name="y">The y coordinate of the pixel.</param>
-    /// <param name="color">The color of the pixel in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the pixel.</param>
     public static void SetPixel(int x, int y, uint color) {
         if (!isDrawClear || x < 0 || x >= scaledWidth || y < 0 || y >= scaledHeight) {
             return;
@@ -147,7 +147,7 @@ public static class FL {
     /// <name>Clear</name>
     /// <returns>void</returns>
     /// <summary>Clears the window to the specified color.</summary>
-    /// <param name="color">The color the window will get cleared to in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color the window will get cleared to.</param>
     public static void Clear(uint color) {
         if (!isDrawClear) {
             return; 
@@ -165,7 +165,7 @@ public static class FL {
     /// <param name="y">The starting point of the rectangle's y coordinate.</param>
     /// <param name="width">The width of the rectangle.</param>
     /// <param name="height">The height of the rectangle.</param>
-    /// <param name="color">The color of the rectangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the rectangle.</param>
     public static void FillRect(int x, int y, int width, int height, uint color) {
         if (!isDrawClear) {
             return;
@@ -190,7 +190,6 @@ public static class FL {
         height *= PixelSize;
         
         fixed (uint* screenPtr = e!.Screen) {
-            int numBytes = width * sizeof(uint);
             for (int sy = 0; sy < height; sy++) {
                 uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
                 for (int sx = 0; sx < width; sx++) {
@@ -203,7 +202,7 @@ public static class FL {
         // fixed (uint* screenPtr = e!.Screen) {
         //     int numBytes = width * sizeof(uint);
         //     for (int sy = 0; sy < height; sy++) {
-        //         uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;            
+        //         uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
         //         Buffer.MemoryCopy(&color, screenRowPtr, width, width);
         //     }
         // }
@@ -215,7 +214,7 @@ public static class FL {
     /// <param name="centerX">The center coordinate of the circle along the x-axis.</param>
     /// <param name="centerY">The center coordinate of the cirlce along the y-axis.</param>
     /// <param name="radius">The radius of the circle.</param>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the circle.</param>
     public static void DrawCircle(float centerX, float centerY, float radius, uint color) {
         if (!isDrawClear) {
             return;
@@ -282,7 +281,7 @@ public static class FL {
     /// <param name="centerX">The center coordinate of the circle along the x-axis.</param>
     /// <param name="centerY">The center coordinate of the cirlce along the y-axis.</param>
     /// <param name="radius">The radius of the circle.</param>
-    /// <param name="color">The color of the circle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the circle.</param>
     public static void FillCircle(float centerX, float centerY, float radius, uint color) {
         if (!isDrawClear) {
             return;
@@ -322,7 +321,7 @@ public static class FL {
     /// <param name="y0">The starting y coordinate of the line.</param>
     /// <param name="x1">The ending x coordinate of the line.</param>
     /// <param name="y1">The ending y coordinate of the line.</param>
-    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the line.</param>
     public static void DrawLine(int x0, int y0, int x1, int y1, uint color) {
         if (!isDrawClear) {
             return;
@@ -415,7 +414,7 @@ public static class FL {
     /// <param name="x">The x coordinate of the line.</param>
     /// <param name="y0">The starting y coordinate of the line.</param>
     /// <param name="y1">The ending y coordinate of the line.</param>
-    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the line.</param>
     public static void DrawVerticalLine(int x, int y0, int y1, uint color) {
         if (!isDrawClear) {
             return;
@@ -468,7 +467,7 @@ public static class FL {
     /// <param name="x0">The starting x coordinate of the line.</param>
     /// <param name="x1">The ending x coordinate of the line.</param>
     /// <param name="y">The y coordinate of the line.</param>
-    /// <param name="color">The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the line.</param>
     public static void DrawHorizontalLine(int x0, int x1, int y, uint color) {
         if (!isDrawClear) {
             return;
@@ -529,7 +528,7 @@ public static class FL {
     /// <param name="y1">The y coordinate of the 2nd vertex.</param>
     /// <param name="x2">The x coordinate of the 3rd vertex.</param>
     /// <param name="y2">The y coordinate of the 3rd vertex.</param>
-    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the triangle.</param>
     public static void DrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
         if (!isDrawClear) {
             return;
@@ -544,7 +543,7 @@ public static class FL {
     /// <param name="v0">The 1st vertex.</param>
     /// <param name="v1">The 2nd vertex.</param>
     /// <param name="v2">The 3rd vertex.</param>
-    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the triangle.</param>
     public static void DrawTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
         DrawTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
     }
@@ -564,7 +563,7 @@ public static class FL {
     /// <param name="y1">The y coordinate of the 2nd vertex.</param>
     /// <param name="x2">The x coordinate of the 3rd vertex.</param>
     /// <param name="y2">The y coordinate of the 3rd vertex.</param>
-    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the triangle.</param>
     public static void FillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
         if (!isDrawClear) {
             return;
@@ -579,7 +578,7 @@ public static class FL {
     /// <param name="v0">The 1st vertex.</param>
     /// <param name="v1">The 2nd vertex.</param>
     /// <param name="v2">The 3rd vertex.</param>
-    /// <param name="color">The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the triangle.</param>
     public static void FillTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
         FillTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
     }
@@ -625,7 +624,7 @@ public static class FL {
     /// <name>DrawPolygon</name>
     /// <returns>void</returns>
     /// <summary>Draws the outline of a polygon of specified color with specified vertices.</summary>
-    /// <param name="color">The color of the polygon in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the polygon.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
     public static void DrawPolygon(uint color, params Vector2[] vertices) {
         if (!isDrawClear) {
@@ -650,7 +649,7 @@ public static class FL {
     /// <name>FillPolygon</name>
     /// <returns>void</returns>
     /// <summary>Fills a solid polygon of specified color with specified vertices.</summary>
-    /// <param name="color">The color of the polygon in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</param>
+    /// <param name="color">The color of the polygon.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
     public static void FillPolygon(uint color, params Vector2[] vertices) {
         if (!isDrawClear) {
@@ -721,6 +720,7 @@ public static class FL {
     /// <summary>Draws a texture to the window at the specified coordinates.</summary>
     /// <param name="x">The x coordinate to draw the texture at.</param>
     /// <param name="y">The y coordinate to draw the texture at.</param>
+    /// <param name="texture">The Texture to draw.</param>
     public static void DrawTexture(int x, int y, Texture texture) {
         if (!isDrawClear) {
             return;

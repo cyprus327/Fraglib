@@ -20,7 +20,7 @@ Any settings changed after this (PixelSize, VSync, etc.) won't affect anything.
 Sets the pixel at the specified position to the given color. 
 - **x**: The x coordinate of the pixel.
 - **y**: The y coordinate of the pixel.
-- **color**: The color of the pixel in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the pixel.
 ### GetPixel (uint)
 Gets the pixel's color at the specified position. 
 - **x**: The x coordinate of the pixel.
@@ -29,47 +29,47 @@ Gets the pixel's color at the specified position.
 Clears the window to black. 
 ### Clear (void)
 Clears the window to the specified color. 
-- **color**: The color the window will get cleared to in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color the window will get cleared to.
 ### FillRect (void)
 Fills a solid rectangle of specified size and color at the specified coordinates. 
 - **x**: The starting point of the rectangle's x coordinate.
 - **y**: The starting point of the rectangle's y coordinate.
 - **width**: The width of the rectangle.
 - **height**: The height of the rectangle.
-- **color**: The color of the rectangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the rectangle.
 ### DrawCircle (void)
 Draws the outline of a circle of specified size and color at the specified coordinates. 
 - **centerX**: The center coordinate of the circle along the x-axis.
 - **centerY**: The center coordinate of the cirlce along the y-axis.
 - **radius**: The radius of the circle.
-- **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the circle.
 ### FillCircle (void)
 Fills a solid circle of specified size and color at the specified coordinates. 
 - **centerX**: The center coordinate of the circle along the x-axis.
 - **centerY**: The center coordinate of the cirlce along the y-axis.
 - **radius**: The radius of the circle.
-- **color**: The color of the circle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the circle.
 ### DrawLine (void)
 Draws a line of specified color along the specified path. 
 - **x0**: The starting x coordinate of the line.
 - **y0**: The starting y coordinate of the line.
 - **x1**: The ending x coordinate of the line.
 - **y1**: The ending y coordinate of the line.
-- **color**: The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the line.
 ### DrawVerticalLine (void)
 Draws a vertical line of specified color along the specified path. 
 Should be used over DrawLine if the line is vertical. 
 - **x**: The x coordinate of the line.
 - **y0**: The starting y coordinate of the line.
 - **y1**: The ending y coordinate of the line.
-- **color**: The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the line.
 ### DrawHorizontalLine (void)
 Draws a horizontal line of specified color along the specified path. 
 Should be used over DrawLine if the line is horizontal. 
 - **x0**: The starting x coordinate of the line.
 - **x1**: The ending x coordinate of the line.
 - **y**: The y coordinate of the line.
-- **color**: The color of the line in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the line.
 ### DrawTriangle (void)
 Draws the outline of a triangle of specified color with specified vertices. Should be used over DrawPolygon if the polygon is a triangle. 
 - **x0**: The x coordinate of the 1st vertex.
@@ -78,13 +78,13 @@ Draws the outline of a triangle of specified color with specified vertices. Shou
 - **y1**: The y coordinate of the 2nd vertex.
 - **x2**: The x coordinate of the 3rd vertex.
 - **y2**: The y coordinate of the 3rd vertex.
-- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the triangle.
 ### DrawTriangle (void)
 Draws the outline of a triangle of specified color with specified vertices. Should be used over DrawPolygon if the polygon is a triangle. 
 - **v0**: The 1st vertex.
 - **v1**: The 2nd vertex.
 - **v2**: The 3rd vertex.
-- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the triangle.
 ### FillTriangle (void)
 Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle. 
 - **x0**: The x coordinate of the 1st vertex.
@@ -93,30 +93,31 @@ Fills a solid triangle of specified color with specified vertices. Should be use
 - **y1**: The y coordinate of the 2nd vertex.
 - **x2**: The x coordinate of the 3rd vertex.
 - **y2**: The y coordinate of the 3rd vertex.
-- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the triangle.
 ### FillTriangle (void)
 Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle. 
 - **v0**: The 1st vertex.
 - **v1**: The 2nd vertex.
 - **v2**: The 3rd vertex.
-- **color**: The color of the triangle in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the triangle.
 ### DrawPolygon (void)
 Draws the outline of a polygon of specified color with specified vertices. 
-- **color**: The color of the polygon in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the polygon.
 - **vertices**: The vertices of the polygon to draw. Must have a length >= 3.
 ### FillPolygon (void)
 Fills a solid polygon of specified color with specified vertices. 
-- **color**: The color of the polygon in either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.
+- **color**: The color of the polygon.
 - **vertices**: The vertices of the polygon to draw. Must have a length >= 3.
 ### DrawTexture (void)
 Draws a texture to the window at the specified coordinates. 
 - **x**: The x coordinate to draw the texture at.
 - **y**: The y coordinate to draw the texture at.
+- **texture**: The Texture to draw.
 ## Textures
 ### Texture (struct)
 The texture struct for Fraglib. 
 ### Texture (Texture)
-Creates a Texture from a Bitmap image. 
+Creates a Texture from a Bitmap image. The alpha channel of the bitmap isn't taken into account for now. 
 - **bmpImagePath**: The x coordinate to draw the texture at.
 ### Texture (Texture)
 Clones a Texture. 
@@ -362,11 +363,11 @@ Modifies the underlying array.
 Extension method to translate a Vector2 by the specified amount. 
 Modifies the underlying variable. 
 - **vec**: Optional parameter representing the Vector2 to modify.
-- **offsetX**: The amount to move 'vec' by on the x-axis..
-- **offsetY**: The amount to move 'vec' by on the y-axis..
+- **offsetX**: The amount to move 'vec' by on the x-axis.
+- **offsetY**: The amount to move 'vec' by on the y-axis.
 ### Translate (Vector2[])
 Extension method to translate all Vector2s in an array by the specified amount. 
 Modifies the underlying array. 
 - **arr**: Optional parameter representing the array of Vector2s to modify.
-- **offsetX**: The amount to move the Vector2s in 'arr' by on the x-axis..
-- **offsetY**: The amount to move the Vector2s in 'arr' by on the y-axis..
+- **offsetX**: The amount to move the Vector2s in 'arr' by on the x-axis.
+- **offsetY**: The amount to move the Vector2s in 'arr' by on the y-axis.
