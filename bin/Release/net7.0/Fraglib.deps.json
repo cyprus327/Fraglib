@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v7.0": {
-      "Fraglib/0.1.6": {
+      "Fraglib/0.1.7": {
         "dependencies": {
           "OpenTK": "4.7.7"
         },
@@ -157,7 +157,7 @@
     }
   },
   "libraries": {
-    "Fraglib/0.1.6": {
+    "Fraglib/0.1.7": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
