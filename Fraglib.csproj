@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageId>Fraglib</PackageId>
-    <Version>0.1.6</Version>
+    <Version>0.1.7</Version>
     <Authors>cyprus327</Authors>
     <Description>A high level way to use C# like a fragment shader. https://github.com/cyprus327/Fraglib</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
