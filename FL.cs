@@ -744,14 +744,11 @@ public static class FL {
 
 /// <region>Textures</region>
 #region textures
-    /// <name>Texture</name>
-    /// <returns>struct</returns>
-    /// <summary>The texture struct for Fraglib.</summary>
     public readonly struct Texture {
         /// <name>Texture</name>
         /// <returns>Texture</returns>
         /// <summary>Creates a Texture from a Bitmap image. The alpha channel of the bitmap isn't taken into account for now.</summary>
-        /// <param name="bmpImagePath">The x coordinate to draw the texture at.</param>
+        /// <param name="bmpImagePath">The path to a Bitmap image to create the texture from.</param>
         public Texture(string bmpImagePath) {
             if (!File.Exists(bmpImagePath)) {
                 throw new FileNotFoundException("Specified image not found.");

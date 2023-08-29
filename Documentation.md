@@ -114,11 +114,9 @@ Draws a texture to the window at the specified coordinates.
 - **y**: The y coordinate to draw the texture at.
 - **texture**: The Texture to draw.
 ## Textures
-### Texture (struct)
-The texture struct for Fraglib. 
 ### Texture (Texture)
 Creates a Texture from a Bitmap image. The alpha channel of the bitmap isn't taken into account for now. 
-- **bmpImagePath**: The x coordinate to draw the texture at.
+- **bmpImagePath**: The path to a Bitmap image to create the texture from.
 ### Texture (Texture)
 Clones a Texture. 
 - **texture**: The texture to create a copy of.
