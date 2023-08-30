@@ -28,8 +28,6 @@ public static class FL {
 
         windowWidth = width;
         windowHeight = height;
-        scaledWidth = width / PixelSize;
-        scaledHeight = height / PixelSize;
         program ??= () => {};
         e = new DrawClearEngine(width, height, title, program);
         isDrawClear = true;
@@ -54,8 +52,6 @@ public static class FL {
 
         windowWidth = width;
         windowHeight = height;
-        scaledWidth = width / PixelSize;
-        scaledHeight = height / PixelSize;
         perFrame ??= () => {};
         e = new PerPixelEngine(width, height, title, perPixel, perFrame);
     }
@@ -70,7 +66,7 @@ public static class FL {
             return;
         }
 
-        e!.VSyncEnabled = VSync;
+        e.VSyncEnabled = VSync;
         e.PixelSize = PixelSize;
         
         if (isDrawClear) {
@@ -93,30 +89,12 @@ public static class FL {
     /// <param name="y">The y coordinate of the pixel.</param>
     /// <param name="color">The color of the pixel.</param>
     public static void SetPixel(int x, int y, uint color) {
-        if (!isDrawClear || x < 0 || x >= scaledWidth || y < 0 || y >= scaledHeight) {
+        if (!isDrawClear || x < 0 || x >= windowWidth || y < 0 || y >= windowHeight) {
             return;
         }
 
         ((DrawClearEngine)e!).AddAction(() => {
-            if (PixelSize == 1) {
-                e!.Screen[y * windowWidth + x] = color;
-                return;
-            }
-
-            x *= PixelSize;
-            y *= PixelSize;
-            int xMax = Math.Min(x + PixelSize, windowWidth);
-            int yMax = Math.Min(y + PixelSize, windowHeight);
-            unsafe {
-                fixed (uint* ptr = e!.Screen) {
-                    for (int py = y; py < yMax; py++) {
-                        int yo = py * windowWidth;
-                        for (int px = x; px < xMax; px++) {
-                            ptr[yo + px] = color;
-                        }
-                    }
-                }
-            }
+            e!.Screen[y * windowWidth + x] = color;
         });
     }
 
@@ -184,11 +162,6 @@ public static class FL {
             return;
         }
 
-        x *= PixelSize;
-        y *= PixelSize;
-        width *= PixelSize;
-        height *= PixelSize;
-        
         fixed (uint* screenPtr = e!.Screen) {
             for (int sy = 0; sy < height; sy++) {
                 uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
@@ -306,8 +279,8 @@ public static class FL {
                 for (int y = yStart; y <= yEnd; y++) {
                     float dx = x - centerX;
                     float dy = y - centerY;
-                    if ((dx * dx + dy * dy) <= radiusSquared) {
-                        //SetPixel(x, y, color, ptr);
+                    if (x >= 0 && x < windowWidth && y >= 0 && y < windowHeight && (dx * dx + dy * dy) <= radiusSquared) {
+                        ptr[y * windowWidth + x] = color;
                     }
                 }
             }
@@ -424,37 +397,16 @@ public static class FL {
     }
 
     private static unsafe void DrawVerticalLineAction(int x, int y0, int y1, uint color) {
-        if (x < 0 || x >= scaledWidth || y0 < 0 || y1 >= scaledHeight || y0 > y1) {
+        if (x < 0 || x >= windowWidth || y0 < 0 || y1 >= windowHeight || y0 > y1) {
             return;
         }
-
-        if (PixelSize == 1) {
-            fixed (uint* screenPtr = e!.Screen) {
-                int stride = Width;
-                uint* rowPtr = screenPtr + y0 * stride + x;
-                for (int y = y0; y <= y1; y++) {
-                    *rowPtr = color;
-                    rowPtr += stride;
-                }
-            }
-            return;
-        }
-
-        x *= PixelSize;
-        y0 *= PixelSize;
-        y1 *= PixelSize;
-
-        int xBounds = Math.Min(x + PixelSize, windowWidth);
-        int yBounds = Math.Min(y1 + PixelSize, windowHeight);
 
         fixed (uint* screenPtr = e!.Screen) {
-            uint* baseRowPtr = screenPtr + y0 * windowWidth;
-            for (int sy = y0; sy < yBounds; sy += PixelSize) {
-                uint* rowPtr = baseRowPtr + sy * windowWidth + x;
-                for (int sx = x; sx < xBounds; sx += PixelSize) {
-                    *rowPtr = color;
-                    rowPtr += PixelSize;
-                }
+            int stride = Width;
+            uint* rowPtr = screenPtr + y0 * stride + x;
+            for (int y = y0; y <= y1; y++) {
+                *rowPtr = color;
+                rowPtr += stride;
             }
         }
     }
@@ -477,43 +429,17 @@ public static class FL {
     }
 
     private static void DrawHorizontalLineAction(int x0, int x1, int y, uint color) {
-        if (x0 < 0 || x0 > x1 || x1 >= scaledWidth || y < 0 || y >= scaledHeight) {
+        if (x0 < 0 || x0 > x1 || x1 >= windowWidth || y < 0 || y >= windowHeight) {
             return;
         }
 
-        if (PixelSize == 1) {
-            unsafe {
-                fixed (uint* ptr = e!.Screen) {
-                    int startInd = y * windowWidth + x0;
-                    uint* startPtr = ptr + startInd;
-                    uint* endPtr = startPtr + (x1 - x0);
-                    for (uint* currentPtr = startPtr; currentPtr < endPtr; currentPtr++) {
-                        *currentPtr = color;
-                    }
-                }
-            }
-            return;
-        }
-
-        x0 *= PixelSize;
-        x1 *= PixelSize;
-        y *= PixelSize;
-
-        int xBounds = Math.Min(x1 + PixelSize, windowWidth);
-        int yBound = Math.Min(y + PixelSize, windowHeight);
-        
         unsafe {
             fixed (uint* ptr = e!.Screen) {
-                for (int sy = y; sy < yBound; sy++) {
-                    int yo = sy * windowWidth;
-                    for (int sx = x0; sx < xBounds; sx += PixelSize) {
-                        int startInd = yo + sx;
-                        uint* startPtr = ptr + startInd;
-                        uint* endPtr = startPtr + PixelSize;
-                        for (uint* currentPtr = startPtr; currentPtr < endPtr; currentPtr++) {
-                            *currentPtr = color;
-                        }
-                    }
+                int startInd = y * windowWidth + x0;
+                uint* startPtr = ptr + startInd;
+                uint* endPtr = startPtr + (x1 - x0);
+                for (uint* currentPtr = startPtr; currentPtr < endPtr; currentPtr++) {
+                    *currentPtr = color;
                 }
             }
         }
@@ -675,7 +601,7 @@ public static class FL {
         Array.Sort(vertices, (v1, v2) => v1.Y.CompareTo(v2.Y));
 
         int minYBound = Math.Max(minY, 0);
-        int maxYBound = Math.Min(maxY, scaledHeight - 1);
+        int maxYBound = Math.Min(maxY, windowHeight - 1);
         int maxXBound = windowWidth - 1;
 
         fixed (uint* screenPtr = e!.Screen) {
@@ -1338,15 +1264,13 @@ public static class FL {
 
     /// <name>Width</name>
     /// <returns>int</returns>
-    /// <summary>The scaled width of the window, i.e. real window width / pixel size.</summary>
-    public static int Width => scaledWidth;
-    private static int scaledWidth;
+    /// <summary>The width of the window.</summary>
+    public static int Width => windowWidth;
 
     /// <name>Height</name>
     /// <returns>int</returns>
-    /// <summary>The scaled height of the window, i.e. real window height / pixel size.</summary>
-    public static int Height => scaledHeight;
-    private static int scaledHeight;
+    /// <summary>The height of the window.</summary>
+    public static int Height => windowHeight;
 
     private static int windowWidth = 0, windowHeight = 0;
 

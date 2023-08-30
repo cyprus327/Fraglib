@@ -21,14 +21,11 @@ internal abstract class Engine : GameWindow {
         WindowHeight = height;
         WindowWidth = width;
         WindowTitle = title;
-        ScaledHeight = height / PixelSize;
-        ScaledWidth = width / PixelSize;
     }
     
     public readonly int WindowHeight, WindowWidth;
     public readonly uint[] Screen;
     public readonly string WindowTitle;
-    public readonly int ScaledHeight, ScaledWidth;
 
     private int programHandle;
     private int vertexArrayHandle;
@@ -86,16 +83,22 @@ internal abstract class Engine : GameWindow {
                 gl_Position = vec4(position, 0.0, 1.0);
             }
         ";
-        string fragmentShaderSource = @"
+        string fragmentShaderSource = @$"
             #version 330
 
             uniform sampler2D textureSampler;
 
             out vec4 fragColor;
 
-            void main() {
-                fragColor = texture(textureSampler, gl_FragCoord.xy / textureSize(textureSampler, 0));
-            }
+            void main() {{
+                if ({PixelSize} == 1) {{
+                    fragColor = texture(textureSampler, gl_FragCoord.xy / textureSize(textureSampler, 0));
+                }} else {{
+                    vec2 pixelCoord = floor(gl_FragCoord.xy / {PixelSize}.0) * {PixelSize}.0;
+                    vec2 texCoords = pixelCoord / textureSize(textureSampler, 0);
+                    fragColor = texture(textureSampler, texCoords);
+                }}
+            }}
         ";
         int vertexShader = CompileShader(ShaderType.VertexShader, vertexShaderSource);
         int fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentShaderSource);
@@ -171,7 +174,7 @@ internal abstract class Engine : GameWindow {
 
         Update(args);
 
-        Title = $"{WindowTitle} | FPS: {(1.0 / t):F0}";
+        Title = $"{WindowTitle} | FPS: {1.0 / t:F0}";
     }
 
     private int CompileShader(ShaderType type, string source) {
