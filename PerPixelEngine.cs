@@ -1,5 +1,4 @@
 using OpenTK.Windowing.Common;
-using System.Collections.Concurrent;
 using System.Numerics;
 
 namespace Fraglib;
@@ -45,51 +44,27 @@ internal sealed class PerPixelEngine : Engine {
             Array.Fill(_accumulationData, Vector4.Zero);
         }
 
-        int width = ScaledWidth, height = ScaledHeight;
-        if (PixelSize == 1) {
-            const int batchSize = 128;
-            int length = width * height;
+        const int batchSize = 128;
+        int width = WindowWidth;
+        int length = width * WindowHeight;
 
-            int numTasks = (length + batchSize - 1) / batchSize;
-            Task[] tasks = new Task[numTasks];
+        int numTasks = (length + batchSize - 1) / batchSize;
+        Task[] tasks = new Task[numTasks];
 
-            for (int batchIndex = 0; batchIndex < numTasks; batchIndex++) {
-                int start = batchIndex * batchSize;
-                int end = Math.Min(start + batchSize, length);
+        for (int batchIndex = 0; batchIndex < numTasks; batchIndex++) {
+            int start = batchIndex * batchSize;
+            int end = Math.Min(start + batchSize, length);
 
-                tasks[batchIndex] = Task.Run(() => {
-                    for (int i = start; i < end; i++) {
-                        _accumulationData[i] += _perPixel(i % width, i / width, uniforms).ToVec4();
-                        Vector4 accumulatedCol = _accumulationData[i] / frameInd;
-                        Screen[i] = FL.NewColor(accumulatedCol);
-                    }
-                });
-            }
-
-            Task.WaitAll(tasks);
-            return;
+            tasks[batchIndex] = Task.Run(() => {
+                for (int i = start; i < end; i++) {
+                    _accumulationData[i] += _perPixel(i % width, i / width, uniforms).ToVec4();
+                    Vector4 accumulatedCol = _accumulationData[i] / frameInd;
+                    Screen[i] = FL.NewColor(accumulatedCol);
+                }
+            });
         }
 
-        Parallel.For(0, width * height, i => {
-            int sx = i % width;
-            int sy = i / width;
-
-            uint fragColor = _perPixel(sx, sy, uniforms);
-
-            int startX = sx * PixelSize;
-            int startY = sy * PixelSize;
-
-            for (int py = 0; py < PixelSize; py++) {
-                int y = startY + py;
-                for (int px = 0; px < PixelSize; px++) {
-                    if (startX + px >= width || y >= height) continue;
-                    int ind = y * width + startX + px;
-                    _accumulationData[ind] += _perPixel(i % width, i / width, uniforms).ToVec4();
-                    Vector4 accumulatedCol = _accumulationData[ind] / frameInd;
-                    Screen[ind] = FL.NewColor(accumulatedCol);
-                }
-            }
-        });
+        Task.WaitAll(tasks);
     }
 
     public override void OnWindowClose() {
