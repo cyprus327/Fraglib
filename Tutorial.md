@@ -1,6 +1,11 @@
-# Fraglib Basics
+# Fraglib Tutorial
 
-## Setup
+Quick links:
+- [DrawClear tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#drawclear-tutorial)
+- [PerPixel tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#perpixel-tutorial)
+- [Textures](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md#textures)
+
+## Setup / First Window
 
 First things first, add the latest version of Fraglib to your project.
 
@@ -8,14 +13,12 @@ First things first, add the latest version of Fraglib to your project.
 dotnet add package Fraglib --version *
 ```
 
-## First Window
-
-**Step 1)** Use Fraglib
+Use Fraglib
 ```csharp
 using Fraglib;
 ```
 
-**Step 2)** Initialize and run the window
+Initialize and run the window
 ```csharp
 private static void Main() {
     FL.Init(1024, 768, "Window Title");
@@ -434,3 +437,23 @@ internal sealed class Tutorial {
 ![Mandelbrot Zoom](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/MandelbrotGIF.gif)
 
 With that, this tutorial comes to an end. If you'd like to see some more things made with Fraglib, check out the [gallery](https://github.com/cyprus327/Fraglib/blob/main/Gallery.md).
+
+## Textures
+
+In Fraglib, the only images that can be used (for now) as Textures are 32 bit Bitmaps. This is because of [how the images are loaded into the Texture](https://github.com/cyprus327/Fraglib/blob/d55a77f1c38dc4bbddfa8205b5c641540e64167f/FL.cs#L678C19-L678C19) and the fact that the approach is tailor made specifically for 32 bit Bitmaps.
+
+Due to Buffer.MemoryCopy, it is actually faster to draw a texture than it is to draw a plain rectangle, if they're both large and you're drawing lots of them.
+
+To create a new Texture in Fraglib, create a new FL.Texture, as shown below.
+```csharp
+// load a Texture from image.bmp
+FL.Texture texture = new(@"path\to\image.bmp");
+
+// create a clone of 'texture'
+FL.Texture clonedTexture = new(texture);
+
+// create a blank Texture with size 256x256
+FL.Texture blankTexture = new(256, 256);
+```
+
+The Texture struct of course has the methods you would expect, e.g. SetPixel(x, y, color), GetPixel(x, y), GetPixels.
