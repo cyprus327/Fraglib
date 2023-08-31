@@ -153,20 +153,27 @@ public static class FL {
     }
 
     private static unsafe void FillRectAction(int x, int y, int width, int height, uint color) {
-        x = Math.Max(x, 0);
-        y = Math.Max(y, 0);
-        width = Math.Min(width, windowWidth);
-        height = Math.Min(height, windowHeight);
-        
         if (width <= 0 || height <= 0) {
             return;
         }
 
+        int xClipped = Math.Max(x, 0);
+        int yClipped = Math.Max(y, 0);
+        int widthClipped = Math.Min(width + x, windowWidth) - xClipped;
+        int heightClipped = Math.Min(height + y, windowHeight) - yClipped;
+
+        if (widthClipped <= 0 || heightClipped <= 0) {
+            return;
+        }
+
         fixed (uint* screenPtr = e!.Screen) {
-            for (int sy = 0; sy < height; sy++) {
-                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
-                for (int sx = 0; sx < width; sx++) {
-                    *(screenRowPtr + sx) = color;
+            uint* rowStartPtr = screenPtr + yClipped * windowWidth + xClipped;
+
+            for (int sy = 0; sy < heightClipped; sy++) {
+                uint* rowPtr = rowStartPtr + sy * windowWidth;
+
+                for (int sx = 0; sx < widthClipped; sx++) {
+                    *(rowPtr + sx) = color;
                 }
             }
         }
@@ -656,13 +663,20 @@ public static class FL {
     }
 
     private static unsafe void DrawTextureAction(int x, int y, Texture texture) {
-        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) { 
+        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
             int textureWidth = texture.Width, textureHeight = texture.Height;
             int numBytes = textureWidth * sizeof(uint);
-            for (int sy = 0; sy < textureHeight; sy++) {
+
+            int startX = Math.Max(0, -x);
+            int startY = Math.Max(0, -y);
+            int endX = Math.Min(textureWidth, windowWidth - x);
+            int endY = Math.Min(textureHeight, windowHeight - y);
+
+            for (int sy = startY; sy < endY; sy++) {
                 uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
                 uint* textureRowPtr = texturePtr + sy * textureWidth;
-                Buffer.MemoryCopy(textureRowPtr, screenRowPtr, numBytes, numBytes);
+
+                Buffer.MemoryCopy(textureRowPtr + startX, screenRowPtr + startX, (endX - startX) * sizeof(uint), (endX - startX) * sizeof(uint));
             }
         }
     }
