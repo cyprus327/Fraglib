@@ -34,37 +34,29 @@ internal sealed class PerPixelEngine : Engine {
     private uint frameInd = 0;
 
     public override void Update(FrameEventArgs args) {
-        uniforms.Time += (float)args.Time;
-        uniforms.DeltaTime = (float)args.Time;
+        float dt = (float)args.Time;
+        uniforms.Time += dt;
+        uniforms.DeltaTime = dt;
         
         _perFrame();
-        frameInd++;
 
-        if (frameInd == 1) {
-            Array.Fill(_accumulationData, Vector4.Zero);
-        }
+        if (accumulate) {
+            if (frameInd++ == 0) {
+                Array.Clear(_accumulationData, 0, _accumulationData.Length);
+            }
 
-        const int batchSize = 128;
-        int width = WindowWidth;
-        int length = width * WindowHeight;
-
-        int numTasks = (length + batchSize - 1) / batchSize;
-        Task[] tasks = new Task[numTasks];
-
-        for (int batchIndex = 0; batchIndex < numTasks; batchIndex++) {
-            int start = batchIndex * batchSize;
-            int end = Math.Min(start + batchSize, length);
-
-            tasks[batchIndex] = Task.Run(() => {
-                for (int i = start; i < end; i++) {
-                    _accumulationData[i] += _perPixel(i % width, i / width, uniforms).ToVec4();
-                    Vector4 accumulatedCol = _accumulationData[i] / frameInd;
-                    Screen[i] = FL.NewColor(accumulatedCol);
-                }
+            int length = Screen.Length;
+            Parallel.For(0, length, i => {
+                _accumulationData[i] += _perPixel(i % length, i / length, uniforms).ToVec4();
+                Vector4 accumulatedCol = _accumulationData[i] / frameInd;
+                Screen[i] = FL.NewColor(accumulatedCol);
+            });
+        } else {
+            int length = Screen.Length;
+            Parallel.For(0, length, i => {
+                Screen[i] = _perPixel(i % length, i / length, uniforms);
             });
         }
-
-        Task.WaitAll(tasks);
     }
 
     public override void OnWindowClose() {

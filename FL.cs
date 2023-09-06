@@ -54,6 +54,7 @@ public static class FL {
         windowHeight = height;
         perFrame ??= () => {};
         e = new PerPixelEngine(width, height, title, perPixel, perFrame);
+        ((PerPixelEngine)e).Accumulate = accumulate;
     }
 
     /// <name>Run</name>
@@ -1258,13 +1259,16 @@ public static class FL {
     /// <returns>bool</returns>
     /// <summary>Gets or sets whether or not the engine accumulates previous frames with the current frame. Only applicable in PerPixel mode. Can be changed during runtime.</summary>
     public static bool Accumulate { 
-        get => e is PerPixelEngine p && p.Accumulate; 
+        get => e is PerPixelEngine p ? p.Accumulate : accumulate;
         set {
             if (e is PerPixelEngine p) {
                 p.Accumulate = value;
+            } else {
+                accumulate = value;
             }
         }
     }
+    private static bool accumulate = false;
 
     /// <name>ElapsedTime</name>
     /// <returns>float</returns>
