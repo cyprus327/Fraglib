@@ -91,13 +91,13 @@ internal abstract class Engine : GameWindow {
             out vec4 fragColor;
 
             void main() {{
-                if ({PixelSize} == 1) {{
-                    fragColor = texture(textureSampler, gl_FragCoord.xy / textureSize(textureSampler, 0));
-                }} else {{
-                    vec2 pixelCoord = floor(gl_FragCoord.xy / {PixelSize}.0) * {PixelSize}.0;
+                {(PixelSize == 1 ? 
+                    "fragColor = texture(textureSampler, gl_FragCoord.xy / textureSize(textureSampler, 0));" : 
+                    
+                    @$"vec2 pixelCoord = floor(gl_FragCoord.xy / {PixelSize}.0) * {PixelSize}.0;
                     vec2 texCoords = pixelCoord / textureSize(textureSampler, 0);
-                    fragColor = texture(textureSampler, texCoords);
-                }}
+                    fragColor = texture(textureSampler, texCoords);"
+                )}
             }}
         ";
         int vertexShader = CompileShader(ShaderType.VertexShader, vertexShaderSource);
