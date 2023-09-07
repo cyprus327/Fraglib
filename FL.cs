@@ -895,11 +895,11 @@ public static class FL {
 #region states
     private static readonly List<uint[]> _states = new();
 
-    /// <name>SaveScreen</name>
+    /// <name>SaveState</name>
     /// <returns>void</returns>
     /// <summary>Saves the current state of the window to a buffer.</summary>
     /// <param name="state">An int that corresponds to the saved buffer and can be passed into LoadScreen.</param>
-    public static void SaveScreen(out int state) {
+    public static void SaveState(out int state) {
         if (e is null) {
             state = -1;
             return;
@@ -910,11 +910,11 @@ public static class FL {
         state = index;
     }
 
-    /// <name>LoadScreen</name>
+    /// <name>LoadState</name>
     /// <returns>void</returns>
     /// <summary>Sets the window to a previously saved state.</summary>
     /// <param name="state">An int that corresponds to the previously saved buffer, generated from SaveScreen.</param>
-    public static void LoadScreen(int state) {
+    public static unsafe void LoadState(int state) {
         if (e is null) {
             return;
         }
@@ -923,8 +923,12 @@ public static class FL {
             return;
         }
 
-        Array.Copy(_states[state], e.Screen, e.Screen.Length);
-        //Buffer.BlockCopy(_states[state], 0, e.Screen, 0, e.Screen.Length * sizeof(uint));
+        unsafe {
+            fixed (uint* screenPtr = e.Screen, statePtr = _states[state]) {
+                long numBytes = e.Screen.Length * sizeof(uint);
+                Buffer.MemoryCopy(statePtr, screenPtr, numBytes, numBytes);
+            }
+        }
     }
 
     /// <name>ClearStates</name>
