@@ -456,4 +456,51 @@ FL.Texture clonedTexture = new(texture);
 FL.Texture blankTexture = new(256, 256);
 ```
 
-The Texture struct of course has the methods you would expect, e.g. SetPixel(x, y, color), GetPixel(x, y), GetPixels.
+The Texture struct of course has the methods you would expect, e.g. 'SetPixel(x, y, color)', 'GetPixel(x, y)', 'GetPixels'.
+
+## States
+
+The 'SaveState' and 'LoadState' methods can be extremely helpful in certain circumstances.
+For example, if you have a texture or pattern you want to be the background of the window, instead of drawing the texture every frame, you can simply draw it once, save it, and then load it repeatedly.
+Below is what this would look like.
+
+```csharp
+int background = -1;
+FL.Texture texture = new(@"path\to\image.bmp");
+
+FL.Init(800, 600, "Window", () => {
+    FL.LoadState(background);
+    // ...
+});
+
+for (int y = 0; y < 600; y += 5) {
+    for (int x = 0; x < 800; x += 5) {
+        FL.FillRect(x, y, 4, 4, FL.Rand());
+    }
+}
+FL.SaveState(out background);
+
+FL.Run();
+```
+
+Instead of below, where you're drawing the background pattern every frame.
+
+```csharp
+FL.Texture texture = new(@"path\to\image.bmp");
+
+FL.Init(800, 600, "Window", () => {
+    for (int y = 0; y < 600; y += 5) {
+        for (int x = 0; x < 800; x += 5) {
+            FL.FillRect(x, y, 4, 4, FL.Rand());
+        }
+    }
+    // ...
+});
+
+FL.Run();
+```
+
+In case you're confused about the first snippet and why things are in the order they are, the simple explaination is that when you call Init, the program supplied isn't actually run until Run is called,
+so anything in betweem those two calls will be called before your program, which in this case allows us to save the background pattern.
+
+You may notice I initialize 'background' to -1, this doesn't actually effect anything, it just makes it look better to me. Initializing it to any other integer would work perfectly here as well.
