@@ -40,21 +40,21 @@ internal sealed class PerPixelEngine : Engine {
         
         _perFrame();
 
+        int length = Screen.Length;
+        int width = WindowWidth;
         if (accumulate) {
             if (frameInd++ == 0) {
                 Array.Clear(_accumulationData, 0, _accumulationData.Length);
             }
 
-            int length = Screen.Length;
             Parallel.For(0, length, i => {
-                _accumulationData[i] += _perPixel(i % length, i / length, uniforms).ToVec4();
+                _accumulationData[i] += _perPixel(i % width, i / width, uniforms).ToVec4();
                 Vector4 accumulatedCol = _accumulationData[i] / frameInd;
                 Screen[i] = FL.NewColor(accumulatedCol);
             });
         } else {
-            int length = Screen.Length;
             Parallel.For(0, length, i => {
-                Screen[i] = _perPixel(i % length, i / length, uniforms);
+                Screen[i] = _perPixel(i % width, i / width, uniforms);
             });
         }
     }
