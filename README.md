@@ -1,6 +1,6 @@
 # Fraglib
 
-Fraglib is a powerful and simple-to-learn library that allows you to use C# like a fragment shader, or to help render things in general.
+Fraglib is a powerful and simple-to-learn library that allows you to use C# like a fragment shader.
 
 NOTE: This library is still in very early stages of development, and is in no way final. See [Fraglib on NuGet](https://www.nuget.org/packages/Fraglib) to see what the latest version is.
 
@@ -15,9 +15,9 @@ NOTE: This library is still in very early stages of development, and is in no wa
 
 ## Features
 
-- **DrawClear Mode**: Individual control over every pixel on the window.
+- **DrawClear Mode**: Individual control over every pixel on the window + helpful build in methods (FillPolygon, DrawTexture, etc.).
 - **PerPixel Mode**: A perPixel function that runs for every pixel on the window and a perFrame function that runs each frame.
-- **Flexible pixel size**: You can set the pixel size to any number (>= 1) without making other changes to your program. Fraglib handles everything automatically.
+- **Many customizable settings**: You can set the pixel size to any number (>= 1) without making other changes to your program. Fraglib handles everything automatically.
 - **Time-saving functions**: Fraglib provides many functions that are commonly used in development, such as a deterministic random, to speed up your workflow.
 
 ## Getting Started
@@ -56,12 +56,11 @@ internal sealed class Example {
     // variables for the ball
     private static float ballX = FL.Width / 2f;
     private static float ballY = FL.Height / 2f;
-    private static float ballRadius = 50f / FL.PixelSize;
-    private static float ballSpeedX = 700f / FL.PixelSize;
-    private static float ballSpeedY = 700f / FL.PixelSize;
+    private static float ballRadius = 50f;
+    private static float ballSpeedX = 700f;
+    private static float ballSpeedY = 700f;
     
     private static void Main() {
-        FL.PixelSize = 4;
         FL.VSync = true;
         FL.Init(1024, 768, "Rainbow Ball", Program);
         FL.Run();
@@ -69,7 +68,7 @@ internal sealed class Example {
 
     private static void Program() {
         // clear the last frame
-        FL.Clear(FL.Black);
+        FL.Clear();
 
         // update ball position
         ballX += ballSpeedX * FL.DeltaTime;
@@ -90,4 +89,4 @@ internal sealed class Example {
 ```
 ![Rainbow Ball](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/RainbowBallGIF.gif)
 
-You may have noticed there is nothing like "FL.Close()", which is on purpose. There's no unbinding, unloading, etc. in Fraglib, everything happens automatically behind the scenes.
+You may have noticed there is nothing like "FL.Close()", which is on purpose. There's no unbinding, unloading, etc., everything is done for you behind the scenes.
