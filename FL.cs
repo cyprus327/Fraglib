@@ -137,11 +137,35 @@ public static class FL {
         });
     }
 
+    /// <name>DrawRect</name>
+    /// <returns>void</returns>
+    /// <summary>Draws a rectangle of specified size and color at the specified coordinates.</summary>
+    /// <param name="x">The rectangle's x coordinate.</param>
+    /// <param name="y">The rectangle's y coordinate.</param>
+    /// <param name="width">The width of the rectangle.</param>
+    /// <param name="height">The height of the rectangle.</param>
+    /// <param name="color">The color of the rectangle.</param>
+    public static void DrawRect(int x, int y, int width, int height, uint color) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => DrawRectAction(x, y, width, height, color));
+    }
+
+    private static void DrawRectAction(int x, int y, int width, int height, uint color) {
+        int xw = x + width, yh = y + height;
+        DrawVerticalLineAction(x, y, yh, color);
+        DrawVerticalLineAction(xw, y, yh, color);
+        DrawHorizontalLineAction(x, xw, y, color);
+        DrawHorizontalLineAction(x, xw, yh, color);
+    }
+
     /// <name>FillRect</name>
     /// <returns>void</returns>
     /// <summary>Fills a solid rectangle of specified size and color at the specified coordinates.</summary>
-    /// <param name="x">The starting point of the rectangle's x coordinate.</param>
-    /// <param name="y">The starting point of the rectangle's y coordinate.</param>
+    /// <param name="x">The rectangle's x coordinate.</param>
+    /// <param name="y">The rectangle's y coordinate.</param>
     /// <param name="width">The width of the rectangle.</param>
     /// <param name="height">The height of the rectangle.</param>
     /// <param name="color">The color of the rectangle.</param>
@@ -181,10 +205,10 @@ public static class FL {
 
         // TODO: make this work somehow, ~20x faster for big rects
         // fixed (uint* screenPtr = e!.Screen) {
-        //     int numBytes = width * sizeof(uint);
+        //     int numBytes = sizeof(uint);
         //     for (int sy = 0; sy < height; sy++) {
         //         uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
-        //         Buffer.MemoryCopy(&color, screenRowPtr, width, width);
+        //         Buffer.MemoryCopy(&color, screenRowPtr, numBytes, numBytes);
         //     }
         // }
     }
@@ -208,7 +232,7 @@ public static class FL {
         int x = (int)radius, y = 0;
         int decisionOver2 = 1 - x;
 
-        fixed (uint* ptr = e!.Screen) {
+        fixed (uint* screenPtr = e!.Screen) {
             while (y <= x) {
                 int i1 = (int)(centerY + y) * windowWidth + (int)(centerX + x);
                 int i2 = (int)(centerY - y) * windowWidth + (int)(centerX + x);
@@ -220,28 +244,28 @@ public static class FL {
                 int i8 = (int)(centerY - x) * windowWidth + (int)(centerX - y);
 
                 if (i1 >= 0 && i1 < windowWidth * windowHeight) {
-                    ptr[i1] = color;
+                    screenPtr[i1] = color;
                 }
                 if (i2 >= 0 && i2 < windowWidth * windowHeight) {
-                    ptr[i2] = color;
+                    screenPtr[i2] = color;
                 }
                 if (i3 >= 0 && i3 < windowWidth * windowHeight) {
-                    ptr[i3] = color;
+                    screenPtr[i3] = color;
                 }
                 if (i4 >= 0 && i4 < windowWidth * windowHeight) {
-                    ptr[i4] = color;
+                    screenPtr[i4] = color;
                 }
                 if (i5 >= 0 && i5 < windowWidth * windowHeight) {
-                    ptr[i5] = color;
+                    screenPtr[i5] = color;
                 }
                 if (i6 >= 0 && i6 < windowWidth * windowHeight) {
-                    ptr[i6] = color;
+                    screenPtr[i6] = color;
                 }
                 if (i7 >= 0 && i7 < windowWidth * windowHeight) {
-                    ptr[i7] = color;
+                    screenPtr[i7] = color;
                 }
                 if (i8 >= 0 && i8 < windowWidth * windowHeight) {
-                    ptr[i8] = color;
+                    screenPtr[i8] = color;
                 }
 
                 if (decisionOver2 <= 0) {
@@ -282,13 +306,13 @@ public static class FL {
         int yEnd = (int)(centerY + radius);
         float radiusSquared = radius * radius;
 
-        fixed (uint* ptr = e!.Screen) {
+        fixed (uint* screenPtr = e!.Screen) {
             for (int x = xStart; x <= xEnd; x++) {
                 for (int y = yStart; y <= yEnd; y++) {
                     float dx = x - centerX;
                     float dy = y - centerY;
                     if (x >= 0 && x < windowWidth && y >= 0 && y < windowHeight && (dx * dx + dy * dy) <= radiusSquared) {
-                        ptr[y * windowWidth + x] = color;
+                        screenPtr[y * windowWidth + x] = color;
                     }
                 }
             }
@@ -405,8 +429,15 @@ public static class FL {
     }
 
     private static unsafe void DrawVerticalLineAction(int x, int y0, int y1, uint color) {
-        if (x < 0 || x >= windowWidth || y0 < 0 || y1 >= windowHeight || y0 > y1) {
+        if (x < 0 || x >= windowWidth || y0 >= windowHeight || y1 < 0) {
             return;
+        }
+
+        if (y0 < 0) {
+            y0 = 0;
+        }
+        if (y1 >= windowHeight) {
+            y1 = windowHeight - 1;
         }
 
         fixed (uint* screenPtr = e!.Screen) {
@@ -418,7 +449,6 @@ public static class FL {
             }
         }
     }
-
 
     /// <name>DrawHorizontalLine</name>
     /// <returns>void</returns>
@@ -436,19 +466,29 @@ public static class FL {
         ((DrawClearEngine)e!).AddAction(() => DrawHorizontalLineAction(x0, x1, y, color));
     }
 
-    private static void DrawHorizontalLineAction(int x0, int x1, int y, uint color) {
-        if (x0 < 0 || x0 > x1 || x1 >= windowWidth || y < 0 || y >= windowHeight) {
+    private static unsafe void DrawHorizontalLineAction(int x0, int x1, int y, uint color) {
+        if (y < 0 || y >= windowHeight) {
             return;
         }
 
-        unsafe {
-            fixed (uint* ptr = e!.Screen) {
-                int startInd = y * windowWidth + x0;
-                uint* startPtr = ptr + startInd;
-                uint* endPtr = startPtr + (x1 - x0);
-                for (uint* currentPtr = startPtr; currentPtr < endPtr; currentPtr++) {
-                    *currentPtr = color;
-                }
+        if (x0 < 0) {
+            x0 = 0;
+        }
+
+        if (x1 >= windowWidth) {
+            x1 = windowWidth - 1;
+        }
+
+        if (x0 > x1) {
+            return;
+        }
+
+        fixed (uint* screenPtr = e!.Screen) {
+            int startInd = y * windowWidth + x0;
+            uint* startPtr = screenPtr + startInd;
+            uint* endPtr = startPtr + (x1 - x0);
+            for (uint* currentPtr = startPtr; currentPtr <= endPtr; currentPtr++) {
+                *currentPtr = color;
             }
         }
     }
@@ -666,18 +706,71 @@ public static class FL {
     private static unsafe void DrawTextureAction(int x, int y, Texture texture) {
         fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
             int textureWidth = texture.Width, textureHeight = texture.Height;
-            int numBytes = textureWidth * sizeof(uint);
 
             int startX = Math.Max(0, -x);
             int startY = Math.Max(0, -y);
             int endX = Math.Min(textureWidth, windowWidth - x);
             int endY = Math.Min(textureHeight, windowHeight - y);
+            int numBytes = (endX - startX) * sizeof(uint);
 
             for (int sy = startY; sy < endY; sy++) {
                 uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
                 uint* textureRowPtr = texturePtr + sy * textureWidth;
 
-                Buffer.MemoryCopy(textureRowPtr + startX, screenRowPtr + startX, (endX - startX) * sizeof(uint), (endX - startX) * sizeof(uint));
+                Buffer.MemoryCopy(textureRowPtr + startX, screenRowPtr + startX, numBytes, numBytes);
+            }
+        }
+    }
+
+    /// <name>DrawTexture</name>
+    /// <returns>void</returns>
+    /// <summary>Draws a texture to the window at the specified coordinates with the specified scale.</summary>
+    /// <param name="x">The x coordinate to draw the texture at.</param>
+    /// <param name="y">The y coordinate to draw the texture at.</param>
+    /// <param name="scaleX">The amount by which to scale the texture horizontally.</param>
+    /// <param name="scaleY">The amount by which to scale the texture vertically.</param>
+    /// <param name="texture">The Texture to draw.</param>
+    public static void DrawTextureScaled(int x, int y, float scaleX, float scaleY, Texture texture) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => DrawTextureScaledAction(x, y, scaleX, scaleY, texture));
+    }
+
+    private static unsafe void DrawTextureScaledAction(int x, int y, float scaleX, float scaleY, Texture texture) {
+        if (scaleX <= 0 || scaleY <= 0) {
+            return;
+        }
+
+        int scaledWidth = (int)(texture.Width * scaleX);
+        int scaledHeight = (int)(texture.Height * scaleY);
+
+        int startX = Math.Max(0, -x);
+        int startY = Math.Max(0, -y);
+        int endX = Math.Min(scaledWidth, windowWidth - x);
+        int endY = Math.Min(scaledHeight, windowHeight - y);
+
+        if (endX <= 0 || endY <= 0) {
+            return;
+        }
+
+        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+            int textureWidth = texture.Width, textureHeight = texture.Height;
+
+            for (int sy = startY; sy < endY; sy++) {
+                int textureY = (int)(sy / scaleY);
+
+                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
+
+                for (int sx = startX; sx < endX; sx++) {
+                    int textureX = (int)(sx / scaleX);
+
+                    uint* texturePixelPtr = texturePtr + textureY * textureWidth + textureX;
+                    uint* screenPixelPtr = screenRowPtr + sx;
+
+                    *screenPixelPtr = *texturePixelPtr;
+                }
             }
         }
     }
