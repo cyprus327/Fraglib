@@ -30,10 +30,17 @@ Clears the window to black.
 ### Clear (void)
 Clears the window to the specified color. 
 - **color**: The color the window will get cleared to.
+### DrawRect (void)
+Draws a rectangle of specified size and color at the specified coordinates. 
+- **x**: The rectangle's x coordinate.
+- **y**: The rectangle's y coordinate.
+- **width**: The width of the rectangle.
+- **height**: The height of the rectangle.
+- **color**: The color of the rectangle.
 ### FillRect (void)
 Fills a solid rectangle of specified size and color at the specified coordinates. 
-- **x**: The starting point of the rectangle's x coordinate.
-- **y**: The starting point of the rectangle's y coordinate.
+- **x**: The rectangle's x coordinate.
+- **y**: The rectangle's y coordinate.
 - **width**: The width of the rectangle.
 - **height**: The height of the rectangle.
 - **color**: The color of the rectangle.
@@ -112,6 +119,13 @@ Fills a solid polygon of specified color with specified vertices.
 Draws a texture to the window at the specified coordinates. 
 - **x**: The x coordinate to draw the texture at.
 - **y**: The y coordinate to draw the texture at.
+- **texture**: The Texture to draw.
+### DrawTexture (void)
+Draws a texture to the window at the specified coordinates with the specified scale. 
+- **x**: The x coordinate to draw the texture at.
+- **y**: The y coordinate to draw the texture at.
+- **scaleX**: The amount by which to scale the texture horizontally.
+- **scaleY**: The amount by which to scale the texture vertically.
 - **texture**: The Texture to draw.
 ## Textures
 ### Texture (Texture)
@@ -284,9 +298,9 @@ The total time since Run was called.
 ### DeltaTime (float)
 The time from the current frame to the last frame. 
 ### Width (int)
-The scaled width of the window, i.e. real window width / pixel size. 
+The width of the window. 
 ### Height (int)
-The scaled height of the window, i.e. real window height / pixel size. 
+The height of the window. 
 ### Mouse (Vector2)
 The mouse position on the window. 
 ### MouseDelta (Vector2)
