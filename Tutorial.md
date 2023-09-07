@@ -466,7 +466,6 @@ Below is what this would look like.
 
 ```csharp
 int background = -1;
-FL.Texture texture = new(@"path\to\image.bmp");
 
 FL.Init(800, 600, "Window", () => {
     FL.LoadState(background);
@@ -486,8 +485,6 @@ FL.Run();
 Instead of below, where you're drawing the background pattern every frame.
 
 ```csharp
-FL.Texture texture = new(@"path\to\image.bmp");
-
 FL.Init(800, 600, "Window", () => {
     for (int y = 0; y < 600; y += 5) {
         for (int x = 0; x < 800; x += 5) {
