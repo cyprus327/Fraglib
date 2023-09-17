@@ -120,7 +120,7 @@ Draws a texture to the window at the specified coordinates.
 - **x**: The x coordinate to draw the texture at.
 - **y**: The y coordinate to draw the texture at.
 - **texture**: The Texture to draw.
-### DrawTexture (void)
+### DrawTextureScaled (void)
 Draws a texture to the window at the specified coordinates with the specified scale. 
 - **x**: The x coordinate to draw the texture at.
 - **y**: The y coordinate to draw the texture at.
@@ -154,10 +154,10 @@ Gets a pixel in the texture at specified coordinates.
 - **x**: The x coordinate of the pixel.
 - **y**: The y coordinate of the pixel.
 ## States
-### SaveScreen (void)
+### SaveState (void)
 Saves the current state of the window to a buffer. 
 - **state**: An int that corresponds to the saved buffer and can be passed into LoadScreen.
-### LoadScreen (void)
+### LoadState (void)
 Sets the window to a previously saved state. 
 - **state**: An int that corresponds to the previously saved buffer, generated from SaveScreen.
 ### ClearStates (void)
@@ -285,14 +285,20 @@ Converts a color from HSL format to either RGBA (0xRRGGBBAA) or ABGR format (0xA
 - **saturation**: The S channel's value.
 - **lightness**: The L channel's value.
 ## Common
+### RenderSettings (struct)
+The struct defining the settings which will be applied when FL.Init is called. 
 ### PixelSize (int)
-The pixel size of the window. Locked between [1, 100]. 
+Gets or sets the pixel size of the window. Clamped in the range [1, 100]. 
 ### VSync (bool)
 Gets or sets whether or not VSync is enabled. 
 ### Multithreaded (bool)
 Gets or sets whether or not the engine is multithreaded. Only applicable in DrawClear mode. 
 ### Accumulate (bool)
 Gets or sets whether or not the engine accumulates previous frames with the current frame. Only applicable in PerPixel mode. Can be changed during runtime. 
+### ScaleType (ScaleType)
+Gets or sets how the engine renders when PixelSize > 1. 
+### Settings (RenderSettings)
+Gets or sets the settings with which the engine will run. Not all settings can be changed during runtime, the ones that can't be must be set before Init. 
 ### ElapsedTime (float)
 The total time since Run was called. 
 ### DeltaTime (float)
