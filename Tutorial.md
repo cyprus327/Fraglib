@@ -33,13 +33,17 @@ When you run this, you should see a black window open with your specified resolu
 If you want to change settings, such as PixelSize, change them before calling FL.Init as shown below.
 ```csharp
 // this is fine
-FL.PixelSize = 10;
+FL.Settings = new() {
+    PixelSize = 5
+};
 FL.Init(1024, 768, "Window With Big Pixels");
 FL.Run();
 
 // this doesn't work
 FL.Init(1024, 768, "Window With Normal Pixels");
-FL.PixelSize = 10;
+FL.Settings = new() {
+    PixelSize = 5
+};
 FL.Run();
 ```
 
@@ -232,7 +236,7 @@ internal sealed class Tutorial {
 
     private static void Program() {
         // clear the last frame
-        FL.Clear(FL.Black);
+        FL.Clear();
 
         // update ball position
         ballX += ballSpeedX * FL.DeltaTime;
@@ -255,12 +259,6 @@ internal sealed class Tutorial {
 Before moving on, try experimenting with some things. For example, see if you can get the ball to look like the screenshot below.
 
 ![Scaled rainbow ball](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/PixelatedRainbowBall.png)
-
-Here's a hint:
-```csharp
-FL.PixelSize = 8;
-```
-And another hint: Scale your variables!
 
 ## PerPixel Tutorial
 
