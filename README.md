@@ -34,7 +34,10 @@ using Fraglib;
 
 internal sealed class Example {
     private static void Main() {
-        FL.VSync = true;
+        FL.Settings = new() {
+            VSync = true
+        };
+
         FL.Init(1024, 768, "Window", PerPixel); // PerFrame optional
         FL.Run();
     }
@@ -61,7 +64,10 @@ internal sealed class Example {
     private static float ballSpeedY = 700f;
     
     private static void Main() {
-        FL.VSync = true;
+        FL.Settings = new() {
+            VSync = true
+        };
+
         FL.Init(1024, 768, "Rainbow Ball", Program);
         FL.Run();
     }
