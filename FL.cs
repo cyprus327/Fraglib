@@ -54,7 +54,7 @@ public static class FL {
         windowHeight = height;
         perFrame ??= () => {};
         e = new PerPixelEngine(width, height, title, perPixel, perFrame);
-        ((PerPixelEngine)e).Accumulate = accumulate;
+        ((PerPixelEngine)e).Accumulate = renderSettings.Accumulate;
     }
 
     /// <name>Run</name>
@@ -67,12 +67,13 @@ public static class FL {
             return;
         }
 
-        e.VSyncEnabled = VSync;
-        e.PixelSize = PixelSize;
+        e.VSyncEnabled = renderSettings.VSync;
+        e.PixelSize = renderSettings.PixelSize;
+        e.ScaleType = renderSettings.ScaleType;
         
         if (isDrawClear) {
-            ((DrawClearEngine)e).Multithreaded = Multithreaded;
-            if (Multithreaded) {
+            ((DrawClearEngine)e).Multithreaded = renderSettings.Multithreaded;
+            if (renderSettings.Multithreaded) {
                 ((DrawClearEngine)e).StartThreadPool();
             }
         }
@@ -722,7 +723,7 @@ public static class FL {
         }
     }
 
-    /// <name>DrawTexture</name>
+    /// <name>DrawTextureScaled</name>
     /// <returns>void</returns>
     /// <summary>Draws a texture to the window at the specified coordinates with the specified scale.</summary>
     /// <param name="x">The x coordinate to draw the texture at.</param>
@@ -736,6 +737,14 @@ public static class FL {
         }
 
         ((DrawClearEngine)e!).AddAction(() => DrawTextureScaledAction(x, y, scaleX, scaleY, texture));
+    }
+
+    public static void DrawTextureScaled(int x, int y, int scaledX, int scaledY, Texture texture) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => DrawTextureScaledAction(x, y, (float)scaledX / texture.Width, (float)scaledY / texture.Height, texture));
     }
 
     private static unsafe void DrawTextureScaledAction(int x, int y, float scaleX, float scaleY, Texture texture) {
@@ -1331,41 +1340,66 @@ public static class FL {
 
 /// <region>Common</region>
 #region common
-    //===========================================================
-    // Properties
-    /// <name>PixelSize</name>
-    /// <returns>int</returns>
-    /// <summary>The pixel size of the window. Locked between [1, 100].</summary>
-    public static int PixelSize {
-        get => pixelSize;
-        set => pixelSize = Math.Clamp(value, 1, 100);
+    /// <name>RenderSettings</name>
+    /// <returns>struct</returns>
+    /// <summary>The struct defining the settings which will be applied when FL.Init is called.</summary>
+    public struct RenderSettings {
+        public RenderSettings() { }
+
+        /// <name>PixelSize</name>
+        /// <returns>int</returns>
+        /// <summary>Gets or sets the pixel size of the window. Clamped in the range [1, 100].</summary>
+        public int PixelSize {
+            readonly get => pixelSize;
+            set => pixelSize = Math.Clamp(value, 1, 100);
+        }
+        private int pixelSize = 1;
+        
+        /// <name>VSync</name>
+        /// <returns>bool</returns>
+        /// <summary>Gets or sets whether or not VSync is enabled.</summary>
+        public bool VSync { get; set; } = true;
+        
+        /// <name>Multithreaded</name>
+        /// <returns>bool</returns>
+        /// <summary>Gets or sets whether or not the engine is multithreaded. Only applicable in DrawClear mode.</summary>
+        public bool Multithreaded { get; set; } = false;
+        
+        /// <name>Accumulate</name>
+        /// <returns>bool</returns>
+        /// <summary>Gets or sets whether or not the engine accumulates previous frames with the current frame. Only applicable in PerPixel mode. Can be changed during runtime.</summary>
+        public bool Accumulate {
+            readonly get => e is PerPixelEngine p ? p.Accumulate : accumulate;
+            set {
+                if (e is PerPixelEngine p) {
+                    p.Accumulate = value;
+                } else {
+                    accumulate = value;
+                }
+            }
+        }
+        private bool accumulate = false;
+
+        /// <name>ScaleType</name>
+        /// <returns>ScaleType</returns>
+        /// <summary>Gets or sets how the engine renders when PixelSize > 1.</summary>
+        public ScaleType ScaleType;
     }
-    private static int pixelSize = 1;
 
-    /// <name>VSync</name>
-    /// <returns>bool</returns>
-    /// <summary>Gets or sets whether or not VSync is enabled.</summary>
-    public static bool VSync { get; set; } = true;
-
-    /// <name>Multithreaded</name>
-    /// <returns>bool</returns>
-    /// <summary>Gets or sets whether or not the engine is multithreaded. Only applicable in DrawClear mode.</summary>
-    public static bool Multithreaded { get; set; } = false;
-    
-    /// <name>Accumulate</name>
-    /// <returns>bool</returns>
-    /// <summary>Gets or sets whether or not the engine accumulates previous frames with the current frame. Only applicable in PerPixel mode. Can be changed during runtime.</summary>
-    public static bool Accumulate { 
-        get => e is PerPixelEngine p ? p.Accumulate : accumulate;
+    /// <name>Settings</name>
+    /// <returns>RenderSettings</returns>
+    /// <summary>Gets or sets the settings with which the engine will run. Not all settings can be changed during runtime, the ones that can't be must be set before Init.</summary>
+    public static RenderSettings Settings {
+        get => renderSettings;
         set {
-            if (e is PerPixelEngine p) {
-                p.Accumulate = value;
+            if (e is null) {
+                renderSettings = value;
             } else {
-                accumulate = value;
+                renderSettings.Accumulate = value.Accumulate;
             }
         }
     }
-    private static bool accumulate = false;
+    private static RenderSettings renderSettings = new();
 
     /// <name>ElapsedTime</name>
     /// <returns>float</returns>
@@ -1627,8 +1661,8 @@ public static class FL {
     /// <param name="offsetX">The amount to move 'vec' by on the x-axis.</param>
     /// <param name="offsetY">The amount to move 'vec' by on the y-axis.</param>
     public static Vector2 Translate(this ref Vector2 vec, float offsetX, float offsetY) {
-        vec.X += offsetX / PixelSize;
-        vec.Y += offsetY / PixelSize;
+        vec.X += offsetX;
+        vec.Y += offsetY;
 
         return vec;
     }
