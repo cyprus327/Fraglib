@@ -37,6 +37,7 @@ internal abstract class Engine : GameWindow {
     public float DeltaTime { get; private set; } = 0f;
     public bool VSyncEnabled { get => VSync == VSyncMode.On; set => VSync = value ? VSyncMode.On : VSyncMode.Off; }
     public int PixelSize { get; set; } = 1;
+    public ScaleType ScaleType { get; set; } = ScaleType.None;
 
     protected override void OnLoad() {
         base.OnLoad();
@@ -93,10 +94,28 @@ internal abstract class Engine : GameWindow {
             void main() {{
                 {(PixelSize == 1 ? 
                     "fragColor = texture(textureSampler, gl_FragCoord.xy / textureSize(textureSampler, 0));" : 
-                    
-                    @$"vec2 pixelCoord = floor(gl_FragCoord.xy / {PixelSize}.0) * {PixelSize}.0;
-                    vec2 texCoords = pixelCoord / textureSize(textureSampler, 0);
-                    fragColor = texture(textureSampler, texCoords);"
+
+                    ScaleType == ScaleType.Average ? 
+                    @$"
+                        vec2 pixelCoord = floor(gl_FragCoord.xy / vec2({PixelSize}, {PixelSize})) * vec2({PixelSize}, {PixelSize});
+                        vec2 texCoords = pixelCoord / textureSize(textureSampler, 0);
+                        vec3 averageColor = vec3(0.0);
+
+                        for (int i = 0; i < {PixelSize}; i++) {{
+                            for (int j = 0; j < {PixelSize}; j++) {{
+                                texCoords = (pixelCoord + vec2(i, j)) / textureSize(textureSampler, 0);
+                                averageColor += texture(textureSampler, texCoords).rgb;
+                            }}
+                        }}
+
+                        averageColor /= float({PixelSize} * {PixelSize});
+                        fragColor = vec4(averageColor, 1.0);
+                    " : 
+                    @$"
+                        vec2 pixelCoord = floor(gl_FragCoord.xy / {PixelSize}.0) * {PixelSize}.0;
+                        vec2 texCoords = pixelCoord / textureSize(textureSampler, 0);
+                        fragColor = texture(textureSampler, texCoords);
+                    "
                 )}
             }}
         ";
@@ -193,4 +212,9 @@ internal abstract class Engine : GameWindow {
 
     public abstract void Update(FrameEventArgs args);
     public abstract void OnWindowClose();
+}
+
+public enum ScaleType {
+    None,
+    Average
 }
