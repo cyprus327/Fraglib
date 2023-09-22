@@ -50,11 +50,15 @@ internal sealed class PerPixelEngine : Engine {
             Parallel.For(0, length, i => {
                 _accumulationData[i] += _perPixel(i % width, i / width, uniforms).ToVec4();
                 Vector4 accumulatedCol = _accumulationData[i] / frameInd;
-                Screen[i] = FL.NewColor(accumulatedCol);
+                uint color = FL.NewColor(accumulatedCol);
+                color.SetR((byte)(((int)color.GetR() + (int)Screen[i].GetA()) / 0b10));
+                Screen[i] = color;
             });
         } else {
             Parallel.For(0, length, i => {
-                Screen[i] = _perPixel(i % width, i / width, uniforms);
+                uint color = _perPixel(i % width, i / width, uniforms);
+                color.SetR((byte)(((int)color.GetR() + (int)Screen[i].GetA()) / 0b10));
+                Screen[i] = color;
             });
         }
     }
