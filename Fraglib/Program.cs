@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-string source = File.ReadAllText("FL.cs");
+string source = File.ReadAllText("Fraglib\\FL.cs");
 StringBuilder docs = new("# Fraglib Documentation\n");
 
 MatchCollection? comments = Regex.Matches(source, @"///.*\n");
