@@ -203,15 +203,6 @@ public static class FL {
                 }
             }
         }
-
-        // TODO: make this work somehow, ~20x faster for big rects
-        // fixed (uint* screenPtr = e!.Screen) {
-        //     int numBytes = sizeof(uint);
-        //     for (int sy = 0; sy < height; sy++) {
-        //         uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
-        //         Buffer.MemoryCopy(&color, screenRowPtr, numBytes, numBytes);
-        //     }
-        // }
     }
 
     /// <name>DrawCircle</name>
@@ -647,8 +638,6 @@ public static class FL {
             maxY = Math.Max(maxY, y);
         }
 
-        Array.Sort(vertices, (v1, v2) => v1.Y.CompareTo(v2.Y));
-
         int minYBound = Math.Max(minY, 0);
         int maxYBound = Math.Min(maxY, windowHeight - 1);
         int maxXBound = windowWidth - 1;
@@ -676,14 +665,9 @@ public static class FL {
                 int count = intersections.Count;
                 uint* rowPtr = screenPtr + y * windowWidth;
                 for (int i = 0; i < count; i += 2) {
-                    int xStart = Math.Max(intersections[i], 0);
-                    int xEnd = Math.Min(intersections[Math.Min(i + 1, count - 1)], maxXBound);
-
-                    uint* pixelPtr = rowPtr + xStart;
-                    int numPixels = xEnd - xStart + 1;
-                    for (int p = 0; p < numPixels; p++) {
-                        *pixelPtr = color;
-                        pixelPtr++;
+                    uint* end = rowPtr + Math.Min(intersections[Math.Min(i + 1, count - 1)], maxXBound);
+                    for (uint* start = rowPtr + Math.Max(intersections[i], 0); start <= end; start++) {
+                        *start = color;
                     }
                 }
             }
