@@ -18,7 +18,7 @@ foreach (Match comment in comments.Cast<Match>()) {
     if (!string.IsNullOrEmpty(name)) {
         docs.Append($"### {name}");
     }
-    
+
     string summary = Regex.Match(commentText, @"<summary>(.*?)<\/summary>").Groups[1].Value.Trim();
     if (!string.IsNullOrEmpty(summary)) {
         docs.AppendLine($"{summary} ");
