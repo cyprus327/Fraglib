@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageId>Fraglib</PackageId>
-    <Version>0.2.1</Version>
+    <Version>0.2.2</Version>
     <Authors>cyprus327</Authors>
     <Description>A unique high level C# rendering library. https://github.com/cyprus327/Fraglib</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
