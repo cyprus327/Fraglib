@@ -15,10 +15,10 @@ NOTE: This library is still in very early stages of development, and is in no wa
 
 ## Features
 
-- **DrawClear Mode**: Individual control over every pixel on the window + helpful build in methods (FillPolygon, DrawTexture, etc.).
+- **DrawClear Mode**: Individual control over every pixel on the window + helpful methods such as FillPolygon, DrawTexture, etc..
 - **PerPixel Mode**: A perPixel function that runs for every pixel on the window and a perFrame function that runs each frame.
-- **Many customizable settings**: You can set the pixel size to any number (>= 1) without making other changes to your program. Fraglib handles everything automatically.
-- **Time-saving functions**: Fraglib provides many functions that are commonly used in development, such as a deterministic random, to speed up your workflow.
+- **Many customizable settings**: Fraglib has lots of settings to get the ideal setup for your project, e.g. you can set the pixel size to any number (>= 1) without making other changes to your program.
+- **Time-saving functions**: Fraglib provides a large library containing many functions that are commonly used in development, e.g. such as a deterministic random.
 
 ## Getting Started
 
