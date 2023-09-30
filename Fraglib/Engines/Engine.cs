@@ -122,6 +122,7 @@ internal abstract class Engine : GameWindow {
         int vertexShader = CompileShader(ShaderType.VertexShader, vertexShaderSource);
         int fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentShaderSource);
 
+
         programHandle = GL.CreateProgram();
         GL.AttachShader(programHandle, vertexShader);
         GL.AttachShader(programHandle, fragmentShader);
@@ -134,6 +135,8 @@ internal abstract class Engine : GameWindow {
         textureHandle = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, textureHandle);
 
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, ClientSize.X, ClientSize.Y, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
 
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
@@ -167,6 +170,8 @@ internal abstract class Engine : GameWindow {
 
     protected override void OnRenderFrame(FrameEventArgs args) {
         base.OnRenderFrame(args);
+
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
         GL.BindTexture(TextureTarget.Texture2D, textureHandle);
         unsafe {
