@@ -707,6 +707,47 @@ public static class FL {
         }
     }
 
+    public static void DrawTransparentTexture(int x, int y, Texture texture) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => DrawTransparentTextureAction(x, y, texture));
+    }
+
+    private static unsafe void DrawTransparentTextureAction(int x, int y, Texture texture) {
+        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+            int textureWidth = texture.Width, textureHeight = texture.Height;
+
+            int startX = Math.Max(0, -x);
+            int startY = Math.Max(0, -y);
+            int endX = Math.Min(textureWidth, windowWidth - x);
+            int endY = Math.Min(textureHeight, windowHeight - y);
+
+            for (int sy = startY; sy < endY; sy++) {
+                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
+                uint* textureRowPtr = texturePtr + sy * textureWidth;
+
+                for (int sx = startX; sx < endX; sx++) {
+                    uint srcPixel = textureRowPtr[sx];
+                    uint destPixel = screenRowPtr[sx];
+
+                    byte srcAlpha = srcPixel.GetA();
+                    byte destAlpha = destPixel.GetA();
+
+                    byte src255 = (byte)((255 - srcAlpha) / 255);
+                    byte alpha = (byte)(srcAlpha + destAlpha * src255);
+                    byte red = (byte)((srcPixel.GetR() * srcAlpha + destPixel.GetR() * destAlpha * src255) / alpha);
+                    byte green = (byte)((srcPixel.GetG() * srcAlpha + destPixel.GetG() * destAlpha * src255) / alpha);
+                    byte blue = (byte)((srcPixel.GetB() * srcAlpha + destPixel.GetB() * destAlpha * src255) / alpha);
+
+                    *(screenRowPtr + sx) = (uint)((alpha << 24) | (red << 16) | (green << 8) | blue);
+                }
+            }
+        }
+    }
+
+
     /// <name>DrawTextureScaled</name>
     /// <returns>void</returns>
     /// <summary>Draws a texture to the window at the specified coordinates with the specified scale.</summary>
