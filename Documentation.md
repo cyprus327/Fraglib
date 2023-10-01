@@ -115,18 +115,42 @@ Draws the outline of a polygon of specified color with specified vertices.
 Fills a solid polygon of specified color with specified vertices. 
 - **color**: The color of the polygon.
 - **vertices**: The vertices of the polygon to draw. Must have a length >= 3.
-### DrawTexture (void)
+### DrawTextureFast (void)
 Draws a texture to the window at the specified coordinates. 
 - **x**: The x coordinate to draw the texture at.
 - **y**: The y coordinate to draw the texture at.
+- **texture**: The Texture to draw.
+### DrawTexture (void)
+Use DrawTextureFast if your texture doesn't have transparency. 
+Draws a texture to the window at the specified coordinates, with transparency. 
+- **x**: The x coordinate to draw the texture at.
+- **y**: The y coordinate to draw the texture at.
+- **texture**: The Texture to draw.
+### DrawTexture (void)
+Draws a texture to the window at the specified coordinates with the specified scale. 
+- **x**: The x coordinate to draw the texture at.
+- **y**: The y coordinate to draw the texture at.
+- **scaleX**: The amount to scale the by texture horizontally.
+- **scaleY**: The amount to scale the by texture vertically.
 - **texture**: The Texture to draw.
 ### DrawTextureScaled (void)
 Draws a texture to the window at the specified coordinates with the specified scale. 
 - **x**: The x coordinate to draw the texture at.
 - **y**: The y coordinate to draw the texture at.
-- **scaleX**: The amount by which to scale the texture horizontally.
-- **scaleY**: The amount by which to scale the texture vertically.
+- **scaledX**: The width to scale the texture to in pixels
+- **scaledY**: The height to scale the texture to in pixels.
 - **texture**: The Texture to draw.
+### DrawTexture (void)
+Draws a cropped section of a texture to the window at the specified coordinates. 
+The cropped section is defined by the starting coordinates (texStartX, texStartY) 
+and dimensions (texWidth, texHeight) within the provided texture. 
+- **x**: The x coordinate to draw the cropped texture section at.
+- **y**: The y coordinate to draw the cropped texture section at.
+- **texStartX**: The x coordinate within the texture where cropping starts.
+- **texStartY**: The y coordinate within the texture where cropping starts.
+- **texWidth**: The width of the cropped texture section.
+- **texHeight**: The height of the cropped texture section.
+- **texture**: The Texture from which to draw the cropped section.
 ## Textures
 ### Texture (Texture)
 Creates a Texture from a Bitmap image. The alpha channel of the bitmap isn't taken into account for now. 
@@ -153,6 +177,20 @@ Sets a pixel in the texture at specified coordinates to specified color.
 Gets a pixel in the texture at specified coordinates. 
 - **x**: The x coordinate of the pixel.
 - **y**: The y coordinate of the pixel.
+### ScaleTo (Texture)
+Returns the parent texture scaled by the factors scaleX and scaleY. 
+- **scaleX**: The amount to scale the texture by horizontally.
+- **scaleY**: The amount to scale the texture by vertically.
+### ScaleTo (Texture)
+Returns the parent texture scaled by the factors scaleX and scaleY. 
+- **scaledX**: The width to scale the texture to in pixels.
+- **scaledY**: The height to scale the texture to in pixels.
+### CropTo (Texture)
+Returns the parent texture cropped to the resolution specified. 
+- **texStartX**: The x coordinate within the texture where cropping starts.
+- **texStartY**: The y coordinate within the texture where cropping starts.
+- **texWidth**: The width of the cropped texture section.
+- **texHeight**: The height of the cropped texture section.
 ## States
 ### SaveState (void)
 Saves the current state of the window to a buffer. 
@@ -164,52 +202,52 @@ Sets the window to a previously saved state.
 Clears any previously saved states. 
 ## Colors
 ### Black (uint)
-The color black, either 4278190080 or 255. 
+The color black, 4278190080. 
 ### Gray (uint)
-The color gray, either 4286611584 or 2155905279. 
+The color gray, 4286611584. 
 ### White (uint)
-The color white, represented as 4294967295. 
+The color white, 4294967295. 
 ### Red (uint)
-The color red, represented as 4278190335. 
+The color red, 4278190335. 
 ### Green (uint)
-The color green, either 4278255360 or 16711935. 
+The color green, 4278255360. 
 ### Blue (uint)
-The color blue, either 4294901760 or 65535. 
+The color blue, 4294901760. 
 ### Yellow (uint)
-The color yellow, either 4278255615 or 4294902015. 
+The color yellow, either 4278255615. 
 ### Orange (uint)
-The color orange, either 4278232575 or 4289003775. 
+The color orange, either 4278232575. 
 ### Cyan (uint)
-The color cyan, either 4294967040 or 16777215. 
+The color cyan, either 4294967040. 
 ### Magenta (uint)
-The color magenta, either 4294902015 or 4278255615. 
+The color magenta, either 4294902015. 
 ### Turquoise (uint)
-The color turquoise, either 4291878976 or 1088475391. 
+The color turquoise, either 4291878976. 
 ### Lavender (uint)
-The color lavender, either 4294633190 or 3873897215. 
+The color lavender, either 4294633190. 
 ### Crimson (uint)
-The color crimson, either 4282127580 or 3692313855. 
+The color crimson, either 4282127580. 
 ### Rainbow (uint)
 A color that cycles through all the full rainbow based on ElapsedTime. 
 - **timeScale**: Optional parameter that controls how fast the color changes.
 ### NewColor (uint)
-Creates a color from 4 bytes, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
+Creates a color from 4 bytes in ABGR format (0xAABBGGRR). 
 - **r**: The R channel's value between [0, 255].
 - **g**: The G channel's value between [0, 255].
 - **b**: The B channel's value between [0, 255].
 - **a**: The A channel's value between [0, 255].
 ### NewColor (uint)
-Creates a color from 4 floats, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
+Creates a color from 4 floats in ABGR format (0xAABBGGRR). 
 - **r**: The R channel's value between [0.0, 1.0].
 - **g**: The G channel's value between [0.0, 1.0].
 - **b**: The B channel's value between [0.0, 1.0].
 - **a**: The A channel's value between [0.0, 1.0].
 ### NewColor (uint)
-Creates a color from a Vector3 and additional float, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
+Creates a color from a Vector3 and additional float in ABGR format (0xAABBGGRR). 
 - **col**: The R, G, and B channels, all between [0.0, 1.0].
 - **a**: The A channel between [0.0, 1.0].
 ### NewColor (uint)
-Creates a color from a Vector4, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
+Creates a color from a Vector4 in ABGR format (0xAABBGGRR). 
 - **col**: The R, G, B, and A channels, all between [0.0, 1.0].
 ### ToVec3 (Vector3)
 Creates a Vector3 from a color, will always return in RGB format. 
@@ -218,12 +256,12 @@ Creates a Vector3 from a color, will always return in RGB format.
 Creates a Vector4 from a color, will always return in RGBA format. 
 - **color**: Optional parameter representing the color to convert to a Vector4.
 ### AverageColors (uint)
-Creates a color from averaging two provided colors, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
+Creates a color from averaging two provided colors in ABGR format (0xAABBGGRR). 
 The order in which parameters are supplied doesn't matter. 
 - **color1**: The first color to average with.
 - **color2**: The second color to average with.
 ### LerpColors (uint)
-Linearly interpolates between two colors, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
+Linearly interpolates between two colors in ABGR format (0xAABBGGRR). 
 - **color1**: The first color to interpolate from.
 - **color2**: The second color to interpolate to.
 - **t**: The interpolation factor between [0, 1], where 0 represents color1 and 1 represents color2.
