@@ -922,6 +922,63 @@ public static class FL {
 
             return pixels[ind];
         }
+
+        /// <name>ScaleTo</name>
+        /// <returns>Texture</returns>
+        /// <summary>Returns the parent texture scaled by the factors scaleX and scaleY.</summary>
+        /// <param name="scaleX">The amount to scale the texture by horizontally.</param>
+        /// <param name="scaleY">The amount to scale the texture by vertically.</param>
+        public Texture ScaleTo(float scaleX, float scaleY) {
+            return ScaleTo((int)(scaleX * Width), (int)(scaleY * Height));
+        }
+
+        /// <name>ScaleTo</name>
+        /// <returns>Texture</returns>
+        /// <summary>Returns the parent texture scaled by the factors scaleX and scaleY.</summary>
+        /// <param name="scaledX">The width to scale the texture to in pixels.</param>
+        /// <param name="scaledY">The height to scale the texture to in pixels.</param>
+        public Texture ScaleTo(int scaledX, int scaledY) {
+            float scaleX = (float)scaledX / Width;
+            float scaleY = (float)scaledY / Height;
+
+            Texture scaledTexture = new(scaledX, scaledY);
+
+            for (int y = 0; y < scaledY; y++) {
+                for (int x = 0; x < scaledX; x++) {
+                    uint pixel = GetPixel((int)(x / scaleX), (int)(y / scaleY));
+                    scaledTexture.SetPixel(x, y, pixel);
+                }
+            }
+
+            return scaledTexture;
+        }
+
+        /// <name>CropTo</name>
+        /// <returns>Texture</returns>
+        /// <summary>Returns the parent texture cropped to the resolution specified.</summary>
+        /// <param name="texStartX">The x coordinate within the texture where cropping starts.</param>
+        /// <param name="texStartY">The y coordinate within the texture where cropping starts.</param>
+        /// <param name="texWidth">The width of the cropped texture section.</param>
+        /// <param name="texHeight">The height of the cropped texture section.</param>
+        public Texture CropTo(int texStartX, int texStartY, int texWidth, int texHeight) {
+            if (texStartX < 0 || texStartY < 0 || texStartX >= Width || texStartY >= Height) {
+                throw new ArgumentOutOfRangeException("Cropping region is out of bounds.");
+            }
+
+            texWidth = Math.Min(texWidth, Width - texStartX);
+            texHeight = Math.Min(texHeight, Height - texStartY);
+
+            Texture croppedTexture = new(texWidth, texHeight);
+
+            for (int y = 0; y < texHeight; y++) {
+                for (int x = 0; x < texWidth; x++) {
+                    uint pixel = GetPixel(texStartX + x, texStartY + y);
+                    croppedTexture.SetPixel(x, y, pixel);
+                }
+            }
+
+            return croppedTexture;
+        }
     }
 #endregion textures
 
