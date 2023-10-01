@@ -674,9 +674,43 @@ public static class FL {
         }
     }
 
-    /// <name>DrawTexture</name>
+    /// <name>DrawTextureFast</name>
     /// <returns>void</returns>
     /// <summary>Draws a texture to the window at the specified coordinates.</summary>
+    /// <param name="x">The x coordinate to draw the texture at.</param>
+    /// <param name="y">The y coordinate to draw the texture at.</param>
+    /// <param name="texture">The Texture to draw.</param>
+    public static void DrawTextureFast(int x, int y, Texture texture) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => DrawTextureFastAction(x, y, texture));
+    }
+
+    private static unsafe void DrawTextureFastAction(int x, int y, Texture texture) {
+        int textureWidth = texture.Width, textureHeight = texture.Height;
+
+        int startX = Math.Max(0, -x);
+        int startY = Math.Max(0, -y);
+        int endX = Math.Min(textureWidth, windowWidth - x);
+        int endY = Math.Min(textureHeight, windowHeight - y);
+        int numBytes = (endX - startX) * sizeof(uint);
+
+        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+            for (int sy = startY; sy < endY; sy++) {
+                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
+                uint* textureRowPtr = texturePtr + sy * textureWidth;
+
+                Buffer.MemoryCopy(textureRowPtr + startX, screenRowPtr + startX, numBytes, numBytes);
+            }
+        }
+    }
+
+    /// <name>DrawTexture</name>
+    /// <returns>void</returns>
+    /// <summary>Use DrawTextureFast if your texture doesn't have transparency.</summary>
+    /// <summary>Draws a texture to the window at the specified coordinates, with transparency.</summary>
     /// <param name="x">The x coordinate to draw the texture at.</param>
     /// <param name="y">The y coordinate to draw the texture at.</param>
     /// <param name="texture">The Texture to draw.</param>
@@ -689,57 +723,36 @@ public static class FL {
     }
 
     private static unsafe void DrawTextureAction(int x, int y, Texture texture) {
+        int textureWidth = texture.Width, textureHeight = texture.Height;
+
+        int startX = Math.Max(0, -x);
+        int startY = Math.Max(0, -y);
+        int endX = Math.Min(textureWidth, windowWidth - x);
+        int endY = Math.Min(textureHeight, windowHeight - y);
+
         fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
-            int textureWidth = texture.Width, textureHeight = texture.Height;
-
-            int startX = Math.Max(0, -x);
-            int startY = Math.Max(0, -y);
-            int endX = Math.Min(textureWidth, windowWidth - x);
-            int endY = Math.Min(textureHeight, windowHeight - y);
-            int numBytes = (endX - startX) * sizeof(uint);
-
-            for (int sy = startY; sy < endY; sy++) {
-                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
-                uint* textureRowPtr = texturePtr + sy * textureWidth;
-
-                Buffer.MemoryCopy(textureRowPtr + startX, screenRowPtr + startX, numBytes, numBytes);
-            }
-        }
-    }
-
-    public static void DrawTransparentTexture(int x, int y, Texture texture) {
-        if (!isDrawClear) {
-            return;
-        }
-
-        ((DrawClearEngine)e!).AddAction(() => DrawTransparentTextureAction(x, y, texture));
-    }
-
-    private static unsafe void DrawTransparentTextureAction(int x, int y, Texture texture) {
-        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
-            int textureWidth = texture.Width, textureHeight = texture.Height;
-
-            int startX = Math.Max(0, -x);
-            int startY = Math.Max(0, -y);
-            int endX = Math.Min(textureWidth, windowWidth - x);
-            int endY = Math.Min(textureHeight, windowHeight - y);
-
             for (int sy = startY; sy < endY; sy++) {
                 uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
                 uint* textureRowPtr = texturePtr + sy * textureWidth;
 
                 for (int sx = startX; sx < endX; sx++) {
-                    uint srcPixel = textureRowPtr[sx];
-                    uint destPixel = screenRowPtr[sx];
+                    uint texturePixel = textureRowPtr[sx];
+                    uint screenPixel = screenRowPtr[sx];
 
-                    byte srcAlpha = srcPixel.GetA();
-                    byte destAlpha = destPixel.GetA();
+                    byte textureAlpha = (byte)((texturePixel >> 24) & 0xFF);
+                    byte textureRed = (byte)((texturePixel >> 16) & 0xFF);
+                    byte textureGreen = (byte)((texturePixel >> 8) & 0xFF);
+                    byte textureBlue = (byte)(texturePixel & 0xFF);
 
-                    byte src255 = (byte)((255 - srcAlpha) / 255);
-                    byte alpha = (byte)(srcAlpha + destAlpha * src255);
-                    byte red = (byte)((srcPixel.GetR() * srcAlpha + destPixel.GetR() * destAlpha * src255) / alpha);
-                    byte green = (byte)((srcPixel.GetG() * srcAlpha + destPixel.GetG() * destAlpha * src255) / alpha);
-                    byte blue = (byte)((srcPixel.GetB() * srcAlpha + destPixel.GetB() * destAlpha * src255) / alpha);
+                    byte screenAlpha = (byte)((screenPixel >> 24) & 0xFF);
+                    byte screenRed = (byte)((screenPixel >> 16) & 0xFF);
+                    byte screenGreen = (byte)((screenPixel >> 8) & 0xFF);
+                    byte screenBlue = (byte)(screenPixel & 0xFF);
+
+                    byte alpha = (byte)((textureAlpha * 255 + (255 - textureAlpha) * screenAlpha) / 255);
+                    byte red = (byte)((textureRed * textureAlpha + screenRed * (255 - textureAlpha)) / 255);
+                    byte green = (byte)((textureGreen * textureAlpha + screenGreen * (255 - textureAlpha)) / 255);
+                    byte blue = (byte)((textureBlue * textureAlpha + screenBlue * (255 - textureAlpha)) / 255);
 
                     *(screenRowPtr + sx) = (uint)((alpha << 24) | (red << 16) | (green << 8) | blue);
                 }
@@ -747,38 +760,46 @@ public static class FL {
         }
     }
 
+    /// <name>DrawTexture</name>
+    /// <returns>void</returns>
+    /// <summary>Draws a texture to the window at the specified coordinates with the specified scale.</summary>
+    /// <param name="x">The x coordinate to draw the texture at.</param>
+    /// <param name="y">The y coordinate to draw the texture at.</param>
+    /// <param name="scaleX">The amount to scale the by texture horizontally.</param>
+    /// <param name="scaleY">The amount to scale the by texture vertically.</param>
+    /// <param name="texture">The Texture to draw.</param>
+    public static void DrawTexture(int x, int y, float scaleX, float scaleY, Texture texture) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => DrawTextureAction(x, y, scaleX, scaleY, texture));
+    }
 
     /// <name>DrawTextureScaled</name>
     /// <returns>void</returns>
     /// <summary>Draws a texture to the window at the specified coordinates with the specified scale.</summary>
     /// <param name="x">The x coordinate to draw the texture at.</param>
     /// <param name="y">The y coordinate to draw the texture at.</param>
-    /// <param name="scaleX">The amount by which to scale the texture horizontally.</param>
-    /// <param name="scaleY">The amount by which to scale the texture vertically.</param>
+    /// <param name="scaledX">The width to scale the texture to in pixels</param>
+    /// <param name="scaledY">The height to scale the texture to in pixels.</param>
     /// <param name="texture">The Texture to draw.</param>
-    public static void DrawTextureScaled(int x, int y, float scaleX, float scaleY, Texture texture) {
+    public static void DrawTexture(int x, int y, int scaledX, int scaledY, Texture texture) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawTextureScaledAction(x, y, scaleX, scaleY, texture));
+        ((DrawClearEngine)e!).AddAction(() => DrawTextureAction(x, y, (float)scaledX / texture.Width, (float)scaledY / texture.Height, texture));
     }
 
-    public static void DrawTextureScaled(int x, int y, int scaledX, int scaledY, Texture texture) {
-        if (!isDrawClear) {
-            return;
-        }
-
-        ((DrawClearEngine)e!).AddAction(() => DrawTextureScaledAction(x, y, (float)scaledX / texture.Width, (float)scaledY / texture.Height, texture));
-    }
-
-    private static unsafe void DrawTextureScaledAction(int x, int y, float scaleX, float scaleY, Texture texture) {
+    private static unsafe void DrawTextureAction(int x, int y, float scaleX, float scaleY, Texture texture) {
         if (scaleX <= 0 || scaleY <= 0) {
             return;
         }
 
-        int scaledWidth = (int)(texture.Width * scaleX);
-        int scaledHeight = (int)(texture.Height * scaleY);
+        int textureWidth = texture.Width, textureHeight = texture.Height;
+        int scaledWidth = (int)(textureWidth * scaleX);
+        int scaledHeight = (int)(textureHeight * scaleY);
 
         int startX = Math.Max(0, -x);
         int startY = Math.Max(0, -y);
@@ -790,8 +811,6 @@ public static class FL {
         }
 
         fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
-            int textureWidth = texture.Width, textureHeight = texture.Height;
-
             for (int sy = startY; sy < endY; sy++) {
                 int textureY = (int)(sy / scaleY);
 
@@ -803,7 +822,80 @@ public static class FL {
                     uint* texturePixelPtr = texturePtr + textureY * textureWidth + textureX;
                     uint* screenPixelPtr = screenRowPtr + sx;
 
-                    *screenPixelPtr = *texturePixelPtr;
+                    byte textureAlpha = (byte)((*texturePixelPtr >> 24) & 0xFF);
+                    byte textureRed = (byte)((*texturePixelPtr >> 16) & 0xFF);
+                    byte textureGreen = (byte)((*texturePixelPtr >> 8) & 0xFF);
+                    byte textureBlue = (byte)(*texturePixelPtr & 0xFF);
+
+                    byte screenAlpha = (byte)((*screenPixelPtr >> 24) & 0xFF);
+                    byte screenRed = (byte)((*screenPixelPtr >> 16) & 0xFF);
+                    byte screenGreen = (byte)((*screenPixelPtr >> 8) & 0xFF);
+                    byte screenBlue = (byte)(*screenPixelPtr & 0xFF);
+
+                    byte alpha = (byte)((textureAlpha * 255 + (255 - textureAlpha) * screenAlpha) / 255);
+                    byte red = (byte)((textureRed * textureAlpha + screenRed * (255 - textureAlpha)) / 255);
+                    byte green = (byte)((textureGreen * textureAlpha + screenGreen * (255 - textureAlpha)) / 255);
+                    byte blue = (byte)((textureBlue * textureAlpha + screenBlue * (255 - textureAlpha)) / 255);
+
+                    *screenPixelPtr = (uint)((alpha << 24) | (red << 16) | (green << 8) | blue);
+                }
+            }
+        }
+    }
+
+    /// <name>DrawTexture</name>
+    /// <returns>void</returns>
+    /// <summary>Draws a cropped section of a texture to the window at the specified coordinates.</summary>
+    /// <summary>The cropped section is defined by the starting coordinates (texStartX, texStartY)</summary>
+    /// <summary>and dimensions (texWidth, texHeight) within the provided texture.</summary>
+    /// <param name="x">The x coordinate to draw the cropped texture section at.</param>
+    /// <param name="y">The y coordinate to draw the cropped texture section at.</param>
+    /// <param name="texStartX">The x coordinate within the texture where cropping starts.</param>
+    /// <param name="texStartY">The y coordinate within the texture where cropping starts.</param>
+    /// <param name="texWidth">The width of the cropped texture section.</param>
+    /// <param name="texHeight">The height of the cropped texture section.</param>
+    /// <param name="texture">The Texture from which to draw the cropped section.</param>
+    public static void DrawTexture(int x, int y, int texStartX, int texStartY, int texWidth, int texHeight, Texture texture) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        ((DrawClearEngine)e!).AddAction(() => DrawTextureAction(x, y, texStartX, texStartY, texWidth, texHeight, texture)); 
+    }
+
+    private static unsafe void DrawTextureAction(int x, int y, int texStartX, int texStartY, int texWidth, int texHeight, Texture texture) {
+        int textureWidth = texture.Width, textureHeight = texture.Height;
+
+        int startX = Math.Max(0, -x);
+        int startY = Math.Max(0, -y);
+        int endX = Math.Min(texWidth, Math.Min(textureWidth - texStartX, windowWidth - x));
+        int endY = Math.Min(texHeight, Math.Min(textureHeight - texStartY, windowHeight - y));
+        
+        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+            for (int sy = startY; sy < endY; sy++) {
+                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
+                uint* textureRowPtr = texturePtr + (texStartY + sy) * textureWidth + texStartX;
+
+                for (int sx = startX; sx < endX; sx++) {
+                    uint texturePixel = textureRowPtr[sx];
+                    uint screenPixel = screenRowPtr[sx];
+
+                    byte textureAlpha = (byte)((texturePixel >> 24) & 0xFF);
+                    byte textureRed = (byte)((texturePixel >> 16) & 0xFF);
+                    byte textureGreen = (byte)((texturePixel >> 8) & 0xFF);
+                    byte textureBlue = (byte)(texturePixel & 0xFF);
+
+                    byte screenAlpha = (byte)((screenPixel >> 24) & 0xFF);
+                    byte screenRed = (byte)((screenPixel >> 16) & 0xFF);
+                    byte screenGreen = (byte)((screenPixel >> 8) & 0xFF);
+                    byte screenBlue = (byte)(screenPixel & 0xFF);
+
+                    byte alpha = (byte)((textureAlpha * 255 + (255 - textureAlpha) * screenAlpha) / 255);
+                    byte red = (byte)((textureRed * textureAlpha + screenRed * (255 - textureAlpha)) / 255);
+                    byte green = (byte)((textureGreen * textureAlpha + screenGreen * (255 - textureAlpha)) / 255);
+                    byte blue = (byte)((textureBlue * textureAlpha + screenBlue * (255 - textureAlpha)) / 255);
+
+                    *(screenRowPtr + sx) = (uint)((alpha << 24) | (red << 16) | (green << 8) | blue);
                 }
             }
         }
@@ -1032,8 +1124,6 @@ public static class FL {
 
 /// <region>Colors</region>
 #region colors
-    private static readonly bool _isLittleEndian = BitConverter.IsLittleEndian;
-
     /// <name>Black</name>
     /// <returns>uint</returns>
     /// <summary>The color black, 4278190080.</summary>
