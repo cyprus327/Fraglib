@@ -899,7 +899,7 @@ public static class FL {
         /// <param name="y">The y coordinate of the pixel.</param>
         /// <param name="color">The color to set the pixel.</param>
         public void SetPixel(int x, int y, uint color) {
-            int ind = y * Height + x;
+            int ind = y * Width + x;
 
             if (ind < 0 || ind >= pixels.Length) {
                 return;
@@ -914,7 +914,7 @@ public static class FL {
         /// <param name="x">The x coordinate of the pixel.</param>
         /// <param name="y">The y coordinate of the pixel.</param>
         public uint GetPixel(int x, int y) {
-            int ind = y * Height + x;
+            int ind = y * Width + x;
 
             if (ind < 0 || ind >= pixels.Length) {
                 return Black;
