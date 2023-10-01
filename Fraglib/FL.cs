@@ -979,68 +979,68 @@ public static class FL {
 
     /// <name>Black</name>
     /// <returns>uint</returns>
-    /// <summary>The color black, either 4278190080 or 255.</summary>
-    public static uint Black => _isLittleEndian ? 4278190080 : 255;
+    /// <summary>The color black, 4278190080.</summary>
+    public static uint Black => 4278190080;
     
     /// <name>Gray</name>
     /// <returns>uint</returns>
-    /// <summary>The color gray, either 4286611584 or 2155905279.</summary>
-    public static uint Gray => _isLittleEndian ? 4286611584 : 2155905279;
+    /// <summary>The color gray, 4286611584.</summary>
+    public static uint Gray => 4286611584;
     
     /// <name>White</name>
     /// <returns>uint</returns>
-    /// <summary>The color white, represented as 4294967295.</summary>
+    /// <summary>The color white, 4294967295.</summary>
     public static uint White => 4294967295;
     
     /// <name>Red</name>
     /// <returns>uint</returns>
-    /// <summary>The color red, represented as 4278190335.</summary>
+    /// <summary>The color red, 4278190335.</summary>
     public static uint Red => 4278190335;
 
     /// <name>Green</name>
     /// <returns>uint</returns>
-    /// <summary>The color green, either 4278255360 or 16711935.</summary>
-    public static uint Green => _isLittleEndian ? 4278255360 : 16711935;
+    /// <summary>The color green, 4278255360.</summary>
+    public static uint Green => 4278255360;
 
     /// <name>Blue</name>
     /// <returns>uint</returns>
-    /// <summary>The color blue, either 4294901760 or 65535.</summary>
-    public static uint Blue => _isLittleEndian ? 4294901760 : 65535;
+    /// <summary>The color blue, 4294901760.</summary>
+    public static uint Blue => 4294901760;
 
     /// <name>Yellow</name>
     /// <returns>uint</returns>
-    /// <summary>The color yellow, either 4278255615 or 4294902015.</summary>
-    public static uint Yellow => _isLittleEndian ? 4278255615 : 4294902015;
+    /// <summary>The color yellow, either 4278255615.</summary>
+    public static uint Yellow => 4278255615;
 
     /// <name>Orange</name>
     /// <returns>uint</returns>
-    /// <summary>The color orange, either 4278232575 or 4289003775.</summary>
-    public static uint Orange => _isLittleEndian ? 4278232575 : 4289003775;
+    /// <summary>The color orange, either 4278232575.</summary>
+    public static uint Orange => 4278232575;
 
     /// <name>Cyan</name>
     /// <returns>uint</returns>
-    /// <summary>The color cyan, either 4294967040 or 16777215.</summary>
-    public static uint Cyan => _isLittleEndian ? 4294967040 : 16777215;
+    /// <summary>The color cyan, either 4294967040.</summary>
+    public static uint Cyan => 4294967040;
 
     /// <name>Magenta</name>
     /// <returns>uint</returns>
-    /// <summary>The color magenta, either 4294902015 or 4278255615.</summary>
-    public static uint Magenta => _isLittleEndian ? 4294902015 : 4278255615;
+    /// <summary>The color magenta, either 4294902015.</summary>
+    public static uint Magenta => 4294902015;
 
     /// <name>Turquoise</name>
     /// <returns>uint</returns>
-    /// <summary>The color turquoise, either 4291878976 or 1088475391.</summary>
-    public static uint Turquoise => _isLittleEndian ? 4291878976 : 1088475391;
+    /// <summary>The color turquoise, either 4291878976.</summary>
+    public static uint Turquoise => 4291878976;
 
     /// <name>Lavender</name>
     /// <returns>uint</returns>
-    /// <summary>The color lavender, either 4294633190 or 3873897215.</summary>
-    public static uint Lavender => _isLittleEndian ? 4294633190 : 3873897215;
+    /// <summary>The color lavender, either 4294633190.</summary>
+    public static uint Lavender => 4294633190;
 
     /// <name>Crimson</name>
     /// <returns>uint</returns>
-    /// <summary>The color crimson, either 4282127580 or 3692313855.</summary>
-    public static uint Crimson => _isLittleEndian ? 4282127580 : 3692313855;
+    /// <summary>The color crimson, either 4282127580.</summary>
+    public static uint Crimson => 4282127580;
     
     /// <name>Rainbow</name>
     /// <returns>uint</returns>
@@ -1050,20 +1050,18 @@ public static class FL {
 
     /// <name>NewColor</name>
     /// <returns>uint</returns>
-    /// <summary>Creates a color from 4 bytes, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
+    /// <summary>Creates a color from 4 bytes in ABGR format (0xAABBGGRR).</summary>
     /// <param name="r">The R channel's value between [0, 255].</param>
     /// <param name="g">The G channel's value between [0, 255].</param>
     /// <param name="b">The B channel's value between [0, 255].</param>
     /// <param name="a">The A channel's value between [0, 255].</param>
     public static uint NewColor(byte r, byte g, byte b, byte a = 255) {
-        return _isLittleEndian ?
-            ((uint)a << 24) | ((uint)b << 16) | ((uint)g << 8) | r :
-            ((uint)r << 24) | ((uint)g << 16) | ((uint)b << 8) | a;
+        return ((uint)a << 24) | ((uint)b << 16) | ((uint)g << 8) | r;
     }
 
     /// <name>NewColor</name>
     /// <returns>uint</returns>
-    /// <summary>Creates a color from 4 floats, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
+    /// <summary>Creates a color from 4 floats in ABGR format (0xAABBGGRR).</summary>
     /// <param name="r">The R channel's value between [0.0, 1.0].</param>
     /// <param name="g">The G channel's value between [0.0, 1.0].</param>
     /// <param name="b">The B channel's value between [0.0, 1.0].</param>
@@ -1074,7 +1072,7 @@ public static class FL {
 
     /// <name>NewColor</name>
     /// <returns>uint</returns>
-    /// <summary>Creates a color from a Vector3 and additional float, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
+    /// <summary>Creates a color from a Vector3 and additional float in ABGR format (0xAABBGGRR).</summary>
     /// <param name="col">The R, G, and B channels, all between [0.0, 1.0].</param>
     /// <param name="a">The A channel between [0.0, 1.0].</param>
     public static uint NewColor(Vector3 col, float a = 1f) {
@@ -1083,7 +1081,7 @@ public static class FL {
 
     /// <name>NewColor</name>
     /// <returns>uint</returns>
-    /// <summary>Creates a color from a Vector4, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
+    /// <summary>Creates a color from a Vector4 in ABGR format (0xAABBGGRR).</summary>
     /// <param name="col">The R, G, B, and A channels, all between [0.0, 1.0].</param>
     public static uint NewColor(Vector4 col) {
         return NewColor(col.X, col.Y, col.Z, col.W);
@@ -1094,18 +1092,9 @@ public static class FL {
     /// <summary>Creates a Vector3 from a color, will always return in RGB format.</summary>
     /// <param name="color">Optional parameter representing the color to convert to a Vector3.</param>
     public static Vector3 ToVec3(this uint color) {
-        byte r, g, b;
-
-        if (_isLittleEndian) {
-            b = (byte)(color >> 16);
-            g = (byte)(color >> 8);
-            r = (byte)color;
-        } else {
-            r = (byte)(color >> 24);
-            g = (byte)(color >> 16);
-            b = (byte)(color >> 8);
-        }
-
+        byte b = (byte)(color >> 16);
+        byte g = (byte)(color >> 8);
+        byte r = (byte)color;
         return new Vector3(r / 255f, g / 255f, b / 255f);
     }
 
@@ -1114,26 +1103,16 @@ public static class FL {
     /// <summary>Creates a Vector4 from a color, will always return in RGBA format.</summary>
     /// <param name="color">Optional parameter representing the color to convert to a Vector4.</param>
     public static Vector4 ToVec4(this uint color) {
-        byte r, g, b, a;
-
-        if (_isLittleEndian) {
-            a = (byte)(color >> 24);
-            b = (byte)(color >> 16);
-            g = (byte)(color >> 8);
-            r = (byte)color;
-        } else {
-            r = (byte)(color >> 24);
-            g = (byte)(color >> 16);
-            b = (byte)(color >> 8);
-            a = (byte)color;
-        }
-
+        byte a = (byte)(color >> 24);
+        byte b = (byte)(color >> 16);
+        byte g = (byte)(color >> 8);
+        byte r = (byte)color;
         return new Vector4(r / 255f, g / 255f, b / 255f, a / 255f);
     }
 
     /// <name>AverageColors</name>
     /// <returns>uint</returns>
-    /// <summary>Creates a color from averaging two provided colors, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
+    /// <summary>Creates a color from averaging two provided colors in ABGR format (0xAABBGGRR).</summary>
     /// <summary>The order in which parameters are supplied doesn't matter.</summary>
     /// <param name="color1">The first color to average with.</param>
     /// <param name="color2">The second color to average with.</param>
@@ -1153,14 +1132,12 @@ public static class FL {
         byte a3 = (byte)((c03 + c13) / 2);
         byte a4 = (byte)((c04 + c14) / 2);
 
-        return _isLittleEndian ?
-            ((uint)a4 << 24) | ((uint)a3 << 16) | ((uint)a2 << 8) | a1 :
-            ((uint)a1 << 24) | ((uint)a2 << 16) | ((uint)a3 << 8) | a4;
+        return ((uint)a4 << 24) | ((uint)a3 << 16) | ((uint)a2 << 8) | a1;
     }
 
     /// <name>LerpColors</name>
     /// <returns>uint</returns>
-    /// <summary>Linearly interpolates between two colors, either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
+    /// <summary>Linearly interpolates between two colors in ABGR format (0xAABBGGRR).</summary>
     /// <param name="color1">The first color to interpolate from.</param>
     /// <param name="color2">The second color to interpolate to.</param>
     /// <param name="t">The interpolation factor between [0, 1], where 0 represents color1 and 1 represents color2.</param>
@@ -1182,9 +1159,7 @@ public static class FL {
     /// <summary>An extension method that extracts the red channel of the specified color in the range [0, 255].</summary>
     /// <param name="color">An optional parameter representing the color of which to extract the channel.</param>
     public static byte GetR(this uint color) {
-        return _isLittleEndian ? 
-            (byte)(color & 0xFF) : 
-            (byte)((color >> 24) & 0xFF);
+        return (byte)(color & 0xFF);
     }
 
     /// <name>GetG</name>
@@ -1200,9 +1175,7 @@ public static class FL {
     /// <summary>An extension method that extracts the blue channel of the specified color in the range [0, 255].</summary>
     /// <param name="color">An optional parameter representing the color of which to extract the channel.</param>
     public static byte GetB(this uint color) {
-        return _isLittleEndian ? 
-            (byte)((color >> 16) & 0xFF) : 
-            (byte)((color >> 8) & 0xFF);
+        return (byte)((color >> 16) & 0xFF);
     }
 
     /// <name>GetA</name>
@@ -1210,9 +1183,7 @@ public static class FL {
     /// <summary>An extension method that extracts the alpha channel of the specified color in the range [0, 255].</summary>
     /// <param name="color">An optional parameter representing the color of which to extract the channel.</param>
     public static byte GetA(this uint color) {
-        return _isLittleEndian ? 
-            (byte)((color >> 24) & 0xFF) : 
-            (byte)(color & 0xFF);
+        return (byte)((color >> 24) & 0xFF); 
     }
 
     /// <name>SetR</name>
@@ -1222,10 +1193,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the red channel.</param>
     /// <param name="newR">The new value for the R channel of the color, in the range [0, 255].</param>
     public static uint SetR(this ref uint color, byte newR) {
-        color = _isLittleEndian ?
-            (color & 0xFFFFFF00) | newR :
-            (color & 0xFF00FFFF) | ((uint)newR << 24);
-        
+        color = (color & 0xFFFFFF00) | newR;
         return color;
     }
 
@@ -1247,10 +1215,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the green channel.</param>
     /// <param name="newG">The new value for the G channel of the color, in the range [0, 255].</param>
     public static uint SetG(this ref uint color, byte newG) {
-        color = _isLittleEndian ?
-            (color & 0xFFFF00FF) | ((uint)newG << 8) :
-            (color & 0xFF00FFFF) | ((uint)newG << 16);
-        
+        color = (color & 0xFFFF00FF) | ((uint)newG << 8);
         return color;
     }
 
@@ -1272,10 +1237,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the blue channel.</param>
     /// <param name="newB">The new value for the B channel of the color, in the range [0, 255].</param>
     public static uint SetB(this ref uint color, byte newB) {
-        color = _isLittleEndian ?
-            (color & 0xFF00FFFF) | ((uint)newB << 16) :
-            (color & 0xFFFFFF00) | newB;
-        
+        color = (color & 0xFF00FFFF) | ((uint)newB << 16);
         return color;
     }
 
@@ -1297,10 +1259,7 @@ public static class FL {
     /// <param name="color">An optional parameter representing the color of which to set the alpha channel.</param>
     /// <param name="newA">The new value for the A channel of the color, in the range [0, 255].</param>
     public static uint SetA(this ref uint color, byte newA) {
-        color = _isLittleEndian ?
-            (color & 0x00FFFFFF) | ((uint)newA << 24) :
-            (color & 0xFFFFFF00) | newA;
-        
+        color = (color & 0x00FFFFFF) | ((uint)newA << 24);
         return color;
     }
 
