@@ -36,8 +36,11 @@ internal abstract class Engine : GameWindow {
     public float ElapsedTime { get; private set; } = 0f;
     public float DeltaTime { get; private set; } = 0f;
     public bool VSyncEnabled { get => VSync == VSyncMode.On; set => VSync = value ? VSyncMode.On : VSyncMode.Off; }
+    public int TargetFramerate { get; set; } = 144;
     public int PixelSize { get; set; } = 1;
     public ScaleType ScaleType { get; set; } = ScaleType.None;
+
+    private float frameTimer = 0;
 
     protected override void OnLoad() {
         base.OnLoad();
@@ -196,9 +199,18 @@ internal abstract class Engine : GameWindow {
         DeltaTime = t;
         ElapsedTime += t;
 
-        Update(args);
+        if (VSync == VSyncMode.On) {
+            Update(args);
+            Title = $"{WindowTitle} | FPS: {1f / t:F0}";
+            return;
+        }
 
-        Title = $"{WindowTitle} | FPS: {1.0 / t:F0}";
+        frameTimer += t;
+        if (frameTimer >= 1f / TargetFramerate) {
+            Update(args);
+            Title = $"{WindowTitle} | FPS: {1f / frameTimer:F0}";
+            frameTimer = 0f;
+        }
     }
 
     private int CompileShader(ShaderType type, string source) {

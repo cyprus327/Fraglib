@@ -1419,6 +1419,21 @@ public static class FL {
         /// <returns>bool</returns>
         /// <summary>Gets or sets whether or not VSync is enabled.</summary>
         public bool VSync { get; set; } = true;
+
+        /// <name>DesiredFramerate</name>
+        /// <returns>int</returns>
+        /// <summary>Gets or sets the target framerate engine. Only changes anything is VSync == false. Can be changed during runtime.</summary>
+        public int TargetFramerate {
+            readonly get => e is not null ? e.TargetFramerate : targetFramerate;
+            set {
+                if (e is not null) {
+                    e.TargetFramerate = value;
+                } else {
+                    targetFramerate = value;
+                }
+            }
+        }
+        private int targetFramerate = 144;
         
         /// <name>Accumulate</name>
         /// <returns>bool</returns>
