@@ -133,7 +133,7 @@ Draws a texture to the window at the specified coordinates with the specified sc
 - **scaleX**: The amount to scale the by texture horizontally.
 - **scaleY**: The amount to scale the by texture vertically.
 - **texture**: The Texture to draw.
-### DrawTextureScaled (void)
+### DrawTexture (void)
 Draws a texture to the window at the specified coordinates with the specified scale. 
 - **x**: The x coordinate to draw the texture at.
 - **y**: The y coordinate to draw the texture at.
@@ -182,7 +182,7 @@ Returns the parent texture scaled by the factors scaleX and scaleY.
 - **scaleX**: The amount to scale the texture by horizontally.
 - **scaleY**: The amount to scale the texture by vertically.
 ### ScaleTo (Texture)
-Returns the parent texture scaled by the factors scaleX and scaleY. 
+Returns the parent texture scaled to the resolution scaledX x scaledY. 
 - **scaledX**: The width to scale the texture to in pixels.
 - **scaledY**: The height to scale the texture to in pixels.
 ### CropTo (Texture)
@@ -318,23 +318,24 @@ Modifies the underlying variable.
 - **color**: An optional parameter representing the color of which to set the alpha channel.
 - **newA**: The new value for the A channel of the color, in the range [0.0, 1.0].
 ### HslToRgb (uint)
-Converts a color from HSL format to either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness. 
+Converts a color from HSL format to ABGR format (0xAABBGGRR). 
 - **hue**: The H channel's value.
 - **saturation**: The S channel's value.
 - **lightness**: The L channel's value.
-## Common
+## Render Settings
 ### RenderSettings (struct)
 The struct defining the settings which will be applied when FL.Init is called. 
 ### PixelSize (int)
 Gets or sets the pixel size of the window. Clamped in the range [1, 100]. 
 ### VSync (bool)
 Gets or sets whether or not VSync is enabled. 
-### Multithreaded (bool)
-Gets or sets whether or not the engine is multithreaded. Only applicable in DrawClear mode. 
+### DesiredFramerate (int)
+Gets or sets the target framerate engine. Only changes anything is VSync == false. 
 ### Accumulate (bool)
 Gets or sets whether or not the engine accumulates previous frames with the current frame. Only applicable in PerPixel mode. Can be changed during runtime. 
 ### ScaleType (ScaleType)
 Gets or sets how the engine renders when PixelSize > 1. 
+## Common
 ### Settings (RenderSettings)
 Gets or sets the settings with which the engine will run. Not all settings can be changed during runtime, the ones that can't be must be set before Init. 
 ### ElapsedTime (float)
