@@ -70,7 +70,8 @@ public static class FL {
         e.VSyncEnabled = renderSettings.VSync;
         e.PixelSize = renderSettings.PixelSize;
         e.ScaleType = renderSettings.ScaleType;
-        
+        e.TargetFramerate = renderSettings.TargetFramerate;
+
         e.Run();
     }
 #endregion setup
@@ -1422,18 +1423,8 @@ public static class FL {
 
         /// <name>DesiredFramerate</name>
         /// <returns>int</returns>
-        /// <summary>Gets or sets the target framerate engine. Only changes anything is VSync == false. Can be changed during runtime.</summary>
-        public int TargetFramerate {
-            readonly get => e is not null ? e.TargetFramerate : targetFramerate;
-            set {
-                if (e is not null) {
-                    e.TargetFramerate = value;
-                } else {
-                    targetFramerate = value;
-                }
-            }
-        }
-        private int targetFramerate = 144;
+        /// <summary>Gets or sets the target framerate engine. Only changes anything is VSync == false.</summary>
+        public int TargetFramerate { get; set; } = 144;
         
         /// <name>Accumulate</name>
         /// <returns>bool</returns>
@@ -1469,6 +1460,7 @@ public static class FL {
                 renderSettings = value;
             } else {
                 renderSettings.Accumulate = value.Accumulate;
+                renderSettings.TargetFramerate = value.TargetFramerate;
             }
         }
     }
