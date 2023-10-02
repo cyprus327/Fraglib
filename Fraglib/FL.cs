@@ -71,13 +71,6 @@ public static class FL {
         e.PixelSize = renderSettings.PixelSize;
         e.ScaleType = renderSettings.ScaleType;
         
-        if (isDrawClear) {
-            ((DrawClearEngine)e).Multithreaded = renderSettings.Multithreaded;
-            if (renderSettings.Multithreaded) {
-                ((DrawClearEngine)e).StartThreadPool();
-            }
-        }
-
         e.Run();
     }
 #endregion setup
@@ -95,9 +88,7 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => {
-            e!.Screen[y * windowWidth + x] = color;
-        });
+        e!.Screen[y * windowWidth + x] = color;
     }
 
     /// <name>GetPixel</name>
@@ -133,9 +124,7 @@ public static class FL {
             return; 
         }
 
-        ((DrawClearEngine)e!).AddAction(() => {
-            Array.Fill(e.Screen, color);
-        });
+        Array.Fill(e!.Screen, color);
     }
 
     /// <name>DrawRect</name>
@@ -151,15 +140,11 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawRectAction(x, y, width, height, color));
-    }
-
-    private static void DrawRectAction(int x, int y, int width, int height, uint color) {
         int xw = x + width, yh = y + height;
-        DrawVerticalLineAction(x, y, yh, color);
-        DrawVerticalLineAction(xw, y, yh, color);
-        DrawHorizontalLineAction(x, xw, y, color);
-        DrawHorizontalLineAction(x, xw, yh, color);
+        DrawVerticalLine(x, y, yh, color);
+        DrawVerticalLine(xw, y, yh, color);
+        DrawHorizontalLine(x, xw, y, color);
+        DrawHorizontalLine(x, xw, yh, color);
     }
 
     /// <name>FillRect</name>
@@ -170,15 +155,11 @@ public static class FL {
     /// <param name="width">The width of the rectangle.</param>
     /// <param name="height">The height of the rectangle.</param>
     /// <param name="color">The color of the rectangle.</param>
-    public static void FillRect(int x, int y, int width, int height, uint color) {
+    public static unsafe void FillRect(int x, int y, int width, int height, uint color) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => FillRectAction(x, y, width, height, color));
-    }
-
-    private static unsafe void FillRectAction(int x, int y, int width, int height, uint color) {
         if (width <= 0 || height <= 0) {
             return;
         }
@@ -212,15 +193,11 @@ public static class FL {
     /// <param name="centerY">The center coordinate of the cirlce along the y-axis.</param>
     /// <param name="radius">The radius of the circle.</param>
     /// <param name="color">The color of the circle.</param>
-    public static void DrawCircle(float centerX, float centerY, float radius, uint color) {
+    public static unsafe void DrawCircle(float centerX, float centerY, float radius, uint color) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawCircleAction(centerX, centerY, radius, color));
-    }
-
-    private static unsafe void DrawCircleAction(float centerX, float centerY, float radius, uint color) {
         int x = (int)radius, y = 0;
         int decisionOver2 = 1 - x;
 
@@ -279,15 +256,11 @@ public static class FL {
     /// <param name="centerY">The center coordinate of the cirlce along the y-axis.</param>
     /// <param name="radius">The radius of the circle.</param>
     /// <param name="color">The color of the circle.</param>
-    public static void FillCircle(float centerX, float centerY, float radius, uint color) {
+    public static unsafe void FillCircle(float centerX, float centerY, float radius, uint color) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => FillCircleAction(centerX, centerY, radius, color));
-    }
-
-    private static unsafe void FillCircleAction(float centerX, float centerY, float radius, uint color) {
         if (radius == 0) {
             return;
         }
@@ -319,15 +292,11 @@ public static class FL {
     /// <param name="x1">The ending x coordinate of the line.</param>
     /// <param name="y1">The ending y coordinate of the line.</param>
     /// <param name="color">The color of the line.</param>
-    public static void DrawLine(int x0, int y0, int x1, int y1, uint color) {
+    public static unsafe void DrawLine(int x0, int y0, int x1, int y1, uint color) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawLineAction(x0, y0, x1, y1, color));
-    }
-
-    private static unsafe void DrawLineAction(int x0, int y0, int x1, int y1, uint color) {
         if (x0 < 0 || x0 >= windowWidth || y0 < 0 || y0 >= windowHeight ||
             x1 < 0 || x1 >= windowWidth || y1 < 0 || y1 >= windowHeight) {
 
@@ -412,15 +381,11 @@ public static class FL {
     /// <param name="y0">The starting y coordinate of the line.</param>
     /// <param name="y1">The ending y coordinate of the line.</param>
     /// <param name="color">The color of the line.</param>
-    public static void DrawVerticalLine(int x, int y0, int y1, uint color) {
+    public static unsafe void DrawVerticalLine(int x, int y0, int y1, uint color) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawVerticalLineAction(x, y0, y1, color));
-    }
-
-    private static unsafe void DrawVerticalLineAction(int x, int y0, int y1, uint color) {
         if (x < 0 || x >= windowWidth || y0 >= windowHeight || y1 < 0) {
             return;
         }
@@ -450,15 +415,11 @@ public static class FL {
     /// <param name="x1">The ending x coordinate of the line.</param>
     /// <param name="y">The y coordinate of the line.</param>
     /// <param name="color">The color of the line.</param>
-    public static void DrawHorizontalLine(int x0, int x1, int y, uint color) {
+    public static unsafe void DrawHorizontalLine(int x0, int x1, int y, uint color) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawHorizontalLineAction(x0, x1, y, color));
-    }
-
-    private static unsafe void DrawHorizontalLineAction(int x0, int x1, int y, uint color) {
         if (y < 0 || y >= windowHeight) {
             return;
         }
@@ -500,7 +461,9 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawTriangleAction(x0, y0, x1, y1, x2, y2, color));
+        DrawLine(x0, y0, x1, y1, color);
+        DrawLine(x1, y1, x2, y2, color);
+        DrawLine(x2, y2, x0, y0, color);
     }
 
     /// <name>DrawTriangle</name>
@@ -512,12 +475,6 @@ public static class FL {
     /// <param name="color">The color of the triangle.</param>
     public static void DrawTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
         DrawTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
-    }
-
-    private static void DrawTriangleAction(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
-        DrawLineAction(x0, y0, x1, y1, color);
-        DrawLineAction(x1, y1, x2, y2, color);
-        DrawLineAction(x2, y2, x0, y0, color);
     }
 
     /// <name>FillTriangle</name>
@@ -535,21 +492,6 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => FillTriangleAction(x0, y0, x1, y1, x2, y2, color));
-    }
-
-    /// <name>FillTriangle</name>
-    /// <returns>void</returns>
-    /// <summary>Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle.</summary>
-    /// <param name="v0">The 1st vertex.</param>
-    /// <param name="v1">The 2nd vertex.</param>
-    /// <param name="v2">The 3rd vertex.</param>
-    /// <param name="color">The color of the triangle.</param>
-    public static void FillTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
-        FillTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
-    }
-
-    private static void FillTriangleAction(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
         if (y1 < y0) {
             (x0, y0, x1, y1) = (x1, y1, x0, y0);
         }
@@ -572,7 +514,7 @@ public static class FL {
                 (startX, endX) = (endX, startX);
             }
 
-            DrawHorizontalLineAction(startX, endX, scanlineY, color);
+            DrawHorizontalLine(startX, endX, scanlineY, color);
         }
 
         for (int y = y1; y <= y2; y++) {
@@ -583,8 +525,19 @@ public static class FL {
                 (startX, endX) = (endX, startX);
             }
 
-            DrawHorizontalLineAction(startX, endX, y, color);
+            DrawHorizontalLine(startX, endX, y, color);
         }
+    }
+
+    /// <name>FillTriangle</name>
+    /// <returns>void</returns>
+    /// <summary>Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle.</summary>
+    /// <param name="v0">The 1st vertex.</param>
+    /// <param name="v1">The 2nd vertex.</param>
+    /// <param name="v2">The 3rd vertex.</param>
+    /// <param name="color">The color of the triangle.</param>
+    public static void FillTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
+        FillTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
     }
 
     /// <name>DrawPolygon</name>
@@ -597,10 +550,6 @@ public static class FL {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawPolygonAction(color, vertices));
-    }
-
-    private static void DrawPolygonAction(uint color, params Vector2[] vertices) {
         if (vertices.Length < 3) {
             return;
         }
@@ -608,7 +557,7 @@ public static class FL {
         int vertexCount = vertices.Length;
         for (int i = 0; i < vertexCount; i++) {
             int next = (i + 1) % vertexCount;
-            DrawLineAction((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
+            DrawLine((int)vertices[i].X, (int)vertices[i].Y, (int)vertices[next].X, (int)vertices[next].Y, color);
         }
     }
 
@@ -617,15 +566,11 @@ public static class FL {
     /// <summary>Fills a solid polygon of specified color with specified vertices.</summary>
     /// <param name="color">The color of the polygon.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
-    public static void FillPolygon(uint color, params Vector2[] vertices) {
+    public static unsafe void FillPolygon(uint color, params Vector2[] vertices) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => FillPolygonAction(color, vertices));
-    }
-
-    private static unsafe void FillPolygonAction(uint color, params Vector2[] vertices) {
         if (vertices.Length < 3) {
             return;
         }
@@ -680,15 +625,11 @@ public static class FL {
     /// <param name="x">The x coordinate to draw the texture at.</param>
     /// <param name="y">The y coordinate to draw the texture at.</param>
     /// <param name="texture">The Texture to draw.</param>
-    public static void DrawTextureFast(int x, int y, Texture texture) {
+    public static unsafe void DrawTextureFast(int x, int y, Texture texture) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawTextureFastAction(x, y, texture));
-    }
-
-    private static unsafe void DrawTextureFastAction(int x, int y, Texture texture) {
         int textureWidth = texture.Width, textureHeight = texture.Height;
 
         int startX = Math.Max(0, -x);
@@ -714,15 +655,11 @@ public static class FL {
     /// <param name="x">The x coordinate to draw the texture at.</param>
     /// <param name="y">The y coordinate to draw the texture at.</param>
     /// <param name="texture">The Texture to draw.</param>
-    public static void DrawTexture(int x, int y, Texture texture) {
+    public static unsafe void DrawTexture(int x, int y, Texture texture) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawTextureAction(x, y, texture));
-    }
-
-    private static unsafe void DrawTextureAction(int x, int y, Texture texture) {
         int textureWidth = texture.Width, textureHeight = texture.Height;
 
         int startX = Math.Max(0, -x);
@@ -768,31 +705,11 @@ public static class FL {
     /// <param name="scaleX">The amount to scale the by texture horizontally.</param>
     /// <param name="scaleY">The amount to scale the by texture vertically.</param>
     /// <param name="texture">The Texture to draw.</param>
-    public static void DrawTexture(int x, int y, float scaleX, float scaleY, Texture texture) {
+    public static unsafe void DrawTexture(int x, int y, float scaleX, float scaleY, Texture texture) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawTextureAction(x, y, scaleX, scaleY, texture));
-    }
-
-    /// <name>DrawTextureScaled</name>
-    /// <returns>void</returns>
-    /// <summary>Draws a texture to the window at the specified coordinates with the specified scale.</summary>
-    /// <param name="x">The x coordinate to draw the texture at.</param>
-    /// <param name="y">The y coordinate to draw the texture at.</param>
-    /// <param name="scaledX">The width to scale the texture to in pixels</param>
-    /// <param name="scaledY">The height to scale the texture to in pixels.</param>
-    /// <param name="texture">The Texture to draw.</param>
-    public static void DrawTexture(int x, int y, int scaledX, int scaledY, Texture texture) {
-        if (!isDrawClear) {
-            return;
-        }
-
-        ((DrawClearEngine)e!).AddAction(() => DrawTextureAction(x, y, (float)scaledX / texture.Width, (float)scaledY / texture.Height, texture));
-    }
-
-    private static unsafe void DrawTextureAction(int x, int y, float scaleX, float scaleY, Texture texture) {
         if (scaleX <= 0 || scaleY <= 0) {
             return;
         }
@@ -845,6 +762,22 @@ public static class FL {
 
     /// <name>DrawTexture</name>
     /// <returns>void</returns>
+    /// <summary>Draws a texture to the window at the specified coordinates with the specified scale.</summary>
+    /// <param name="x">The x coordinate to draw the texture at.</param>
+    /// <param name="y">The y coordinate to draw the texture at.</param>
+    /// <param name="scaledX">The width to scale the texture to in pixels</param>
+    /// <param name="scaledY">The height to scale the texture to in pixels.</param>
+    /// <param name="texture">The Texture to draw.</param>
+    public static void DrawTexture(int x, int y, int scaledX, int scaledY, Texture texture) {
+        if (!isDrawClear) {
+            return;
+        }
+
+        DrawTexture(x, y, (float)scaledX / texture.Width, (float)scaledY / texture.Height, texture);
+    }
+
+    /// <name>DrawTexture</name>
+    /// <returns>void</returns>
     /// <summary>Draws a cropped section of a texture to the window at the specified coordinates.</summary>
     /// <summary>The cropped section is defined by the starting coordinates (texStartX, texStartY)</summary>
     /// <summary>and dimensions (texWidth, texHeight) within the provided texture.</summary>
@@ -855,15 +788,11 @@ public static class FL {
     /// <param name="texWidth">The width of the cropped texture section.</param>
     /// <param name="texHeight">The height of the cropped texture section.</param>
     /// <param name="texture">The Texture from which to draw the cropped section.</param>
-    public static void DrawTexture(int x, int y, int texStartX, int texStartY, int texWidth, int texHeight, Texture texture) {
+    public static unsafe void DrawTexture(int x, int y, int texStartX, int texStartY, int texWidth, int texHeight, Texture texture) {
         if (!isDrawClear) {
             return;
         }
 
-        ((DrawClearEngine)e!).AddAction(() => DrawTextureAction(x, y, texStartX, texStartY, texWidth, texHeight, texture)); 
-    }
-
-    private static unsafe void DrawTextureAction(int x, int y, int texStartX, int texStartY, int texWidth, int texHeight, Texture texture) {
         int textureWidth = texture.Width, textureHeight = texture.Height;
 
         int startX = Math.Max(0, -x);
@@ -1026,7 +955,7 @@ public static class FL {
 
         /// <name>ScaleTo</name>
         /// <returns>Texture</returns>
-        /// <summary>Returns the parent texture scaled by the factors scaleX and scaleY.</summary>
+        /// <summary>Returns the parent texture scaled to the resolution scaledX x scaledY.</summary>
         /// <param name="scaledX">The width to scale the texture to in pixels.</param>
         /// <param name="scaledY">The height to scale the texture to in pixels.</param>
         public Texture ScaleTo(int scaledX, int scaledY) {
@@ -1424,7 +1353,7 @@ public static class FL {
 
     /// <name>HslToRgb</name>
     /// <returns>uint</returns>
-    /// <summary>Converts a color from HSL format to either RGBA (0xRRGGBBAA) or ABGR format (0xAABBGGRR) depending on the system's endianness.</summary>
+    /// <summary>Converts a color from HSL format to ABGR format (0xAABBGGRR).</summary>
     /// <param name="hue">The H channel's value.</param>
     /// <param name="saturation">The S channel's value.</param>
     /// <param name="lightness">The L channel's value.</param>
@@ -1469,8 +1398,8 @@ public static class FL {
     }
 #endregion colors
 
-/// <region>Common</region>
-#region common
+/// <region>Render Settings</region>
+#region render settings
     /// <name>RenderSettings</name>
     /// <returns>struct</returns>
     /// <summary>The struct defining the settings which will be applied when FL.Init is called.</summary>
@@ -1490,11 +1419,6 @@ public static class FL {
         /// <returns>bool</returns>
         /// <summary>Gets or sets whether or not VSync is enabled.</summary>
         public bool VSync { get; set; } = true;
-        
-        /// <name>Multithreaded</name>
-        /// <returns>bool</returns>
-        /// <summary>Gets or sets whether or not the engine is multithreaded. Only applicable in DrawClear mode.</summary>
-        public bool Multithreaded { get; set; } = false;
         
         /// <name>Accumulate</name>
         /// <returns>bool</returns>
@@ -1516,7 +1440,10 @@ public static class FL {
         /// <summary>Gets or sets how the engine renders when PixelSize > 1.</summary>
         public ScaleType ScaleType;
     }
+#endregion render settings
 
+/// <region>Common</region>
+#region common
     /// <name>Settings</name>
     /// <returns>RenderSettings</returns>
     /// <summary>Gets or sets the settings with which the engine will run. Not all settings can be changed during runtime, the ones that can't be must be set before Init.</summary>
