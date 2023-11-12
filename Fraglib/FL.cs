@@ -1353,15 +1353,23 @@ public static class FL {
     /// <name>RenderSettings</name>
     /// <returns>struct</returns>
     /// <summary>The struct defining the settings which will be applied when FL.Init is called.</summary>
-    public struct RenderSettings {
+    public class RenderSettings {
         public RenderSettings() { }
 
         /// <name>PixelSize</name>
         /// <returns>int</returns>
         /// <summary>Gets or sets the pixel size of the window. Clamped in the range [1, 100].</summary>
         public int PixelSize {
-            readonly get => pixelSize;
-            set => pixelSize = Math.Clamp(value, 1, 100);
+            get => pixelSize;
+            set {
+                int ps = Math.Clamp(value, 1, 100);
+                
+                if (e is PerPixelEngine p) {
+                    p.PixelSize = ps;
+                }
+
+                pixelSize = ps;
+            }
         }
         private int pixelSize = 1;
         
@@ -1379,21 +1387,22 @@ public static class FL {
         /// <returns>bool</returns>
         /// <summary>Gets or sets whether or not the engine accumulates previous frames with the current frame. Only applicable in PerPixel mode. Can be changed during runtime.</summary>
         public bool Accumulate {
-            readonly get => e is PerPixelEngine p ? p.Accumulate : accumulate;
+            get => accumulate;
             set {
                 if (e is PerPixelEngine p) {
                     p.Accumulate = value;
-                } else {
-                    accumulate = value;
                 }
+
+                accumulate = value;
             }
+        }
         }
         private bool accumulate = false;
 
         /// <name>ScaleType</name>
         /// <returns>ScaleType</returns>
         /// <summary>Gets or sets how the engine renders when PixelSize > 1.</summary>
-        public ScaleType ScaleType;
+        public ScaleType ScaleType { get; set; }
     }
 #endregion render settings
 
@@ -1406,10 +1415,12 @@ public static class FL {
         set {
             if (e is null) {
                 renderSettings = value;
-            } else {
-                renderSettings.Accumulate = value.Accumulate;
-                renderSettings.TargetFramerate = value.TargetFramerate;
+                return;
             }
+
+            renderSettings.Accumulate = value.Accumulate;
+            renderSettings.TargetFramerate = value.TargetFramerate;
+            renderSettings.PixelSize = value.PixelSize;
         }
     }
     private static RenderSettings renderSettings = new();
