@@ -15,6 +15,7 @@
     </dependencies>
   </metadata>
   <files>
+    <file src="D:\Common\Repos\Fraglib\bin\Release\net7.0\Fraglib.runtimeconfig.json" target="lib\net7.0\Fraglib.runtimeconfig.json" />
     <file src="D:\Common\Repos\Fraglib\bin\Release\net7.0\Fraglib.dll" target="lib\net7.0\Fraglib.dll" />
     <file src="D:\Common\Repos\Fraglib\LICENSE.txt" target="LICENSE.txt" />
     <file src="D:\Common\Repos\Fraglib\README.md" target="README.md" />
