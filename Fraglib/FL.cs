@@ -1,5 +1,5 @@
-using System;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Fraglib;
 
@@ -194,24 +194,24 @@ public static class FL {
     /// <param name="centerY">The center coordinate of the cirlce along the y-axis.</param>
     /// <param name="radius">The radius of the circle.</param>
     /// <param name="color">The color of the circle.</param>
-    public static unsafe void DrawCircle(float centerX, float centerY, float radius, uint color) {
+    public static unsafe void DrawCircle(int centerX, int centerY, int radius, uint color) {
         if (!isDrawClear) {
             return;
         }
 
-        int x = (int)radius, y = 0;
+        int x = radius, y = 0;
         int decisionOver2 = 1 - x;
 
         fixed (uint* screenPtr = e!.Screen) {
             while (y <= x) {
-                int i1 = (int)(centerY + y) * windowWidth + (int)(centerX + x);
-                int i2 = (int)(centerY - y) * windowWidth + (int)(centerX + x);
-                int i3 = (int)(centerY + y) * windowWidth + (int)(centerX - x);
-                int i4 = (int)(centerY - y) * windowWidth + (int)(centerX - x);
-                int i5 = (int)(centerY + x) * windowWidth + (int)(centerX + y);
-                int i6 = (int)(centerY - x) * windowWidth + (int)(centerX + y);
-                int i7 = (int)(centerY + x) * windowWidth + (int)(centerX - y);
-                int i8 = (int)(centerY - x) * windowWidth + (int)(centerX - y);
+                int i1 = (centerY + y) * windowWidth + (centerX + x);
+                int i2 = (centerY - y) * windowWidth + (centerX + x);
+                int i3 = (centerY + y) * windowWidth + (centerX - x);
+                int i4 = (centerY - y) * windowWidth + (centerX - x);
+                int i5 = (centerY + x) * windowWidth + (centerX + y);
+                int i6 = (centerY - x) * windowWidth + (centerX + y);
+                int i7 = (centerY + x) * windowWidth + (centerX - y);
+                int i8 = (centerY - x) * windowWidth + (centerX - y);
 
                 if (i1 >= 0 && i1 < windowWidth * windowHeight) {
                     screenPtr[i1] = color;
@@ -257,7 +257,7 @@ public static class FL {
     /// <param name="centerY">The center coordinate of the cirlce along the y-axis.</param>
     /// <param name="radius">The radius of the circle.</param>
     /// <param name="color">The color of the circle.</param>
-    public static unsafe void FillCircle(float centerX, float centerY, float radius, uint color) {
+    public static unsafe void FillCircle(int centerX, int centerY, int radius, uint color) {
         if (!isDrawClear) {
             return;
         }
@@ -266,10 +266,10 @@ public static class FL {
             return;
         }
 
-        int xStart = (int)(centerX - radius);
-        int xEnd = (int)(centerX + radius);
-        int yStart = (int)(centerY - radius);
-        int yEnd = (int)(centerY + radius);
+        int xStart = centerX - radius;
+        int xEnd = centerX + radius;
+        int yStart = centerY - radius;
+        int yEnd = centerY + radius;
         float radiusSquared = radius * radius;
 
         fixed (uint* screenPtr = e!.Screen) {
@@ -278,7 +278,7 @@ public static class FL {
                     float dx = x - centerX;
                     float dy = y - centerY;
                     if (x >= 0 && x < windowWidth && y >= 0 && y < windowHeight && (dx * dx + dy * dy) <= radiusSquared) {
-                        screenPtr[y * windowWidth + x] = color;
+                        *(screenPtr + y * windowWidth + x) = color;
                     }
                 }
             }
@@ -298,46 +298,6 @@ public static class FL {
             return;
         }
 
-        if (x0 < 0 || x0 >= windowWidth || y0 < 0 || y0 >= windowHeight ||
-            x1 < 0 || x1 >= windowWidth || y1 < 0 || y1 >= windowHeight) {
-
-            if (x0 != x1) {
-                float m = (float)(y1 - y0) / (x1 - x0);
-
-                if (x0 < 0) {
-                    y0 += (int)(-x0 * m);
-                    x0 = 0;
-                } else if (x0 >= windowWidth) {
-                    y0 += (int)((windowWidth - 1 - x0) * m);
-                    x0 = windowWidth - 1;
-                }
-
-                if (x1 < 0) {
-                    y1 += (int)(-x1 * m);
-                    x1 = 0;
-                } else if (x1 >= windowWidth) {
-                    y1 += (int)((windowWidth - 1 - x1) * m);
-                    x1 = windowWidth - 1;
-                }
-            }
-
-            if (y0 < 0) {
-                x0 += (int)(-y0 / (float)(y1 - y0) * (x1 - x0));
-                y0 = 0;
-            } else if (y0 >= windowHeight) {
-                x0 += (int)((windowHeight - 1 - y0) / (float)(y1 - y0) * (x1 - x0));
-                y0 = windowHeight - 1;
-            }
-
-            if (y1 < 0) {
-                x1 += (int)(-y1 / (float)(y0 - y1) * (x0 - x1));
-                y1 = 0;
-            } else if (y1 >= windowHeight) {
-                x1 += (int)((windowHeight - 1 - y1) / (float)(y0 - y1) * (x0 - x1));
-                y1 = windowHeight - 1;
-            }
-        }
-
         int dx = Math.Abs(x1 - x0);
         int dy = Math.Abs(y1 - y0);
 
@@ -348,10 +308,10 @@ public static class FL {
         int er = dx - dy;
 
         fixed (uint* screenPtr = e!.Screen) {
-            uint* ptr = screenPtr + y0 * windowWidth + x0;
-
             while (true) {
-                *ptr = color;
+                if (x0 >= 0 && x0 < windowWidth && y0 >= 0 && y0 < windowHeight) {
+                    *(screenPtr + y0 * windowWidth + x0) = color;
+                }
 
                 if (x0 == x1 && y0 == y1) {
                     break;
@@ -362,13 +322,11 @@ public static class FL {
                 if (e2 > -dy) {
                     er -= dy;
                     x0 += sx;
-                    ptr += sx;
                 }
 
                 if (e2 < dx) {
                     er += dx;
                     y0 += sy;
-                    ptr += syw;
                 }
             }
         }
@@ -394,6 +352,7 @@ public static class FL {
         if (y0 < 0) {
             y0 = 0;
         }
+
         if (y1 >= windowHeight) {
             y1 = windowHeight - 1;
         }
@@ -503,9 +462,9 @@ public static class FL {
             (x1, y1, x2, y2) = (x2, y2, x1, y1);
         }
 
-        float s1 = (float)(x1 - x0) / (y1 - y0);
-        float s2 = (float)(x2 - x0) / (y2 - y0);
-        float s3 = (float)(x2 - x1) / (y2 - y1);
+        float s1 = (y1 - y0 != 0) ? (float)(x1 - x0) / (y1 - y0) : 0;
+        float s2 = (y2 - y0 != 0) ? (float)(x2 - x0) / (y2 - y0) : 0;
+        float s3 = (y2 - y1 != 0) ? (float)(x2 - x1) / (y2 - y1) : 0;
 
         for (int scanlineY = y0; scanlineY <= y1; scanlineY++) {
             int startX = (int)(x0 + (scanlineY - y0) * s1);
@@ -1194,20 +1153,10 @@ public static class FL {
     /// <param name="color1">The first color to average with.</param>
     /// <param name="color2">The second color to average with.</param>
     public static uint AverageColors(uint color1, uint color2) {
-        byte c01 = (byte)((color1 >> 0) & 0xFF);
-        byte c02 = (byte)((color1 >> 8) & 0xFF);
-        byte c03 = (byte)((color1 >> 16) & 0xFF);
-        byte c04 = (byte)((color1 >> 24) & 0xFF);
-
-        byte c11 = (byte)((color2 >> 0) & 0xFF);
-        byte c12 = (byte)((color2 >> 8) & 0xFF);
-        byte c13 = (byte)((color2 >> 16) & 0xFF);
-        byte c14 = (byte)((color2 >> 24) & 0xFF);
-
-        byte a1 = (byte)((c01 + c11) / 2);
-        byte a2 = (byte)((c02 + c12) / 2);
-        byte a3 = (byte)((c03 + c13) / 2);
-        byte a4 = (byte)((c04 + c14) / 2);
+        byte a1 = (byte)((color1.GetR() + color2.GetR()) / 2);
+        byte a2 = (byte)((color1.GetG() + color2.GetG()) / 2);
+        byte a3 = (byte)((color1.GetB() + color2.GetB()) / 2);
+        byte a4 = (byte)((color2.GetA() + color2.GetA()) / 2);
 
         return ((uint)a4 << 24) | ((uint)a3 << 16) | ((uint)a2 << 8) | a1;
     }
@@ -1424,7 +1373,7 @@ public static class FL {
         /// <name>DesiredFramerate</name>
         /// <returns>int</returns>
         /// <summary>Gets or sets the target framerate engine. Only changes anything is VSync == false.</summary>
-        public int TargetFramerate { get; set; } = 144;
+        public int TargetFramerate { get; set; } = 2000;
         
         /// <name>Accumulate</name>
         /// <returns>bool</returns>
@@ -1448,7 +1397,6 @@ public static class FL {
     }
 #endregion render settings
 
-/// <region>Common</region>
 #region common
     /// <name>Settings</name>
     /// <returns>RenderSettings</returns>
@@ -1553,8 +1501,10 @@ public static class FL {
 
     //===========================================================
     // Input
-    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern short GetAsyncKeyState(int key);
-    private static readonly Dictionary<char, bool> _previousKeyStates = new Dictionary<char, bool>();
+    [DllImport("user32.dll")] 
+    private static extern short GetAsyncKeyState(int key);
+    
+    private static readonly Dictionary<char, bool> _previousKeyStates = new();
 
     /// <name>GetKeyDown</name>
     /// <returns>bool</returns>
@@ -1621,6 +1571,16 @@ public static class FL {
     /// <param name="rad">Optional parameter representing the radians to convert.</param>
     public static float RadToDeg(this float rad) {
         return 180f / MathF.PI * rad;
+    }
+
+    /// <name>Lerp</name>
+    /// <returns>float</returns>
+    /// <summary>Performs linear interpolation between two values.</summary>
+    /// <param name="a">The value from which to interpolate.</param>
+    /// <param name="b">The value to interpolate to.</param>
+    /// <param name="t">The percent as a decimal in range [0, 1] to interpolate by.</param>
+    public static float Lerp(float a, float b, float t) {
+        return a + (b - a) * t;
     }
 
     /// <name>Rotate</name>
