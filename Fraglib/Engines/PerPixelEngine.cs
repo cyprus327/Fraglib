@@ -1,5 +1,6 @@
 using OpenTK.Windowing.Common;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace Fraglib;
 
@@ -33,6 +34,7 @@ internal sealed class PerPixelEngine : Engine {
     private readonly Vector4[] _accumulationData;
     private uint frameInd = 0;
 
+    // pretty gross method but idk a good way to reduce it so it's staying
     public override void Update(FrameEventArgs args) {
         float dt = (float)args.Time;
         uniforms.Time += dt;
@@ -42,29 +44,79 @@ internal sealed class PerPixelEngine : Engine {
 
         int length = Screen.Length;
         int width = WindowWidth;
+        int ps = PixelSize, cw = width / ps;
         if (accumulate) {
             if (frameInd++ == 0) {
                 Array.Clear(_accumulationData, 0, _accumulationData.Length);
             }
+            
+            if (ps == 1) {
+                Parallel.For(0, length, i => {
+                    _accumulationData[i] += _perPixel(i % width, i / width, uniforms).ToVec4();
+                    Vector4 accumulatedCol = _accumulationData[i] / frameInd;
+                    uint color = FL.NewColor(accumulatedCol);
+                    color.SetA((byte)((color.GetA() + Screen[i].GetA()) / 2));
+                    Screen[i] = color;
+                });
 
-            Parallel.For(0, length, i => {
-                _accumulationData[i] += _perPixel(i % width, i / width, uniforms).ToVec4();
-                Vector4 accumulatedCol = _accumulationData[i] / frameInd;
-                uint color = FL.NewColor(accumulatedCol);
-                color.SetA((byte)(((int)color.GetA() + (int)Screen[i].GetA()) / 0b10));
-                Screen[i] = color;
+                return;
+            }
+
+            Parallel.For(0, WindowHeight / ps, cy => {
+                for (int cx = 0; cx < cw; cx++) {
+                    int ci = cy * ps * width + cx * ps;
+                    _accumulationData[ci] += _perPixel(ci % width, ci / width, uniforms).ToVec4();
+                    Vector4 accumulatedCol = _accumulationData[ci] / frameInd;
+                    uint chunkCol = FL.NewColor(accumulatedCol);
+                    for (int y = 0; y < ps; y++) {
+                        for (int x = 0; x < ps; x++) {
+                            int ind = ci + x + y * width;
+                            if (ind >= length) {
+                                break;
+                            }
+
+                            uint newColor = chunkCol;
+                            newColor.SetA((byte)((newColor.GetA() + Screen[ind].GetA()) / 2));
+                            Screen[ind] = newColor;
+                        }
+                    }
+                }
             });
-        } else {
+
+            return;
+        }
+
+        if (ps == 1) {
             Parallel.For(0, length, i => {
                 uint color = _perPixel(i % width, i / width, uniforms);
-                color.SetA((byte)(((int)color.GetA() + (int)Screen[i].GetA()) / 0b10));
+                color.SetA((byte)((color.GetA() + Screen[i].GetA()) / 2));
                 Screen[i] = color;
             });
+
+            return;
         }
+
+        Parallel.For(0, WindowHeight / ps, cy => {
+            for (int cx = 0; cx < cw; cx++) {
+                int ci = cy * ps * width + cx * ps;
+                uint chunkCol = _perPixel(ci % width, ci / width, uniforms);
+                for (int y = 0; y < ps; y++) {
+                    for (int x = 0; x < ps; x++) {
+                        int ind = ci + x + y * width;
+                        if (ind >= length) {
+                            break;
+                        }
+
+                        uint newColor = chunkCol;
+                        newColor.SetA((byte)((newColor.GetA() + Screen[ind].GetA()) / 2));
+                        Screen[ind] = newColor;
+                    }
+                }
+            }
+        });
     }
 
     public override void OnWindowClose() {
-        
     }
 }
 

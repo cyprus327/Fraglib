@@ -95,7 +95,7 @@ internal abstract class Engine : GameWindow {
             out vec4 fragColor;
 
             void main() {{
-                {(PixelSize == 1 ? 
+                {(PixelSize == 1 || this is PerPixelEngine ? 
                     "fragColor = texture(textureSampler, gl_FragCoord.xy / textureSize(textureSampler, 0));" : 
 
                     ScaleType == ScaleType.Average ? 
