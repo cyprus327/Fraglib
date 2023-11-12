@@ -34,10 +34,7 @@ using Fraglib;
 
 internal sealed class Example {
     private static void Main() {
-        FL.Settings = new() {
-            VSync = true
-        };
-
+        FL.Settings.VSync = true;
         FL.Init(1024, 768, "Window", PerPixel); // PerFrame optional
         FL.Run();
     }
@@ -64,10 +61,7 @@ internal sealed class Example {
     private static float ballSpeedY = 700f;
     
     private static void Main() {
-        FL.Settings = new() {
-            VSync = true
-        };
-
+        FL.Settings.VSync = true;
         FL.Init(1024, 768, "Rainbow Ball", Program);
         FL.Run();
     }
@@ -96,3 +90,5 @@ internal sealed class Example {
 ![Rainbow Ball](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/RainbowBallGIF.gif)
 
 You may have noticed there is nothing like "FL.Close()", which is on purpose. There's no unbinding, unloading, etc., everything is done for you behind the scenes.
+
+If you're intrigued by these snippets, I implore you to check out the [gallery](https://github.com/cyprus327/Fraglib/blob/main/Gallery.md) or [tutorial](https://github.com/cyprus327/Fraglib/blob/main/Tutorial.md).
