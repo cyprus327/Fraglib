@@ -30,20 +30,16 @@ When you run this, you should see a black window open with your specified resolu
 
 ![Window VSync Off](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/BlackWindow.png)
 
-If you want to change settings, such as PixelSize, change them before calling FL.Init as shown below.
+Certain settings must be changed before FL.Init is called.
 ```csharp
 // this is fine
-FL.Settings = new() {
-    PixelSize = 5
-};
-FL.Init(1024, 768, "Window With Big Pixels");
+FL.Settings.VSync = false;
+FL.Init(1024, 768, "Window Without VSync");
 FL.Run();
 
-// this doesn't work
-FL.Init(1024, 768, "Window With Normal Pixels");
-FL.Settings = new() {
-    PixelSize = 5
-};
+// this doesn't work (default for VSync is true)
+FL.Init(1024, 768, "Window With VSync");
+FL.Settings.VSync = false;
 FL.Run();
 ```
 
@@ -110,19 +106,12 @@ internal static class Tutorial {
 ```
 You could also inline Program like below, however I personally prefer it to be it's own method.
 ```csharp
-using Fraglib;
-
-internal sealed class Tutorial {    
-    private static void Main() {
-        FL.Init(1024, 768, "Window", () => {
-            int pos = FL.Width / 2;
-            for (int i = 0; i < FL.Height; i++) {
-                FL.SetPixel(pos, i, FL.Blue);
-            }
-        });
-        FL.Run();
+FL.Init(1024, 768, "Window", () => {
+    int pos = FL.Width / 2;
+    for (int i = 0; i < FL.Height; i++) {
+        FL.SetPixel(pos, i, FL.Blue);
     }
-}
+});
 ```
 
 Here's the output of both above programs:
@@ -400,6 +389,7 @@ internal sealed class Tutorial {
         FL.Run();
     }
 
+    // PerFrame used to handle user input
     private static void PerFrame() {
         if (FL.GetKeyDown('W')) {
             zoom *= MathF.Pow(2f, FL.DeltaTime);
@@ -454,6 +444,8 @@ FL.Texture clonedTexture = new(texture);
 FL.Texture blankTexture = new(256, 256);
 ```
 
+There are multiple overloads to DrawTexture, all of which support transparency. This does make them significantly slower than DrawTextureFast, however, which doesn't support transparency. 
+
 The Texture struct of course has the methods you would expect, e.g. 'SetPixel(x, y, color)', 'GetPixel(x, y)', 'GetPixels'.
 
 ## States
@@ -470,8 +462,8 @@ FL.Init(800, 600, "Window", () => {
     // ...
 });
 
-for (int y = 0; y < 600; y += 5) {
-    for (int x = 0; x < 800; x += 5) {
+for (int y = 0; y < FL.Height; y += 5) {
+    for (int x = 0; x < FL.Width; x += 5) {
         FL.FillRect(x, y, 4, 4, FL.Rand());
     }
 }
@@ -484,8 +476,8 @@ Instead of below, where you're drawing the background pattern every frame.
 
 ```csharp
 FL.Init(800, 600, "Window", () => {
-    for (int y = 0; y < 600; y += 5) {
-        for (int x = 0; x < 800; x += 5) {
+    for (int y = 0; y < FL.Height; y += 5) {
+        for (int x = 0; x < FL.Width; x += 5) {
             FL.FillRect(x, y, 4, 4, FL.Rand());
         }
     }
@@ -495,7 +487,6 @@ FL.Init(800, 600, "Window", () => {
 FL.Run();
 ```
 
-In case you're confused about the first snippet and why things are in the order they are, the simple explaination is that when you call Init, the program supplied isn't actually run until Run is called,
-so anything in betweem those two calls will be called before your program, which in this case allows us to save the background pattern.
+In case you're confused about the first snippet and why things are in the order they are, the simple explaination is that when you call Init, the program supplied isn't actually run until Run is called, so anything in betweem those two calls will be called before your program, which in this case allows us to save the background pattern.
 
-You may notice I initialize 'background' to -1, this doesn't actually effect anything, it just makes it look better to me. Initializing it to any other integer would work perfectly here as well.
+You may notice I initialize 'background' to -1, this doesn't actually effect anything, it just makes it look better to me. Initializing it to any other integer would work perfectly here as well. Also, if something like this is the only state you're saving you really don't need to save it to a variable, the output from SaveState is just an index so in this case (since this is the first state we've saved) 'background' will be set to 0.
