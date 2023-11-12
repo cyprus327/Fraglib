@@ -111,16 +111,9 @@ public static class FL {
 
     /// <name>Clear</name>
     /// <returns>void</returns>
-    /// <summary>Clears the window to black.</summary>
-    public static void Clear() {
-        Clear(Black);
-    }
-
-    /// <name>Clear</name>
-    /// <returns>void</returns>
     /// <summary>Clears the window to the specified color.</summary>
-    /// <param name="color">The color the window will get cleared to.</param>
-    public static void Clear(uint color) {
+    /// <param name="color">The color the window will get cleared to, default value of black (0xFF000000).</param>
+    public static unsafe void Clear(uint color = 4278190080) {
         if (!isDrawClear) {
             return; 
         }
@@ -174,17 +167,21 @@ public static class FL {
             return;
         }
 
-        fixed (uint* screenPtr = e!.Screen) {
-            uint* rowStartPtr = screenPtr + yClipped * windowWidth + xClipped;
-
-            for (int sy = 0; sy < heightClipped; sy++) {
-                uint* rowPtr = rowStartPtr + sy * windowWidth;
-
-                for (int sx = 0; sx < widthClipped; sx++) {
-                    *(rowPtr + sx) = color;
-                }
-            }
+        for (int i = 0; i < heightClipped; i++) {
+            Array.Fill(e!.Screen, color, (i + yClipped) * windowWidth + xClipped, widthClipped);
         }
+
+        // fixed (uint* screenPtr = e!.Screen) {
+        //     uint* rowStartPtr = screenPtr + yClipped * windowWidth + xClipped;
+
+        //     for (int sy = 0; sy < heightClipped; sy++) {
+        //         uint* rowPtr = rowStartPtr + sy * windowWidth;
+
+        //         for (int sx = 0; sx < widthClipped; sx++) {
+        //             *(rowPtr + sx) = color;
+        //         }
+        //     }
+        // }
     }
 
     /// <name>DrawCircle</name>
@@ -396,14 +393,16 @@ public static class FL {
             return;
         }
 
-        fixed (uint* screenPtr = e!.Screen) {
-            int startInd = y * windowWidth + x0;
-            uint* startPtr = screenPtr + startInd;
-            uint* endPtr = startPtr + (x1 - x0);
-            for (uint* currentPtr = startPtr; currentPtr <= endPtr; currentPtr++) {
-                *currentPtr = color;
-            }
-        }
+        Array.Fill(e!.Screen, color, x0 + y * windowWidth, x1 - x0);
+
+        // fixed (uint* screenPtr = e!.Screen) {
+        //     int startInd = y * windowWidth + x0;
+        //     uint* startPtr = screenPtr + startInd;
+        //     uint* endPtr = startPtr + (x1 - x0);
+        //     for (uint* currentPtr = startPtr; currentPtr <= endPtr; currentPtr++) {
+        //         *currentPtr = color;
+        //     }
+        // }
     }
 
     /// <name>DrawTriangle</name>
@@ -1395,7 +1394,6 @@ public static class FL {
 
                 accumulate = value;
             }
-        }
         }
         private bool accumulate = false;
 
