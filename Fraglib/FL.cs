@@ -89,7 +89,17 @@ public static class FL {
             return;
         }
 
-        e!.Screen[y * windowWidth + x] = color;
+        byte a = color.GetA();
+        if (a == 0) {
+            return;
+        }
+
+        int ind = y * windowWidth + x;
+        if (a != 255) {
+            color = AlphaBlend(e!.Screen[ind], color);
+        }
+
+        e!.Screen[ind] = color;
     }
 
     /// <name>GetPixel</name>
@@ -154,6 +164,11 @@ public static class FL {
             return;
         }
 
+        byte a = color.GetA();
+        if (a == 0) {
+            return;
+        }
+
         if (width <= 0 || height <= 0) {
             return;
         }
@@ -167,21 +182,22 @@ public static class FL {
             return;
         }
 
-        for (int i = 0; i < heightClipped; i++) {
-            Array.Fill(e!.Screen, color, (i + yClipped) * windowWidth + xClipped, widthClipped);
+        if (a == 255) {
+            for (int i = 0; i < heightClipped; i++) {
+                Array.Fill(e!.Screen, color, (i + yClipped) * windowWidth + xClipped, widthClipped);
+            }
+            return;
         }
 
-        // fixed (uint* screenPtr = e!.Screen) {
-        //     uint* rowStartPtr = screenPtr + yClipped * windowWidth + xClipped;
-
-        //     for (int sy = 0; sy < heightClipped; sy++) {
-        //         uint* rowPtr = rowStartPtr + sy * windowWidth;
-
-        //         for (int sx = 0; sx < widthClipped; sx++) {
-        //             *(rowPtr + sx) = color;
-        //         }
-        //     }
-        // }
+        fixed (uint* screenPtr = e!.Screen) {
+            uint* rowStartPtr = screenPtr + yClipped * windowWidth + xClipped;
+            for (int sy = 0; sy < heightClipped; sy++) {
+                uint* rowPtr = rowStartPtr + sy * windowWidth;
+                for (int sx = 0; sx < widthClipped; sx++) {
+                    *(rowPtr + sx) = AlphaBlend(rowPtr[sx], color); 
+                }
+            }
+        }
     }
 
     /// <name>DrawCircle</name>
@@ -196,10 +212,63 @@ public static class FL {
             return;
         }
 
+        byte a = color.GetA();
+        if (a == 0) {
+            return;
+        }
+
         int x = radius, y = 0;
         int decisionOver2 = 1 - x;
 
         fixed (uint* screenPtr = e!.Screen) {
+            if (a == 255) {
+                while (y <= x) {
+                    int i1 = (centerY + y) * windowWidth + (centerX + x);
+                    int i2 = (centerY - y) * windowWidth + (centerX + x);
+                    int i3 = (centerY + y) * windowWidth + (centerX - x);
+                    int i4 = (centerY - y) * windowWidth + (centerX - x);
+                    int i5 = (centerY + x) * windowWidth + (centerX + y);
+                    int i6 = (centerY - x) * windowWidth + (centerX + y);
+                    int i7 = (centerY + x) * windowWidth + (centerX - y);
+                    int i8 = (centerY - x) * windowWidth + (centerX - y);
+
+                    if (i1 >= 0 && i1 < windowWidth * windowHeight) {
+                        *(screenPtr + i1) = color;
+                    }
+                    if (i2 >= 0 && i2 < windowWidth * windowHeight) {
+                        screenPtr[i2] = color;
+                    }
+                    if (i3 >= 0 && i3 < windowWidth * windowHeight) {
+                        screenPtr[i3] = color;
+                    }
+                    if (i4 >= 0 && i4 < windowWidth * windowHeight) {
+                        screenPtr[i4] = color;
+                    }
+                    if (i5 >= 0 && i5 < windowWidth * windowHeight) {
+                        screenPtr[i5] = color;
+                    }
+                    if (i6 >= 0 && i6 < windowWidth * windowHeight) {
+                        screenPtr[i6] = color;
+                    }
+                    if (i7 >= 0 && i7 < windowWidth * windowHeight) {
+                        screenPtr[i7] = color;
+                    }
+                    if (i8 >= 0 && i8 < windowWidth * windowHeight) {
+                        screenPtr[i8] = color;
+                    }
+
+                    if (decisionOver2 <= 0) {
+                        decisionOver2 += 2 * y + 1;
+                    } else {
+                        x--;
+                        decisionOver2 += 2 * (y - x) + 1;
+                    }
+
+                    y++;
+                }
+                return;
+            }
+
             while (y <= x) {
                 int i1 = (centerY + y) * windowWidth + (centerX + x);
                 int i2 = (centerY - y) * windowWidth + (centerX + x);
@@ -211,28 +280,28 @@ public static class FL {
                 int i8 = (centerY - x) * windowWidth + (centerX - y);
 
                 if (i1 >= 0 && i1 < windowWidth * windowHeight) {
-                    screenPtr[i1] = color;
+                    *(screenPtr + i1) = AlphaBlend(screenPtr[i1], color);
                 }
                 if (i2 >= 0 && i2 < windowWidth * windowHeight) {
-                    screenPtr[i2] = color;
+                    *(screenPtr + i2) = AlphaBlend(screenPtr[i2], color);
                 }
                 if (i3 >= 0 && i3 < windowWidth * windowHeight) {
-                    screenPtr[i3] = color;
+                    *(screenPtr + i3) = AlphaBlend(screenPtr[i3], color);
                 }
                 if (i4 >= 0 && i4 < windowWidth * windowHeight) {
-                    screenPtr[i4] = color;
+                    *(screenPtr + i4) = AlphaBlend(screenPtr[i4], color);
                 }
                 if (i5 >= 0 && i5 < windowWidth * windowHeight) {
-                    screenPtr[i5] = color;
+                    *(screenPtr + i5) = AlphaBlend(screenPtr[i5], color);
                 }
                 if (i6 >= 0 && i6 < windowWidth * windowHeight) {
-                    screenPtr[i6] = color;
+                    *(screenPtr + i6) = AlphaBlend(screenPtr[i6], color);
                 }
                 if (i7 >= 0 && i7 < windowWidth * windowHeight) {
-                    screenPtr[i7] = color;
+                    *(screenPtr + i7) = AlphaBlend(screenPtr[i7], color);
                 }
                 if (i8 >= 0 && i8 < windowWidth * windowHeight) {
-                    screenPtr[i8] = color;
+                    *(screenPtr + i8) = AlphaBlend(screenPtr[i8], color);
                 }
 
                 if (decisionOver2 <= 0) {
@@ -263,6 +332,11 @@ public static class FL {
             return;
         }
 
+        byte a = color.GetA();
+        if (a == 0) {
+            return;
+        }
+
         int xStart = centerX - radius;
         int xEnd = centerX + radius;
         int yStart = centerY - radius;
@@ -270,12 +344,26 @@ public static class FL {
         float radiusSquared = radius * radius;
 
         fixed (uint* screenPtr = e!.Screen) {
+            if (a == 255) {
+                for (int x = xStart; x <= xEnd; x++) {
+                    for (int y = yStart; y <= yEnd; y++) {
+                        float dx = x - centerX;
+                        float dy = y - centerY;
+                        if (x >= 0 && x < windowWidth && y >= 0 && y < windowHeight && (dx * dx + dy * dy) <= radiusSquared) {
+                            *(screenPtr + y * windowWidth + x) = color;
+                        }
+                    }
+                }
+                return;
+            }
+
             for (int x = xStart; x <= xEnd; x++) {
                 for (int y = yStart; y <= yEnd; y++) {
                     float dx = x - centerX;
                     float dy = y - centerY;
                     if (x >= 0 && x < windowWidth && y >= 0 && y < windowHeight && (dx * dx + dy * dy) <= radiusSquared) {
-                        *(screenPtr + y * windowWidth + x) = color;
+                        int ind = y * windowWidth + x;
+                        *(screenPtr + ind) = AlphaBlend(screenPtr[ind], color);
                     }
                 }
             }
@@ -295,6 +383,11 @@ public static class FL {
             return;
         }
 
+        byte a = color.GetA();
+        if (a == 0) {
+            return;
+        }
+
         int dx = Math.Abs(x1 - x0);
         int dy = Math.Abs(y1 - y0);
 
@@ -305,9 +398,35 @@ public static class FL {
         int er = dx - dy;
 
         fixed (uint* screenPtr = e!.Screen) {
-            while (true) {
+            if (a == 255) {
+                for (int i = 0; i < 10000; i++) {
+                    if (x0 >= 0 && x0 < windowWidth && y0 >= 0 && y0 < windowHeight) {
+                        *(screenPtr + y0 * windowWidth + x0) = color;
+                    }
+
+                    if (x0 == x1 && y0 == y1) {
+                        break;
+                    }
+
+                    int e2 = 2 * er;
+
+                    if (e2 > -dy) {
+                        er -= dy;
+                        x0 += sx;
+                    }
+
+                    if (e2 < dx) {
+                        er += dx;
+                        y0 += sy;
+                    }
+                }
+                return;
+            }
+
+            for (int i = 0; i < 10000; i++) {
                 if (x0 >= 0 && x0 < windowWidth && y0 >= 0 && y0 < windowHeight) {
-                    *(screenPtr + y0 * windowWidth + x0) = color;
+                    int ind = y0 * windowWidth + x0;
+                    *(screenPtr + ind) = AlphaBlend(screenPtr[ind], color);
                 }
 
                 if (x0 == x1 && y0 == y1) {
@@ -346,6 +465,11 @@ public static class FL {
             return;
         }
 
+        byte a = color.GetA();
+        if (a == 0) {
+            return;
+        }
+
         if (y0 < 0) {
             y0 = 0;
         }
@@ -357,9 +481,16 @@ public static class FL {
         fixed (uint* screenPtr = e!.Screen) {
             int stride = Width;
             uint* rowPtr = screenPtr + y0 * stride + x;
+            if (a == 255) {
+                for (int y = y0; y <= y1; y++) {
+                    *rowPtr = color;
+                    rowPtr += stride;
+                }
+                return;
+            }
+
             for (int y = y0; y <= y1; y++) {
-                *rowPtr = color;
-                rowPtr += stride;
+                *rowPtr = AlphaBlend(rowPtr[0], color);
             }
         }
     }
@@ -381,6 +512,11 @@ public static class FL {
             return;
         }
 
+        byte a = color.GetA();
+        if (a == 0) {
+            return;
+        }
+
         if (x0 < 0) {
             x0 = 0;
         }
@@ -393,16 +529,19 @@ public static class FL {
             return;
         }
 
-        Array.Fill(e!.Screen, color, x0 + y * windowWidth, x1 - x0);
+        if (a == 255) {
+            Array.Fill(e!.Screen, color, x0 + y * windowWidth, x1 - x0);
+            return;
+        }
 
-        // fixed (uint* screenPtr = e!.Screen) {
-        //     int startInd = y * windowWidth + x0;
-        //     uint* startPtr = screenPtr + startInd;
-        //     uint* endPtr = startPtr + (x1 - x0);
-        //     for (uint* currentPtr = startPtr; currentPtr <= endPtr; currentPtr++) {
-        //         *currentPtr = color;
-        //     }
-        // }
+        fixed (uint* screenPtr = e!.Screen) {
+            int startInd = y * windowWidth + x0;
+            uint* startPtr = screenPtr + startInd;
+            uint* endPtr = startPtr + (x1 - x0);
+            for (uint* currentPtr = startPtr; currentPtr <= endPtr; currentPtr++) {
+                *currentPtr = AlphaBlend(currentPtr[0], color);
+            }
+        }
     }
 
     /// <name>DrawTriangle</name>
@@ -534,6 +673,11 @@ public static class FL {
             return;
         }
 
+        byte a = color.GetA();
+        if (a == 0) {
+            return;
+        }
+
         int minY = (int)vertices[0].Y;
         int maxY = (int)vertices[0].Y;
         for (int i = 1; i < vertices.Length; i++) {
@@ -568,10 +712,21 @@ public static class FL {
 
                 int count = intersections.Count;
                 uint* rowPtr = screenPtr + y * windowWidth;
+                
+                if (a == 255) {
+                    for (int i = 0; i < count; i += 2) {
+                        uint* endPtr = rowPtr + Math.Min(intersections[Math.Min(i + 1, count - 1)], maxXBound);
+                        for (uint* startPtr = rowPtr + Math.Max(intersections[i], 0); startPtr <= endPtr; startPtr++) {
+                            *startPtr = color;
+                        }
+                    }
+                    continue;
+                }
+
                 for (int i = 0; i < count; i += 2) {
-                    uint* end = rowPtr + Math.Min(intersections[Math.Min(i + 1, count - 1)], maxXBound);
-                    for (uint* start = rowPtr + Math.Max(intersections[i], 0); start <= end; start++) {
-                        *start = color;
+                    uint* endPtr = rowPtr + Math.Min(intersections[Math.Min(i + 1, count - 1)], maxXBound);
+                    for (uint* startPtr = rowPtr + Math.Max(intersections[i], 0); startPtr <= endPtr; startPtr++) {
+                        *startPtr = AlphaBlend(startPtr[0], color);
                     }
                 }
             }
@@ -595,6 +750,10 @@ public static class FL {
         int startY = Math.Max(0, -y);
         int endX = Math.Min(textureWidth, windowWidth - x);
         int endY = Math.Min(textureHeight, windowHeight - y);
+        if (startX >= endX || startY >= endY) {
+            return;
+        }
+
         int numBytes = (endX - startX) * sizeof(uint);
 
         fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
@@ -614,47 +773,67 @@ public static class FL {
     /// <param name="x">The x coordinate to draw the texture at.</param>
     /// <param name="y">The y coordinate to draw the texture at.</param>
     /// <param name="texture">The Texture to draw.</param>
-    public static unsafe void DrawTexture(int x, int y, Texture texture) {
-        if (!isDrawClear) {
-            return;
-        }
+public static unsafe void DrawTexture(int x, int y, Texture texture) {
+    if (!isDrawClear) {
+        return;
+    }
 
-        int textureWidth = texture.Width, textureHeight = texture.Height;
+    int textureWidth = texture.Width, textureHeight = texture.Height;
 
-        int startX = Math.Max(0, -x);
-        int startY = Math.Max(0, -y);
-        int endX = Math.Min(textureWidth, windowWidth - x);
-        int endY = Math.Min(textureHeight, windowHeight - y);
+    int startX = Math.Max(0, -x);
+    int startY = Math.Max(0, -y);
+    int endX = Math.Min(textureWidth, windowWidth - x);
+    int endY = Math.Min(textureHeight, windowHeight - y);
 
-        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
-            for (int sy = startY; sy < endY; sy++) {
-                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
-                uint* textureRowPtr = texturePtr + sy * textureWidth;
+    if (startX >= endX || startY >= endY) {
+        return;
+    }
 
-                for (int sx = startX; sx < endX; sx++) {
-                    uint texturePixel = textureRowPtr[sx];
-                    uint screenPixel = screenRowPtr[sx];
+    fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+        int screenOffset = y * windowWidth + x;
+        int textureOffset = 0;
 
-                    byte textureAlpha = (byte)((texturePixel >> 24) & 0xFF);
-                    byte textureRed = (byte)((texturePixel >> 16) & 0xFF);
-                    byte textureGreen = (byte)((texturePixel >> 8) & 0xFF);
-                    byte textureBlue = (byte)(texturePixel & 0xFF);
+        for (int sy = startY; sy < endY; sy++) {
+            uint* screenRowPtr = screenPtr + screenOffset;
+            uint* textureRowPtr = texturePtr + textureOffset;
 
-                    byte screenAlpha = (byte)((screenPixel >> 24) & 0xFF);
-                    byte screenRed = (byte)((screenPixel >> 16) & 0xFF);
-                    byte screenGreen = (byte)((screenPixel >> 8) & 0xFF);
-                    byte screenBlue = (byte)(screenPixel & 0xFF);
+            for (int sx = startX; sx < endX; sx++) {
+                uint texPixel = textureRowPtr[sx];
 
-                    byte alpha = (byte)((textureAlpha * 255 + (255 - textureAlpha) * screenAlpha) / 255);
-                    byte red = (byte)((textureRed * textureAlpha + screenRed * (255 - textureAlpha)) / 255);
-                    byte green = (byte)((textureGreen * textureAlpha + screenGreen * (255 - textureAlpha)) / 255);
-                    byte blue = (byte)((textureBlue * textureAlpha + screenBlue * (255 - textureAlpha)) / 255);
-
-                    *(screenRowPtr + sx) = (uint)((alpha << 24) | (red << 16) | (green << 8) | blue);
+                if ((texPixel & 0xFF000000) == 0) {
+                    continue;
                 }
+
+                if ((texPixel & 0xFF000000) == 0xFF000000) {
+                    *(screenRowPtr + sx) = texPixel;
+                    continue;
+                }
+
+                byte texA = (byte)(texPixel >> 24);
+                byte invA = (byte)(255 - texA);
+
+                uint screenPixel = screenRowPtr[sx];
+
+                byte scrR = (byte)(screenPixel >> 16);
+                byte scrG = (byte)(screenPixel >> 8);
+                byte scrB = (byte)screenPixel;
+
+                byte texR = (byte)(texPixel >> 16);
+                byte texG = (byte)(texPixel >> 8);
+                byte texB = (byte)texPixel;
+
+                byte red = (byte)((texR * texA + scrR * invA) >> 8);
+                byte green = (byte)((texG * texA + scrG * invA) >> 8);
+                byte blue = (byte)((texB * texA + scrB * invA) >> 8);
+
+                *(screenRowPtr + sx) = (uint)((0xFF << 24) | (red << 16) | (green << 8) | blue);
             }
+
+            screenOffset += windowWidth;
+            textureOffset += textureWidth;
         }
     }
+}
 
     /// <name>DrawTexture</name>
     /// <returns>void</returns>
@@ -688,32 +867,39 @@ public static class FL {
 
         fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
             for (int sy = startY; sy < endY; sy++) {
-                int textureY = (int)(sy / scaleY);
-
                 uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
 
+                int textureY = (int)(sy / scaleY);
                 for (int sx = startX; sx < endX; sx++) {
-                    int textureX = (int)(sx / scaleX);
+                    uint texPixel = texturePtr[textureY * textureWidth + (int)(sx / scaleX)];
 
-                    uint* texturePixelPtr = texturePtr + textureY * textureWidth + textureX;
-                    uint* screenPixelPtr = screenRowPtr + sx;
+                    if ((texPixel & 0xFF000000) == 0) {
+                        continue;
+                    }
 
-                    byte textureAlpha = (byte)((*texturePixelPtr >> 24) & 0xFF);
-                    byte textureRed = (byte)((*texturePixelPtr >> 16) & 0xFF);
-                    byte textureGreen = (byte)((*texturePixelPtr >> 8) & 0xFF);
-                    byte textureBlue = (byte)(*texturePixelPtr & 0xFF);
+                    if ((texPixel & 0xFF000000) == 0xFF000000) {
+                        *(screenRowPtr + sx) = texPixel;
+                        continue;
+                    }
 
-                    byte screenAlpha = (byte)((*screenPixelPtr >> 24) & 0xFF);
-                    byte screenRed = (byte)((*screenPixelPtr >> 16) & 0xFF);
-                    byte screenGreen = (byte)((*screenPixelPtr >> 8) & 0xFF);
-                    byte screenBlue = (byte)(*screenPixelPtr & 0xFF);
+                    byte texA = (byte)(texPixel >> 24);
+                    byte invA = (byte)(255 - texA);
 
-                    byte alpha = (byte)((textureAlpha * 255 + (255 - textureAlpha) * screenAlpha) / 255);
-                    byte red = (byte)((textureRed * textureAlpha + screenRed * (255 - textureAlpha)) / 255);
-                    byte green = (byte)((textureGreen * textureAlpha + screenGreen * (255 - textureAlpha)) / 255);
-                    byte blue = (byte)((textureBlue * textureAlpha + screenBlue * (255 - textureAlpha)) / 255);
+                    uint screenPixel = screenRowPtr[sx];
 
-                    *screenPixelPtr = (uint)((alpha << 24) | (red << 16) | (green << 8) | blue);
+                    byte scrR = (byte)(screenPixel >> 16);
+                    byte scrG = (byte)(screenPixel >> 8);
+                    byte scrB = (byte)screenPixel;
+
+                    byte texR = (byte)(texPixel >> 16);
+                    byte texG = (byte)(texPixel >> 8);
+                    byte texB = (byte)texPixel;
+
+                    byte red = (byte)((texR * texA + scrR * invA) >> 8);
+                    byte green = (byte)((texG * texA + scrG * invA) >> 8);
+                    byte blue = (byte)((texB * texA + scrB * invA) >> 8);
+
+                    *(screenRowPtr + sx) = (uint)((0xFF << 24) | (red << 16) | (green << 8) | blue);
                 }
             }
         }
@@ -765,25 +951,35 @@ public static class FL {
                 uint* textureRowPtr = texturePtr + (texStartY + sy) * textureWidth + texStartX;
 
                 for (int sx = startX; sx < endX; sx++) {
-                    uint texturePixel = textureRowPtr[sx];
+                    uint texPixel = textureRowPtr[sx];
+
+                    if ((texPixel & 0xFF000000) == 0) {
+                        continue;
+                    }
+
+                    if ((texPixel & 0xFF000000) == 0xFF000000) {
+                        *(screenRowPtr + sx) = texPixel;
+                        continue;
+                    }
+
+                    byte texA = (byte)(texPixel >> 24);
+                    byte invA = (byte)(255 - texA);
+
                     uint screenPixel = screenRowPtr[sx];
 
-                    byte textureAlpha = (byte)((texturePixel >> 24) & 0xFF);
-                    byte textureRed = (byte)((texturePixel >> 16) & 0xFF);
-                    byte textureGreen = (byte)((texturePixel >> 8) & 0xFF);
-                    byte textureBlue = (byte)(texturePixel & 0xFF);
+                    byte scrR = (byte)(screenPixel >> 16);
+                    byte scrG = (byte)(screenPixel >> 8);
+                    byte scrB = (byte)screenPixel;
 
-                    byte screenAlpha = (byte)((screenPixel >> 24) & 0xFF);
-                    byte screenRed = (byte)((screenPixel >> 16) & 0xFF);
-                    byte screenGreen = (byte)((screenPixel >> 8) & 0xFF);
-                    byte screenBlue = (byte)(screenPixel & 0xFF);
+                    byte texR = (byte)(texPixel >> 16);
+                    byte texG = (byte)(texPixel >> 8);
+                    byte texB = (byte)texPixel;
 
-                    byte alpha = (byte)((textureAlpha * 255 + (255 - textureAlpha) * screenAlpha) / 255);
-                    byte red = (byte)((textureRed * textureAlpha + screenRed * (255 - textureAlpha)) / 255);
-                    byte green = (byte)((textureGreen * textureAlpha + screenGreen * (255 - textureAlpha)) / 255);
-                    byte blue = (byte)((textureBlue * textureAlpha + screenBlue * (255 - textureAlpha)) / 255);
+                    byte red = (byte)((texR * texA + scrR * invA) >> 8);
+                    byte green = (byte)((texG * texA + scrG * invA) >> 8);
+                    byte blue = (byte)((texB * texA + scrB * invA) >> 8);
 
-                    *(screenRowPtr + sx) = (uint)((alpha << 24) | (red << 16) | (green << 8) | blue);
+                    *(screenRowPtr + sx) = (uint)((0xFF << 24) | (red << 16) | (green << 8) | blue);
                 }
             }
         }
@@ -816,7 +1012,7 @@ public static class FL {
 
             int bpp = BitConverter.ToInt16(header, 28);
             if (bpp != 32) {
-                throw new NotSupportedException($"Only 32 bit bitmaps are supported. Your bitmap is {bpp} bit. Here's a simple converter: https://online-converting.com/image/convert2bmp/");
+                throw new NotSupportedException($"Currently only 32 bit bitmaps are supported. Your bitmap is {bpp} bit. Here's a simple converter: https://online-converting.com/image/convert2bmp/");
             }
 
             int bmpSize = Height * Width;
@@ -1012,6 +1208,34 @@ public static class FL {
 
 /// <region>Colors</region>
 #region colors
+    private static uint AlphaBlend(uint background, uint foreground) {
+        byte alpha = (byte)((foreground >> 24) & 0xFF);
+
+        if (alpha == 0) {
+            return background;
+        }
+
+        if (alpha == 255) {
+            return foreground;
+        }
+
+        byte redF = (byte)((foreground >> 16) & 0xFF);
+        byte greenF = (byte)((foreground >> 8) & 0xFF);
+        byte blueF = (byte)(foreground & 0xFF);
+
+        byte redB = (byte)((background >> 16) & 0xFF);
+        byte greenB = (byte)((background >> 8) & 0xFF);
+        byte blueB = (byte)(background & 0xFF);
+
+        byte oneMinusAlpha = (byte)(255 - alpha);
+
+        byte red = (byte)((redF * alpha + redB * oneMinusAlpha) / 255);
+        byte green = (byte)((greenF * alpha + greenB * oneMinusAlpha) / 255);
+        byte blue = (byte)((blueF * alpha + blueB * oneMinusAlpha) / 255);
+
+        return (uint)((alpha << 24) | (red << 16) | (green << 8) | blue);
+    }
+
     /// <name>Black</name>
     /// <returns>uint</returns>
     /// <summary>The color black, 4278190080.</summary>
