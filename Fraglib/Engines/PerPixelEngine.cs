@@ -1,6 +1,5 @@
 using OpenTK.Windowing.Common;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Fraglib;
 
@@ -43,7 +42,7 @@ internal sealed class PerPixelEngine : Engine {
         _perFrame();
 
         int length = Screen.Length;
-        int width = WindowWidth;
+        int width = WindowWidth, height = WindowHeight;
         int ps = PixelSize, cw = width / ps;
         if (accumulate) {
             if (frameInd++ == 0) {
@@ -51,18 +50,20 @@ internal sealed class PerPixelEngine : Engine {
             }
             
             if (ps == 1) {
-                Parallel.For(0, length, i => {
-                    _accumulationData[i] += _perPixel(i % width, i / width, uniforms).ToVec4();
-                    Vector4 accumulatedCol = _accumulationData[i] / frameInd;
-                    uint color = FL.NewColor(accumulatedCol);
-                    color.SetA((byte)((color.GetA() + Screen[i].GetA()) / 2));
-                    Screen[i] = color;
+                Parallel.For(0, height, y => {
+                    int yOffset = y * width;
+                    for (int x = 0; x < width; x++) {
+                        int ind = x + yOffset;
+                        _accumulationData[ind] += _perPixel(x, y, uniforms).ToVec4();
+                        Vector4 accumulatedCol = _accumulationData[ind] / frameInd;
+                        Screen[ind] = FL.NewColor(accumulatedCol);
+                    }
                 });
 
                 return;
             }
 
-            Parallel.For(0, WindowHeight / ps, cy => {
+            Parallel.For(0, height / ps, cy => {
                 for (int cx = 0; cx < cw; cx++) {
                     int ci = cy * ps * width + cx * ps;
                     _accumulationData[ci] += _perPixel(ci % width, ci / width, uniforms).ToVec4();
@@ -75,9 +76,7 @@ internal sealed class PerPixelEngine : Engine {
                                 break;
                             }
 
-                            uint newColor = chunkCol;
-                            newColor.SetA((byte)((newColor.GetA() + Screen[ind].GetA()) / 2));
-                            Screen[ind] = newColor;
+                            Screen[ind] = chunkCol;
                         }
                     }
                 }
@@ -87,16 +86,18 @@ internal sealed class PerPixelEngine : Engine {
         }
 
         if (ps == 1) {
-            Parallel.For(0, length, i => {
-                uint color = _perPixel(i % width, i / width, uniforms);
-                color.SetA((byte)((color.GetA() + Screen[i].GetA()) / 2));
-                Screen[i] = color;
+            Parallel.For(0, height, y => {
+                int yOffset = y * width;
+                for (int x = 0; x < width; x++) {
+                    uint color = _perPixel(x, y, uniforms);
+                    Screen[x + yOffset] = color;
+                }
             });
 
             return;
         }
 
-        Parallel.For(0, WindowHeight / ps, cy => {
+        Parallel.For(0, height / ps, cy => {
             for (int cx = 0; cx < cw; cx++) {
                 int ci = cy * ps * width + cx * ps;
                 uint chunkCol = _perPixel(ci % width, ci / width, uniforms);
@@ -107,9 +108,7 @@ internal sealed class PerPixelEngine : Engine {
                             break;
                         }
 
-                        uint newColor = chunkCol;
-                        newColor.SetA((byte)((newColor.GetA() + Screen[ind].GetA()) / 2));
-                        Screen[ind] = newColor;
+                        Screen[ind] = chunkCol;
                     }
                 }
             }
