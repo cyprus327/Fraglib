@@ -26,10 +26,8 @@ Gets the pixel's color at the specified position.
 - **x**: The x coordinate of the pixel.
 - **y**: The y coordinate of the pixel.
 ### Clear (void)
-Clears the window to black. 
-### Clear (void)
 Clears the window to the specified color. 
-- **color**: The color the window will get cleared to.
+- **color**: The color the window will get cleared to, default value of black (0xFF000000).
 ### DrawRect (void)
 Draws a rectangle of specified size and color at the specified coordinates. 
 - **x**: The rectangle's x coordinate.
@@ -115,6 +113,13 @@ Draws the outline of a polygon of specified color with specified vertices.
 Fills a solid polygon of specified color with specified vertices. 
 - **color**: The color of the polygon.
 - **vertices**: The vertices of the polygon to draw. Must have a length >= 3.
+### DrawString (void)
+Draws a string of specified color and font size to the window at the specified coordinates. 
+- **str**: The string to draw.
+- **x**: The x coordinate on the window to draw the string to.
+- **y**: The y coordinate on the window to draw the string to.
+- **fontSize**: The font size the string will be drawn at.
+- **color**: The color the string will br drawn with.
 ### DrawTextureFast (void)
 Draws a texture to the window at the specified coordinates. 
 - **x**: The x coordinate to draw the texture at.
@@ -335,7 +340,6 @@ Gets or sets the target framerate engine. Only changes anything is VSync == fals
 Gets or sets whether or not the engine accumulates previous frames with the current frame. Only applicable in PerPixel mode. Can be changed during runtime. 
 ### ScaleType (ScaleType)
 Gets or sets how the engine renders when PixelSize > 1. 
-## Common
 ### Settings (RenderSettings)
 Gets or sets the settings with which the engine will run. Not all settings can be changed during runtime, the ones that can't be must be set before Init. 
 ### ElapsedTime (float)
@@ -382,6 +386,11 @@ Extension method to convert degrees to radians.
 ### RadToDeg (float)
 Extension method to convert radians to degrees. 
 - **rad**: Optional parameter representing the radians to convert.
+### Lerp (float)
+Performs linear interpolation between two values. 
+- **a**: The value from which to interpolate.
+- **b**: The value to interpolate to.
+- **t**: The percent as a decimal in range [0, 1] to interpolate by.
 ### Rotate (Vector2)
 Extension method to rotate a Vector2 around the specified Vector2 by the specified angle. 
 Modifies the underlying variable. 
