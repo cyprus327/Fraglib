@@ -733,6 +733,45 @@ public static class FL {
         }
     }
 
+    /// <name>DrawString</name>
+    /// <returns>void</returns>
+    /// <summary>Draws a string of specified color and font size to the window at the specified coordinates.</summary>
+    /// <param name="str">The string to draw.</param>
+    /// <param name="x">The x coordinate on the window to draw the string to.</param>
+    /// <param name="y">The y coordinate on the window to draw the string to.</param>
+    /// <param name="fontSize">The font size the string will be drawn at.</param>
+    /// <param name="color">The color the string will br drawn with.</param>
+    public static void DrawString(string str, int x, int y, int fontSize, uint color) {
+        fontSize = Math.Max(1, fontSize);
+        
+        const int HEIGHT = 5;
+        int charHeight = HEIGHT * fontSize;
+
+        int startX = x;
+
+        foreach (char c in str) {
+            int cInd = GetTextCharInd(c);
+            
+            if (cInd == _font.Length) {
+                y -= charHeight + fontSize / 2;
+                x = startX;
+                continue;
+            }
+
+            int charWidth = _font[cInd].Length / 5 * fontSize;
+
+            for (int i = 0; i < charHeight; i++) {
+                for (int j = 0; j < charWidth; j++) {
+                    if (_font[cInd][j / fontSize + i / fontSize * (charWidth / fontSize)] == 1) {
+                        SetPixel(x + j, y - i + charHeight, color);
+                    }
+                }
+            }
+
+            x += charWidth + fontSize / 2;
+        }
+    }
+
     /// <name>DrawTextureFast</name>
     /// <returns>void</returns>
     /// <summary>Draws a texture to the window at the specified coordinates.</summary>
@@ -1219,13 +1258,13 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
             return foreground;
         }
 
-        byte redF = (byte)((foreground >> 16) & 0xFF);
-        byte greenF = (byte)((foreground >> 8) & 0xFF);
-        byte blueF = (byte)(foreground & 0xFF);
+        byte redF = (byte)(foreground >> 16);
+        byte greenF = (byte)(foreground >> 8);
+        byte blueF = (byte)foreground;
 
-        byte redB = (byte)((background >> 16) & 0xFF);
-        byte greenB = (byte)((background >> 8) & 0xFF);
-        byte blueB = (byte)(background & 0xFF);
+        byte redB = (byte)(background >> 16);
+        byte greenB = (byte)(background >> 8);
+        byte blueB = (byte)background;
 
         byte oneMinusAlpha = (byte)(255 - alpha);
 
@@ -1351,10 +1390,11 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
     /// <summary>Creates a Vector3 from a color, will always return in RGB format.</summary>
     /// <param name="color">Optional parameter representing the color to convert to a Vector3.</param>
     public static Vector3 ToVec3(this uint color) {
-        byte b = (byte)(color >> 16);
-        byte g = (byte)(color >> 8);
-        byte r = (byte)color;
-        return new Vector3(r / 255f, g / 255f, b / 255f);
+        return new(
+            color.GetR() / 255f, 
+            color.GetG() / 255f, 
+            color.GetB() / 255f
+        );
     }
 
     /// <name>ToVec4</name>
@@ -1362,11 +1402,12 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
     /// <summary>Creates a Vector4 from a color, will always return in RGBA format.</summary>
     /// <param name="color">Optional parameter representing the color to convert to a Vector4.</param>
     public static Vector4 ToVec4(this uint color) {
-        byte a = (byte)(color >> 24);
-        byte b = (byte)(color >> 16);
-        byte g = (byte)(color >> 8);
-        byte r = (byte)color;
-        return new Vector4(r / 255f, g / 255f, b / 255f, a / 255f);
+        return new(
+            color.GetR() / 255f, 
+            color.GetG() / 255f, 
+            color.GetB() / 255f, 
+            color.GetA() / 255f
+        );
     }
 
     /// <name>AverageColors</name>
@@ -1376,12 +1417,12 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
     /// <param name="color1">The first color to average with.</param>
     /// <param name="color2">The second color to average with.</param>
     public static uint AverageColors(uint color1, uint color2) {
-        byte a1 = (byte)((color1.GetR() + color2.GetR()) / 2);
-        byte a2 = (byte)((color1.GetG() + color2.GetG()) / 2);
-        byte a3 = (byte)((color1.GetB() + color2.GetB()) / 2);
-        byte a4 = (byte)((color2.GetA() + color2.GetA()) / 2);
+        byte rAvg = (byte)((color1.GetR() + color2.GetR()) / 2);
+        byte gAvg = (byte)((color1.GetG() + color2.GetG()) / 2);
+        byte bAvg = (byte)((color1.GetB() + color2.GetB()) / 2);
+        byte aAvg = (byte)((color2.GetA() + color2.GetA()) / 2);
 
-        return ((uint)a4 << 24) | ((uint)a3 << 16) | ((uint)a2 << 8) | a1;
+        return NewColor(rAvg, gAvg, bAvg, aAvg);
     }
 
     /// <name>LerpColors</name>
@@ -1400,7 +1441,8 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
             (byte)(r1 + (color2.GetR() - r1) * t), 
             (byte)(g1 + (color2.GetG() - g1) * t), 
             (byte)(b1 + (color2.GetB() - b1) * t), 
-            (byte)(a1 + (color2.GetA() - a1) * t));
+            (byte)(a1 + (color2.GetA() - a1) * t)
+        );
     }
 
     /// <name>GetR</name>
@@ -1416,7 +1458,7 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
     /// <summary>An extension method that extracts the green channel of the specified color in the range [0, 255].</summary>
     /// <param name="color">An optional parameter representing the color of which to extract the channel.</param>
     public static byte GetG(this uint color) {
-        return (byte)((color >> 8) & 0xFF);
+        return (byte)(color >> 8);
     }
 
     /// <name>GetB</name>
@@ -1424,7 +1466,7 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
     /// <summary>An extension method that extracts the blue channel of the specified color in the range [0, 255].</summary>
     /// <param name="color">An optional parameter representing the color of which to extract the channel.</param>
     public static byte GetB(this uint color) {
-        return (byte)((color >> 16) & 0xFF);
+        return (byte)(color >> 16);
     }
 
     /// <name>GetA</name>
@@ -1432,7 +1474,7 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
     /// <summary>An extension method that extracts the alpha channel of the specified color in the range [0, 255].</summary>
     /// <param name="color">An optional parameter representing the color of which to extract the channel.</param>
     public static byte GetA(this uint color) {
-        return (byte)((color >> 24) & 0xFF); 
+        return (byte)(color >> 24); 
     }
 
     /// <name>SetR</name>
@@ -1567,9 +1609,443 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
         green += lightnessMatch;
         blue += lightnessMatch;
 
-        return NewColor((byte)(red * 255f), (byte)(green * 255f), (byte)(blue * 255f));
+        return NewColor(red, green, blue);
     }
 #endregion colors
+
+#region text
+    private static readonly byte[][] _font = {
+        new byte[] { // ' '
+            0,0,0,
+            0,0,0,
+            0,0,0,
+            0,0,0,
+            0,0,0,
+        },
+        new byte[] { // !
+            1,
+            1,
+            1,
+            0,
+            1,
+        },
+        new byte[] { // "
+            1,0,1,
+            1,0,1,
+            0,0,0,
+            0,0,0,
+            0,0,0,
+        },
+        new byte[] { // #
+            0,1,0,1,0,
+            1,1,1,1,1,
+            0,1,0,1,0,
+            1,1,1,1,1,
+            0,1,0,1,0
+        },
+        new byte[] { // $
+            0,1,1,1,1,
+            1,0,1,0,0,
+            0,1,1,1,0,
+            0,0,1,0,1,
+            1,1,1,1,0
+        },
+        new byte[] { // %
+            1,1,0,0,1,
+            0,0,0,1,0,
+            0,0,1,0,0,
+            0,1,0,0,0,
+            1,0,0,1,1,
+        },
+        new byte[] { // &
+            0,1,1,1,0,
+            0,1,0,1,0,
+            1,1,1,0,1,
+            1,0,1,1,0,
+            0,1,1,0,1,
+        },
+        new byte[] { // '
+            1,
+            1,
+            0,
+            0,
+            0,
+        },
+        new byte[] { // (
+            0,1,
+            1,0,
+            1,0,
+            1,0,
+            0,1
+        },
+        new byte[] { // )
+            1,0,
+            0,1,
+            0,1,
+            0,1,
+            1,0,
+        },
+        new byte[] { // *
+            1,0,1,
+            0,1,0,
+            1,0,1,
+            0,0,0,
+            0,0,0
+        },
+        new byte[] { // +
+            0,0,0,
+            0,1,0,
+            1,1,1,
+            0,1,0,
+            0,0,0,
+        },
+        new byte[] { // ,
+            0,0,
+            0,0,
+            0,0,
+            0,1,
+            1,1,
+        },
+        new byte[] { // -
+            0,0,0,
+            0,0,0,
+            1,1,1,
+            0,0,0,
+            0,0,0,
+        },
+        new byte[] { // .
+            0,0,
+            0,0,
+            0,0,
+            1,1,
+            1,1,
+        },
+        new byte[] { // /
+            0,0,1,
+            0,1,0,
+            0,1,0,
+            0,1,0,
+            1,0,0,
+        },
+        new byte[] { // 0
+            0,1,1,1,0,
+            1,0,0,1,1,
+            1,0,1,0,1,
+            1,1,0,0,1,
+            0,1,1,1,0,
+        },
+        new byte[] { // 1
+            0,0,1,0,0,
+            0,1,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            1,1,1,1,1,
+        },
+        new byte[] { // 2
+            1,1,1,1,0,
+            0,0,0,0,1,
+            0,1,1,1,0,
+            1,0,0,0,0,
+            1,1,1,1,1,
+        },
+        new byte[] { // 3
+            0,1,1,1,0,
+            1,0,0,0,1,
+            0,0,1,1,0,
+            1,0,0,0,1,
+            0,1,1,1,0,
+        },
+        new byte[] { // 4
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,1,1,1,1,
+            0,0,0,0,1,
+            0,0,0,0,1,
+        },
+        new byte[] { // 5
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,1,1,1,0,
+            0,0,0,0,1,
+            1,1,1,1,0,
+        },
+        new byte[] { // 6
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,1,1,1,1,
+        },
+        new byte[] { // 7
+            1,1,1,1,1,
+            0,0,0,0,1,
+            0,0,0,1,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+        },
+        new byte[] { // 8
+            0,1,1,1,0,
+            1,0,0,0,1,
+            0,1,1,1,0,
+            1,0,0,0,1,
+            0,1,1,1,0,
+        },
+        new byte[] { // 9
+            0,1,1,1,0,
+            1,0,0,0,1,
+            0,1,1,1,0,
+            0,0,0,1,0,
+            0,1,1,0,0,
+        },
+        new byte[] { // :
+            1,1,
+            1,1,
+            0,0,
+            1,1,
+            1,1,
+        },
+        new byte[] { // ;
+            1,1,
+            1,1,
+            0,0,
+            0,1,
+            1,1,
+        },
+        new byte[] { // <
+            0,0,0,
+            0,1,1,
+            1,0,0,
+            0,1,1,
+            0,0,0,
+        },
+        new byte[] { // =
+            0,0,0,
+            1,1,1,
+            0,0,0,
+            1,1,1,
+            0,0,0,
+        },
+        new byte[] { // >
+            0,0,0,
+            1,1,0,
+            0,0,1,
+            1,1,0,
+            0,0,0,
+        },
+        new byte[] { // ?
+            0,1,1,1,0,
+            1,0,0,0,1,
+            0,0,1,1,0,
+            0,0,0,0,0,
+            0,0,1,0,0,
+        },
+        new byte[] { // @
+            0,1,1,0,0,
+            1,0,0,1,0,
+            1,0,1,0,0,
+            1,0,0,0,1,
+            0,1,1,1,0,
+        },
+        new byte[] { // A
+            0,1,1,1,0,
+            1,0,0,0,1,
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,0,0,0,1 
+        },
+        new byte[] { // B
+            1,1,1,1,0,
+            1,0,0,0,1,
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,1,1,1,0
+        },
+        new byte[] { // C
+            0,1,1,1,0, 
+            1,0,0,0,1,
+            1,0,0,0,0,
+            1,0,0,0,1,
+            0,1,1,1,0
+        },
+        new byte[] { // D
+            1,1,1,1,0,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,1,1,1,0,
+        },
+        new byte[] { // E
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,1,1,1,0,
+            1,0,0,0,0,
+            1,1,1,1,1,
+        },
+        new byte[] { // F
+            1,1,1,1,1,
+            1,0,0,0,0,
+            1,1,1,0,0,
+            1,0,0,0,0,
+            1,0,0,0,0,
+        },
+        new byte[] { // G
+            0,1,1,1,0,
+            1,0,0,0,0,
+            1,0,1,1,1,
+            1,0,0,0,1,
+            0,1,1,1,1,
+        },
+        new byte[] { // H
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,1,1,1,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+        },
+        new byte[] { // I
+            1,1,1,1,1,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            1,1,1,1,1,
+        },
+        new byte[] { // J
+            0,0,0,1,1,
+            0,0,0,0,1,
+            0,0,0,0,1,
+            1,0,0,0,1,
+            0,1,1,1,1,
+        },
+        new byte[] { // K
+            1,0,0,1,0,
+            1,0,1,0,0,
+            1,1,0,0,0,
+            1,0,1,1,0,
+            1,0,0,0,1,
+        },
+        new byte[] { // L
+            1,0,0,0,0,
+            1,0,0,0,0,
+            1,0,0,0,0,
+            1,0,0,0,0,
+            1,1,1,1,1,
+        },
+        new byte[] { // M
+            1,1,0,1,1,
+            1,0,1,0,1,
+            1,0,1,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+        },
+        new byte[] { // N
+            1,0,0,0,1,
+            1,1,0,0,1,
+            1,0,1,0,1,
+            1,0,0,1,1,
+            1,0,0,0,1,
+        },
+        new byte[] { // O
+            0,1,1,1,0,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            0,1,1,1,0,
+        },
+        new byte[] { // P
+            1,1,1,1,0,
+            1,0,0,0,1,
+            1,1,1,1,0,
+            1,0,0,0,0,
+            1,0,0,0,0,
+        },
+        new byte[] { // Q
+            0,1,1,1,0,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,1,0,
+            0,1,1,0,1,
+        },
+        new byte[] { // R
+            1,1,1,1,0,
+            1,0,0,0,1,
+            1,1,1,1,0,
+            1,0,0,1,0,
+            1,0,0,0,1,
+        },
+        new byte[] { // S
+            0,1,1,1,1,
+            1,0,0,0,0,
+            0,1,1,1,0,
+            0,0,0,0,1,
+            1,1,1,1,0,
+        },
+        new byte[] { // T
+            1,1,1,1,1,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+        },
+        new byte[] { // U
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,0,0,1,
+            0,1,1,1,0,
+        },
+        new byte[] { // V
+            1,0,0,0,1,
+            1,0,0,0,1,
+            0,1,0,1,0,
+            0,1,0,1,0,
+            0,0,1,0,0,
+        },
+        new byte[] { // W
+            1,0,0,0,1,
+            1,0,0,0,1,
+            1,0,1,0,1,
+            1,1,0,1,1,
+            1,0,0,0,1,
+        },
+        new byte[] { // X
+            1,0,0,0,1,
+            0,1,0,1,0,
+            0,0,1,0,0,
+            0,1,0,1,0,
+            1,0,0,0,1,
+        },
+        new byte[] { // Y
+            1,0,0,0,1,
+            0,1,0,1,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+            0,0,1,0,0,
+        },
+        new byte[] { // Z
+            1,1,1,1,1,
+            0,0,0,0,1,
+            0,1,1,1,0,
+            1,0,0,0,0,
+            1,1,1,1,1,
+        }
+    };
+
+    private static int GetTextCharInd(char c) {
+        if (c >= 'a' && c <= 'z') {
+            c = char.ToUpper(c);
+        }
+
+        if (c >= ' ' && c <= 'Z') {
+            return Math.Clamp(c - ' ', 0, _font.Length);
+        }
+
+        if (c == '\n') {
+            return _font.Length;
+        }
+
+        return 0; // ' '
+    }
+#endregion text
 
 /// <region>Render Settings</region>
 #region render settings
@@ -1678,6 +2154,10 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
     /// <returns>Vector2</returns>
     /// <summary>The amount the mouse has moved from the last frame to the current frame.</summary>
     public static Vector2 MouseDelta => new(e?.MouseState.Delta.X ?? 0f, e?.MouseState.Delta.Y ?? 0f);
+
+    public static uint[] WindowBuffer {
+        get => e is null ? Array.Empty<uint>() : e.Screen;
+    }
 
     //===========================================================
     // Lehmer Rand
