@@ -739,13 +739,13 @@ public static class FL {
     /// <param name="str">The string to draw.</param>
     /// <param name="x">The x coordinate on the window to draw the string to.</param>
     /// <param name="y">The y coordinate on the window to draw the string to.</param>
-    /// <param name="fontSize">The font size the string will be drawn at.</param>
+    /// <param name="fontScale">The font size the string will be drawn at.</param>
     /// <param name="color">The color the string will br drawn with.</param>
-    public static void DrawString(string str, int x, int y, int fontSize, uint color) {
-        fontSize = Math.Max(1, fontSize);
+    public static void DrawString(string str, int x, int y, int fontScale, uint color) {
+        fontScale = Math.Max(1, fontScale);
         
         const int HEIGHT = 5;
-        int charHeight = HEIGHT * fontSize;
+        int charHeight = HEIGHT * fontScale;
 
         int startX = x;
 
@@ -753,22 +753,22 @@ public static class FL {
             int cInd = GetTextCharInd(c);
             
             if (cInd == _font.Length) {
-                y -= charHeight + fontSize / 2;
+                y -= charHeight + fontScale / 2;
                 x = startX;
                 continue;
             }
 
-            int charWidth = _font[cInd].Length / 5 * fontSize;
+            int charWidth = _font[cInd].Length / 5 * fontScale;
 
             for (int i = 0; i < charHeight; i++) {
                 for (int j = 0; j < charWidth; j++) {
-                    if (_font[cInd][j / fontSize + i / fontSize * (charWidth / fontSize)] == 1) {
+                    if (_font[cInd][j / fontScale + i / fontScale * (charWidth / fontScale)] == 1) {
                         SetPixel(x + j, y - i + charHeight, color);
                     }
                 }
             }
 
-            x += charWidth + fontSize / 2;
+            x += charWidth + fontScale / 2;
         }
     }
 
@@ -2029,6 +2029,41 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
             1,1,1,1,1,
         }
     };
+
+
+    /// <name>MeasureString</name>
+    /// <returns>(int, int)</returns>
+    /// <summary>Calcualtes the size in pixels of a string drawn with DrawString.</summary>
+    /// <param name="str">The string to measure the size of.</param>
+    /// <param name="fontScale">The fontScale the string will be measued at.</param>
+    public static (int x, int y) MeasureString(string str, int fontScale) {
+        if (str == string.Empty) {
+            return (0, 0);
+        }
+
+        fontScale = Math.Max(1, fontScale);
+        
+        int charHeight = 5 * fontScale;
+
+        (int x, int y) size = (0, charHeight);
+
+        int lineCount = 1;
+        foreach (char c in str) {
+            int cInd = GetTextCharInd(c);
+            
+            if (cInd == _font.Length) {
+                lineCount++;
+                size.y += charHeight;
+                continue;
+            }
+
+            size.x += _font[cInd].Length / 5 * fontScale + fontScale / 2;
+        }
+
+        size.x -= fontScale / 2;
+        size.x /= lineCount;
+        return size;
+    }
 
     private static int GetTextCharInd(char c) {
         if (c >= 'a' && c <= 'z') {
