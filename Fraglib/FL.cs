@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Fraglib;
@@ -108,11 +109,7 @@ public static class FL {
     /// <param name="x">The x coordinate of the pixel.</param>
     /// <param name="y">The y coordinate of the pixel.</param>
     public static uint GetPixel(int x, int y) {
-        if (!isDrawClear) {
-            return 0; 
-        }
-
-        if (x < 0 || x >= windowWidth || y < 0 || y >= windowHeight) {
+        if (!isDrawClear || x < 0 || x >= windowWidth || y < 0 || y >= windowHeight) {
             return 0;
         }
 
@@ -123,7 +120,7 @@ public static class FL {
     /// <returns>void</returns>
     /// <summary>Clears the window to the specified color.</summary>
     /// <param name="color">The color the window will get cleared to, default value of black (0xFF000000).</param>
-    public static unsafe void Clear(uint color = 4278190080) {
+    public static unsafe void Clear(uint color = 0xFF000000) {
         if (!isDrawClear) {
             return; 
         }
@@ -194,7 +191,7 @@ public static class FL {
             for (int sy = 0; sy < heightClipped; sy++) {
                 uint* rowPtr = rowStartPtr + sy * windowWidth;
                 for (int sx = 0; sx < widthClipped; sx++) {
-                    *(rowPtr + sx) = AlphaBlend(rowPtr[sx], color); 
+                    *(rowPtr + sx) = AlphaBlend(rowPtr[sx], color);
                 }
             }
         }
@@ -220,99 +217,29 @@ public static class FL {
         int x = radius, y = 0;
         int decisionOver2 = 1 - x;
 
-        fixed (uint* screenPtr = e!.Screen) {
-            if (a == 255) {
-                while (y <= x) {
-                    int i1 = (centerY + y) * windowWidth + (centerX + x);
-                    int i2 = (centerY - y) * windowWidth + (centerX + x);
-                    int i3 = (centerY + y) * windowWidth + (centerX - x);
-                    int i4 = (centerY - y) * windowWidth + (centerX - x);
-                    int i5 = (centerY + x) * windowWidth + (centerX + y);
-                    int i6 = (centerY - x) * windowWidth + (centerX + y);
-                    int i7 = (centerY + x) * windowWidth + (centerX - y);
-                    int i8 = (centerY - x) * windowWidth + (centerX - y);
+        while (y <= x) {
+            int pxx = centerX + x, nxx = centerX - x;
+            int pyy = centerY + y, nyy = centerY - y;
+            int pxy = centerX + y, nxy = centerX - y;
+            int pyx = centerY + x, nyx = centerY - x;
 
-                    if (i1 >= 0 && i1 < windowWidth * windowHeight) {
-                        *(screenPtr + i1) = color;
-                    }
-                    if (i2 >= 0 && i2 < windowWidth * windowHeight) {
-                        screenPtr[i2] = color;
-                    }
-                    if (i3 >= 0 && i3 < windowWidth * windowHeight) {
-                        screenPtr[i3] = color;
-                    }
-                    if (i4 >= 0 && i4 < windowWidth * windowHeight) {
-                        screenPtr[i4] = color;
-                    }
-                    if (i5 >= 0 && i5 < windowWidth * windowHeight) {
-                        screenPtr[i5] = color;
-                    }
-                    if (i6 >= 0 && i6 < windowWidth * windowHeight) {
-                        screenPtr[i6] = color;
-                    }
-                    if (i7 >= 0 && i7 < windowWidth * windowHeight) {
-                        screenPtr[i7] = color;
-                    }
-                    if (i8 >= 0 && i8 < windowWidth * windowHeight) {
-                        screenPtr[i8] = color;
-                    }
+            SetPixel(pxx, pyy, color);
+            SetPixel(pxx, nyy, color);
+            SetPixel(nxx, pyy, color);
+            SetPixel(nxx, nyy, color);
+            SetPixel(pxy, pyx, color);
+            SetPixel(pxy, nyx, color);
+            SetPixel(nxy, pyx, color);
+            SetPixel(nxy, nyx, color);
 
-                    if (decisionOver2 <= 0) {
-                        decisionOver2 += 2 * y + 1;
-                    } else {
-                        x--;
-                        decisionOver2 += 2 * (y - x) + 1;
-                    }
-
-                    y++;
-                }
-                return;
+            if (decisionOver2 <= 0) {
+                decisionOver2 += 2 * y + 1;
+            } else {
+                x--;
+                decisionOver2 += 2 * (y - x) + 1;
             }
 
-            while (y <= x) {
-                int i1 = (centerY + y) * windowWidth + (centerX + x);
-                int i2 = (centerY - y) * windowWidth + (centerX + x);
-                int i3 = (centerY + y) * windowWidth + (centerX - x);
-                int i4 = (centerY - y) * windowWidth + (centerX - x);
-                int i5 = (centerY + x) * windowWidth + (centerX + y);
-                int i6 = (centerY - x) * windowWidth + (centerX + y);
-                int i7 = (centerY + x) * windowWidth + (centerX - y);
-                int i8 = (centerY - x) * windowWidth + (centerX - y);
-
-                if (i1 >= 0 && i1 < windowWidth * windowHeight) {
-                    *(screenPtr + i1) = AlphaBlend(screenPtr[i1], color);
-                }
-                if (i2 >= 0 && i2 < windowWidth * windowHeight) {
-                    *(screenPtr + i2) = AlphaBlend(screenPtr[i2], color);
-                }
-                if (i3 >= 0 && i3 < windowWidth * windowHeight) {
-                    *(screenPtr + i3) = AlphaBlend(screenPtr[i3], color);
-                }
-                if (i4 >= 0 && i4 < windowWidth * windowHeight) {
-                    *(screenPtr + i4) = AlphaBlend(screenPtr[i4], color);
-                }
-                if (i5 >= 0 && i5 < windowWidth * windowHeight) {
-                    *(screenPtr + i5) = AlphaBlend(screenPtr[i5], color);
-                }
-                if (i6 >= 0 && i6 < windowWidth * windowHeight) {
-                    *(screenPtr + i6) = AlphaBlend(screenPtr[i6], color);
-                }
-                if (i7 >= 0 && i7 < windowWidth * windowHeight) {
-                    *(screenPtr + i7) = AlphaBlend(screenPtr[i7], color);
-                }
-                if (i8 >= 0 && i8 < windowWidth * windowHeight) {
-                    *(screenPtr + i8) = AlphaBlend(screenPtr[i8], color);
-                }
-
-                if (decisionOver2 <= 0) {
-                    decisionOver2 += 2 * y + 1;
-                } else {
-                    x--;
-                    decisionOver2 += 2 * (y - x) + 1;
-                }
-
-                y++;
-            }
+            y++;
         }
     }
 
@@ -793,14 +720,14 @@ public static class FL {
             return;
         }
 
-        int numBytes = (endX - startX) * sizeof(uint);
+        uint numBytes = (uint)(endX - startX) * sizeof(uint);
 
-        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+        fixed (uint* screenPtr = &e!.Screen[0], texturePtr = &texture.GetPixels[0]) {
             for (int sy = startY; sy < endY; sy++) {
                 uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
                 uint* textureRowPtr = texturePtr + sy * textureWidth;
 
-                Buffer.MemoryCopy(textureRowPtr + startX, screenRowPtr + startX, numBytes, numBytes);
+                Unsafe.CopyBlock(screenRowPtr + startX, textureRowPtr + startX, numBytes);
             }
         }
     }
@@ -812,67 +739,67 @@ public static class FL {
     /// <param name="x">The x coordinate to draw the texture at.</param>
     /// <param name="y">The y coordinate to draw the texture at.</param>
     /// <param name="texture">The Texture to draw.</param>
-public static unsafe void DrawTexture(int x, int y, Texture texture) {
-    if (!isDrawClear) {
-        return;
-    }
+    public static unsafe void DrawTexture(int x, int y, Texture texture) {
+        if (!isDrawClear) {
+            return;
+        }
 
-    int textureWidth = texture.Width, textureHeight = texture.Height;
+        int textureWidth = texture.Width, textureHeight = texture.Height;
 
-    int startX = Math.Max(0, -x);
-    int startY = Math.Max(0, -y);
-    int endX = Math.Min(textureWidth, windowWidth - x);
-    int endY = Math.Min(textureHeight, windowHeight - y);
+        int startX = Math.Max(0, -x);
+        int startY = Math.Max(0, -y);
+        int endX = Math.Min(textureWidth, windowWidth - x);
+        int endY = Math.Min(textureHeight, windowHeight - y);
 
-    if (startX >= endX || startY >= endY) {
-        return;
-    }
+        if (startX >= endX || startY >= endY) {
+            return;
+        }
 
-    fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
-        int screenOffset = y * windowWidth + x;
-        int textureOffset = 0;
+        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+            int screenOffset = y * windowWidth + x;
+            int textureOffset = 0;
 
-        for (int sy = startY; sy < endY; sy++) {
-            uint* screenRowPtr = screenPtr + screenOffset;
-            uint* textureRowPtr = texturePtr + textureOffset;
+            for (int sy = startY; sy < endY; sy++) {
+                uint* screenRowPtr = screenPtr + screenOffset;
+                uint* textureRowPtr = texturePtr + textureOffset;
 
-            for (int sx = startX; sx < endX; sx++) {
-                uint texPixel = textureRowPtr[sx];
+                for (int sx = startX; sx < endX; sx++) {
+                    uint texPixel = textureRowPtr[sx];
 
-                if ((texPixel & 0xFF000000) == 0) {
-                    continue;
+                    if ((texPixel & 0xFF000000) == 0) {
+                        continue;
+                    }
+
+                    if ((texPixel & 0xFF000000) == 0xFF000000) {
+                        *(screenRowPtr + sx) = texPixel;
+                        continue;
+                    }
+
+                    byte texA = (byte)(texPixel >> 24);
+                    byte invA = (byte)(255 - texA);
+
+                    uint screenPixel = screenRowPtr[sx];
+
+                    byte scrR = (byte)(screenPixel >> 16);
+                    byte scrG = (byte)(screenPixel >> 8);
+                    byte scrB = (byte)screenPixel;
+
+                    byte texR = (byte)(texPixel >> 16);
+                    byte texG = (byte)(texPixel >> 8);
+                    byte texB = (byte)texPixel;
+
+                    byte red = (byte)((texR * texA + scrR * invA) >> 8);
+                    byte green = (byte)((texG * texA + scrG * invA) >> 8);
+                    byte blue = (byte)((texB * texA + scrB * invA) >> 8);
+
+                    *(screenRowPtr + sx) = (uint)((0xFF << 24) | (red << 16) | (green << 8) | blue);
                 }
 
-                if ((texPixel & 0xFF000000) == 0xFF000000) {
-                    *(screenRowPtr + sx) = texPixel;
-                    continue;
-                }
-
-                byte texA = (byte)(texPixel >> 24);
-                byte invA = (byte)(255 - texA);
-
-                uint screenPixel = screenRowPtr[sx];
-
-                byte scrR = (byte)(screenPixel >> 16);
-                byte scrG = (byte)(screenPixel >> 8);
-                byte scrB = (byte)screenPixel;
-
-                byte texR = (byte)(texPixel >> 16);
-                byte texG = (byte)(texPixel >> 8);
-                byte texB = (byte)texPixel;
-
-                byte red = (byte)((texR * texA + scrR * invA) >> 8);
-                byte green = (byte)((texG * texA + scrG * invA) >> 8);
-                byte blue = (byte)((texB * texA + scrB * invA) >> 8);
-
-                *(screenRowPtr + sx) = (uint)((0xFF << 24) | (red << 16) | (green << 8) | blue);
+                screenOffset += windowWidth;
+                textureOffset += textureWidth;
             }
-
-            screenOffset += windowWidth;
-            textureOffset += textureWidth;
         }
     }
-}
 
     /// <name>DrawTexture</name>
     /// <returns>void</returns>
@@ -1231,8 +1158,8 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
 
         unsafe {
             fixed (uint* screenPtr = e.Screen, statePtr = _states[state]) {
-                long numBytes = e.Screen.Length * sizeof(uint);
-                Buffer.MemoryCopy(statePtr, screenPtr, numBytes, numBytes);
+                uint numBytes = (uint)e.Screen.Length * sizeof(uint);
+                Unsafe.CopyBlock(screenPtr, statePtr, numBytes);
             }
         }
     }
@@ -1613,6 +1540,7 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
     }
 #endregion colors
 
+/// <region>Text</region>
 #region text
     private static readonly byte[][] _font = {
         new byte[] { // ' '
@@ -2139,6 +2067,7 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
     }
 #endregion render settings
 
+/// <region>Common</region>
 #region common
     /// <name>Settings</name>
     /// <returns>RenderSettings</returns>
@@ -2453,6 +2382,30 @@ public static unsafe void DrawTexture(int x, int y, Texture texture) {
         }
 
         return arr;
+    }
+
+    /// <name>Fract</name>
+    /// <returns>float</returns>
+    /// <summary>Returns the fractional part of the input float in the range [0.0, 1.0).</summary>
+    /// <param name="f">The input from which to get the fractional part.</param>
+    public static float Fract(float f) {
+        return f - MathF.Floor(f);
+    }
+
+    /// <name>Fract</name>
+    /// <returns>Vector2</returns>
+    /// <summary>Returns the fractional part of the input Vector2 in the range [0.0, 1.0).</summary>
+    /// <param name="vec">The input from which to get the fractional part.</param>
+    public static Vector2 Fract(Vector2 vec) {
+        return new(Fract(vec.X), Fract(vec.Y));
+    }
+
+    /// <name>Fract</name>
+    /// <returns>Vector3</returns>
+    /// <summary>Returns the fractional part of the input Vector3 in the range [0.0, 1.0).</summary>
+    /// <param name="vec">The input from which to get the fractional part.</param>
+    public static Vector3 Fract(Vector3 vec) {
+        return new(Fract(vec.X), Fract(vec.Y), Fract(vec.Z));
     }
 #endregion common
 }
