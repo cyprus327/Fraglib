@@ -9,7 +9,7 @@ internal sealed class DrawClearEngine : Engine {
     
     private readonly Action _program;
 
-    public override void Update(FrameEventArgs args) {
+    public override void Update(float dt) {
         _program();
     }
 

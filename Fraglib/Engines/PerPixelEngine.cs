@@ -34,12 +34,9 @@ internal sealed class PerPixelEngine : Engine {
     private uint frameInd = 0;
 
     // pretty gross method but idk a good way to reduce it so it's staying
-    public override void Update(FrameEventArgs args) {
-        float dt = (float)args.Time;
+    public override void Update(float dt) {
         uniforms.Time += dt;
         uniforms.DeltaTime = dt;
-        
-        _perFrame();
 
         int length = Screen.Length;
         int width = WindowWidth, height = WindowHeight;
@@ -60,7 +57,7 @@ internal sealed class PerPixelEngine : Engine {
                     }
                 });
 
-                return;
+                goto END;
             }
 
             Parallel.For(0, height / ps, cy => {
@@ -82,7 +79,7 @@ internal sealed class PerPixelEngine : Engine {
                 }
             });
 
-            return;
+            goto END;
         }
 
         if (ps == 1) {
@@ -94,7 +91,7 @@ internal sealed class PerPixelEngine : Engine {
                 }
             });
 
-            return;
+            goto END;
         }
 
         Parallel.For(0, height / ps, cy => {
@@ -113,6 +110,9 @@ internal sealed class PerPixelEngine : Engine {
                 }
             }
         });
+
+        END:
+        _perFrame();
     }
 
     public override void OnWindowClose() {

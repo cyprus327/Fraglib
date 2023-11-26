@@ -27,18 +27,18 @@ internal abstract class Engine : GameWindow {
     public readonly uint[] Screen;
     public readonly string WindowTitle;
 
-    private int programHandle;
-    private int vertexArrayHandle;
-    private int textureHandle;
-    private int vertexBufferHandle;
-    private int indexBufferHandle;
-
     public float ElapsedTime { get; private set; } = 0f;
     public float DeltaTime { get; private set; } = 0f;
     public bool VSyncEnabled { get => VSync == VSyncMode.On; set => VSync = value ? VSyncMode.On : VSyncMode.Off; }
     public int TargetFramerate { get; set; } = 144;
     public int PixelSize { get; set; } = 1;
     public ScaleType ScaleType { get; set; } = ScaleType.None;
+    
+    private int programHandle;
+    private int vertexArrayHandle;
+    private int textureHandle;
+    private int vertexBufferHandle;
+    private int indexBufferHandle;
 
     private float frameTimer = 0;
 
@@ -125,7 +125,6 @@ internal abstract class Engine : GameWindow {
         int vertexShader = CompileShader(ShaderType.VertexShader, vertexShaderSource);
         int fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentShaderSource);
 
-
         programHandle = GL.CreateProgram();
         GL.AttachShader(programHandle, vertexShader);
         GL.AttachShader(programHandle, fragmentShader);
@@ -200,14 +199,14 @@ internal abstract class Engine : GameWindow {
         ElapsedTime += t;
 
         if (VSync == VSyncMode.On) {
-            Update(args);
+            Update(t);
             Title = $"{WindowTitle} | FPS: {1f / t:F0}";
             return;
         }
 
         frameTimer += t;
         if (frameTimer >= 1f / TargetFramerate) {
-            Update(args);
+            Update(frameTimer);
             Title = $"{WindowTitle} | FPS: {1f / frameTimer:F0}";
             frameTimer = 0f;
         }
@@ -227,7 +226,7 @@ internal abstract class Engine : GameWindow {
         return shader;
     }
 
-    public abstract void Update(FrameEventArgs args);
+    public abstract void Update(float dt);
     public abstract void OnWindowClose();
 }
 
