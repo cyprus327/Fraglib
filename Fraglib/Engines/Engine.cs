@@ -195,21 +195,28 @@ internal abstract class Engine : GameWindow {
         base.OnUpdateFrame(args);
 
         float t = (float)args.Time;
-        DeltaTime = t;
-        ElapsedTime += t;
 
         if (VSync == VSyncMode.On) {
             Update(t);
             Title = $"{WindowTitle} | FPS: {1f / t:F0}";
+
+            DeltaTime = t;
+            ElapsedTime += t;
             return;
         }
 
         frameTimer += t;
-        if (frameTimer >= 1f / TargetFramerate) {
-            Update(frameTimer);
-            Title = $"{WindowTitle} | FPS: {1f / frameTimer:F0}";
-            frameTimer = 0f;
+        if (frameTimer < 1f / TargetFramerate) {
+            return;
         }
+
+        Update(frameTimer);
+        Title = $"{WindowTitle} | FPS: {1f / frameTimer:F0}";
+
+        DeltaTime = frameTimer;
+        ElapsedTime += frameTimer;
+
+        frameTimer = 0f;
     }
 
     private int CompileShader(ShaderType type, string source) {
