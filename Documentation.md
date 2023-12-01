@@ -15,7 +15,7 @@ This method must be called before using any other FL methods.
 Starts the main loop of the engine. 
 Must be called after Init for a window to appear. 
 Any settings changed after this (PixelSize, VSync, etc.) won't affect anything. 
-## DrawClear Methods
+## Drawing Methods
 ### SetPixel (void)
 Sets the pixel at the specified position to the given color. 
 - **x**: The x coordinate of the pixel.
@@ -118,7 +118,7 @@ Draws a string of specified color and font size to the window at the specified c
 - **str**: The string to draw.
 - **x**: The x coordinate on the window to draw the string to.
 - **y**: The y coordinate on the window to draw the string to.
-- **fontSize**: The font size the string will be drawn at.
+- **fontScale**: The font size the string will be drawn at.
 - **color**: The color the string will br drawn with.
 ### DrawTextureFast (void)
 Draws a texture to the window at the specified coordinates. 
@@ -327,6 +327,11 @@ Converts a color from HSL format to ABGR format (0xAABBGGRR).
 - **hue**: The H channel's value.
 - **saturation**: The S channel's value.
 - **lightness**: The L channel's value.
+## Text
+### MeasureString ((int, int))
+Calcualtes the size in pixels of a string drawn with DrawString. 
+- **str**: The string to measure the size of.
+- **fontScale**: The fontScale the string will be measued at.
 ## Render Settings
 ### RenderSettings (struct)
 The struct defining the settings which will be applied when FL.Init is called. 
@@ -340,6 +345,7 @@ Gets or sets the target framerate engine. Only changes anything is VSync == fals
 Gets or sets whether or not the engine accumulates previous frames with the current frame. Only applicable in PerPixel mode. Can be changed during runtime. 
 ### ScaleType (ScaleType)
 Gets or sets how the engine renders when PixelSize > 1. 
+## Common
 ### Settings (RenderSettings)
 Gets or sets the settings with which the engine will run. Not all settings can be changed during runtime, the ones that can't be must be set before Init. 
 ### ElapsedTime (float)
@@ -437,3 +443,12 @@ Modifies the underlying array.
 - **arr**: Optional parameter representing the array of Vector2s to modify.
 - **offsetX**: The amount to move the Vector2s in 'arr' by on the x-axis.
 - **offsetY**: The amount to move the Vector2s in 'arr' by on the y-axis.
+### Fract (float)
+Returns the fractional part of the input float in the range [0.0, 1.0). 
+- **f**: The input from which to get the fractional part.
+### Fract (Vector2)
+Returns the fractional part of the input Vector2 in the range [0.0, 1.0). 
+- **vec**: The input from which to get the fractional part.
+### Fract (Vector3)
+Returns the fractional part of the input Vector3 in the range [0.0, 1.0). 
+- **vec**: The input from which to get the fractional part.

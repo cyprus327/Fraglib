@@ -74,8 +74,8 @@ public static class FL {
     }
 #endregion setup
 
-/// <region>DrawClear Methods</region>
-#region drawclear methods
+/// <region>Drawing Methods</region>
+#region drawing methods
     /// <name>SetPixel</name>
     /// <returns>void</returns>
     /// <summary>Sets the pixel at the specified position to the given color.</summary>
