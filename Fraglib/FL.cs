@@ -9,8 +9,6 @@ public static class FL {
 
 /// <region>Setup</region>
 #region setup
-    private static bool isDrawClear = false;
-
     /// <name>Init</name>
     /// <returns>void</returns>
     /// <summary>Initializes the window with the specified width, height, and title.</summary>
@@ -31,7 +29,6 @@ public static class FL {
         windowHeight = height;
         program ??= () => {};
         e = new DrawClearEngine(width, height, title, program);
-        isDrawClear = true;
     }
 
     /// <name>Init</name>
@@ -86,7 +83,7 @@ public static class FL {
     /// <param name="y">The y coordinate of the pixel.</param>
     /// <param name="color">The color of the pixel.</param>
     public static void SetPixel(int x, int y, uint color) {
-        if (!isDrawClear || x < 0 || x >= windowWidth || y < 0 || y >= windowHeight) {
+        if (x < 0 || x >= windowWidth || y < 0 || y >= windowHeight) {
             return;
         }
 
@@ -109,7 +106,7 @@ public static class FL {
     /// <param name="x">The x coordinate of the pixel.</param>
     /// <param name="y">The y coordinate of the pixel.</param>
     public static uint GetPixel(int x, int y) {
-        if (!isDrawClear || x < 0 || x >= windowWidth || y < 0 || y >= windowHeight) {
+        if (x < 0 || x >= windowWidth || y < 0 || y >= windowHeight) {
             return 0;
         }
 
@@ -121,10 +118,6 @@ public static class FL {
     /// <summary>Clears the window to the specified color.</summary>
     /// <param name="color">The color the window will get cleared to, default value of black (0xFF000000).</param>
     public static unsafe void Clear(uint color = 0xFF000000) {
-        if (!isDrawClear) {
-            return; 
-        }
-
         Array.Fill(e!.Screen, color);
     }
 
@@ -137,10 +130,6 @@ public static class FL {
     /// <param name="height">The height of the rectangle.</param>
     /// <param name="color">The color of the rectangle.</param>
     public static void DrawRect(int x, int y, int width, int height, uint color) {
-        if (!isDrawClear) {
-            return;
-        }
-
         int xw = x + width, yh = y + height;
         DrawVerticalLine(x, y, yh, color);
         DrawVerticalLine(xw, y, yh, color);
@@ -157,10 +146,6 @@ public static class FL {
     /// <param name="height">The height of the rectangle.</param>
     /// <param name="color">The color of the rectangle.</param>
     public static unsafe void FillRect(int x, int y, int width, int height, uint color) {
-        if (!isDrawClear) {
-            return;
-        }
-
         byte a = color.GetA();
         if (a == 0) {
             return;
@@ -205,10 +190,6 @@ public static class FL {
     /// <param name="radius">The radius of the circle.</param>
     /// <param name="color">The color of the circle.</param>
     public static unsafe void DrawCircle(int centerX, int centerY, int radius, uint color) {
-        if (!isDrawClear) {
-            return;
-        }
-
         byte a = color.GetA();
         if (a == 0) {
             return;
@@ -251,10 +232,6 @@ public static class FL {
     /// <param name="radius">The radius of the circle.</param>
     /// <param name="color">The color of the circle.</param>
     public static unsafe void FillCircle(int centerX, int centerY, int radius, uint color) {
-        if (!isDrawClear) {
-            return;
-        }
-
         if (radius == 0) {
             return;
         }
@@ -306,10 +283,6 @@ public static class FL {
     /// <param name="y1">The ending y coordinate of the line.</param>
     /// <param name="color">The color of the line.</param>
     public static unsafe void DrawLine(int x0, int y0, int x1, int y1, uint color) {
-        if (!isDrawClear) {
-            return;
-        }
-
         byte a = color.GetA();
         if (a == 0) {
             return;
@@ -384,10 +357,6 @@ public static class FL {
     /// <param name="y1">The ending y coordinate of the line.</param>
     /// <param name="color">The color of the line.</param>
     public static unsafe void DrawVerticalLine(int x, int y0, int y1, uint color) {
-        if (!isDrawClear) {
-            return;
-        }
-
         if (x < 0 || x >= windowWidth || y0 >= windowHeight || y1 < 0) {
             return;
         }
@@ -431,10 +400,6 @@ public static class FL {
     /// <param name="y">The y coordinate of the line.</param>
     /// <param name="color">The color of the line.</param>
     public static unsafe void DrawHorizontalLine(int x0, int x1, int y, uint color) {
-        if (!isDrawClear) {
-            return;
-        }
-
         if (y < 0 || y >= windowHeight) {
             return;
         }
@@ -482,10 +447,6 @@ public static class FL {
     /// <param name="y2">The y coordinate of the 3rd vertex.</param>
     /// <param name="color">The color of the triangle.</param>
     public static void DrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
-        if (!isDrawClear) {
-            return;
-        }
-
         DrawLine(x0, y0, x1, y1, color);
         DrawLine(x1, y1, x2, y2, color);
         DrawLine(x2, y2, x0, y0, color);
@@ -513,10 +474,6 @@ public static class FL {
     /// <param name="y2">The y coordinate of the 3rd vertex.</param>
     /// <param name="color">The color of the triangle.</param>
     public static void FillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint color) {
-        if (!isDrawClear) {
-            return;
-        }
-
         if (y1 < y0) {
             (x0, y0, x1, y1) = (x1, y1, x0, y0);
         }
@@ -571,10 +528,6 @@ public static class FL {
     /// <param name="color">The color of the polygon.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
     public static void DrawPolygon(uint color, params Vector2[] vertices) {
-        if (!isDrawClear) {
-            return;
-        }
-
         if (vertices.Length < 3) {
             return;
         }
@@ -592,10 +545,6 @@ public static class FL {
     /// <param name="color">The color of the polygon.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
     public static unsafe void FillPolygon(uint color, params Vector2[] vertices) {
-        if (!isDrawClear) {
-            return;
-        }
-
         if (vertices.Length < 3) {
             return;
         }
@@ -706,10 +655,6 @@ public static class FL {
     /// <param name="y">The y coordinate to draw the texture at.</param>
     /// <param name="texture">The Texture to draw.</param>
     public static unsafe void DrawTextureFast(int x, int y, Texture texture) {
-        if (!isDrawClear) {
-            return;
-        }
-
         int textureWidth = texture.Width, textureHeight = texture.Height;
 
         int startX = Math.Max(0, -x);
@@ -740,10 +685,6 @@ public static class FL {
     /// <param name="y">The y coordinate to draw the texture at.</param>
     /// <param name="texture">The Texture to draw.</param>
     public static unsafe void DrawTexture(int x, int y, Texture texture) {
-        if (!isDrawClear) {
-            return;
-        }
-
         int textureWidth = texture.Width, textureHeight = texture.Height;
 
         int startX = Math.Max(0, -x);
@@ -810,10 +751,6 @@ public static class FL {
     /// <param name="scaleY">The amount to scale the by texture vertically.</param>
     /// <param name="texture">The Texture to draw.</param>
     public static unsafe void DrawTexture(int x, int y, float scaleX, float scaleY, Texture texture) {
-        if (!isDrawClear) {
-            return;
-        }
-
         if (scaleX <= 0 || scaleY <= 0) {
             return;
         }
@@ -880,10 +817,6 @@ public static class FL {
     /// <param name="scaledY">The height to scale the texture to in pixels.</param>
     /// <param name="texture">The Texture to draw.</param>
     public static void DrawTexture(int x, int y, int scaledX, int scaledY, Texture texture) {
-        if (!isDrawClear) {
-            return;
-        }
-
         DrawTexture(x, y, (float)scaledX / texture.Width, (float)scaledY / texture.Height, texture);
     }
 
@@ -900,10 +833,6 @@ public static class FL {
     /// <param name="texHeight">The height of the cropped texture section.</param>
     /// <param name="texture">The Texture from which to draw the cropped section.</param>
     public static unsafe void DrawTexture(int x, int y, int texStartX, int texStartY, int texWidth, int texHeight, Texture texture) {
-        if (!isDrawClear) {
-            return;
-        }
-
         int textureWidth = texture.Width, textureHeight = texture.Height;
 
         int startX = Math.Max(0, -x);
@@ -1175,7 +1104,7 @@ public static class FL {
 /// <region>Colors</region>
 #region colors
     private static uint AlphaBlend(uint background, uint foreground) {
-        byte alpha = (byte)((foreground >> 24) & 0xFF);
+        byte alpha = (byte)(foreground >> 24);
 
         if (alpha == 0) {
             return background;
@@ -1698,11 +1627,11 @@ public static class FL {
             1,1,1,1,0,
         },
         new byte[] { // 6
-            1,1,1,1,1,
+            0,1,1,1,1,
             1,0,0,0,0,
-            1,1,1,1,1,
+            1,1,1,1,0,
             1,0,0,0,1,
-            1,1,1,1,1,
+            0,1,1,1,0,
         },
         new byte[] { // 7
             1,1,1,1,1,
