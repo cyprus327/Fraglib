@@ -45,7 +45,7 @@ FL.Init(1024, 768, "Window", (x, y, u) => {
 });
 FL.Run();
 
-// inlined code above could also be written as below
+/* inlined code above could also be written as below
 
 FL.Init(1024, 768, "Window", PerPixel, PerFrame);
 FL.Run();
@@ -57,6 +57,7 @@ uint PerPixel(int x, int y, Uniforms u) {
 void PerFrame() {
     // ...
 }
+*/
 ```
 ![Vertex Coord Colors](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/UVGradient.png)
 
