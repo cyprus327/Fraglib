@@ -157,7 +157,7 @@ and dimensions (texWidth, texHeight) within the provided texture.
 - **texHeight**: The height of the cropped texture section.
 - **texture**: The Texture from which to draw the cropped section.
 ## Textures
-### Texture (Texture)
+### ctor (Texture)
 Creates a Texture from a Bitmap image. The alpha channel of the bitmap isn't taken into account for now. 
 - **bmpImagePath**: The path to a Bitmap image to create the texture from.
 ### Texture (Texture)
@@ -196,6 +196,93 @@ Returns the parent texture cropped to the resolution specified.
 - **texStartY**: The y coordinate within the texture where cropping starts.
 - **texWidth**: The width of the cropped texture section.
 - **texHeight**: The height of the cropped texture section.
+## Camera
+### ctor (Camera)
+Initializes a new instantce of the Camera struct with the specified properties. 
+- **pos**: The position in world space of the camera.
+- **yawRad**: The camera's orientation's yaw in radians.
+- **pitchRad**: The camera's orientation's pitch in radians.
+- **fovDeg**: The camera's field of view in degrees.
+### Yaw (float)
+The camera's current yaw in degrees. Can be set by using the LookBy or LookAt methods. 
+### Pitch (float)
+The camera's current pitch in degrees. Can be set by using the LookBy or LookAt methods. 
+### YawPitchMatrix (Matrix4x4)
+The yaw-pitch rotation matrix of the camera. 
+### ViewMatrix (Matrix4x4)
+The view matrix of the camera. 
+### ProjectionMatrix (Matrix4x4)
+The projection matrix of the camera. 
+### ViewProjectionMatrix (Matrix4x4)
+The view-projection matrix of the camera (ViewMatrix * ProjectionMatrix). 
+### Pos (Vector3)
+Gets or sets camera's position in world space. 
+### FOV (float)
+Gets or sets the camera's field of view. 
+### NearPlane (float)
+Gets or sets the camera's near plane. 
+### FarPlane (float)
+Gets or sets the camera's far plane. 
+### HandleInputDefault (void)
+Purely for convenience, handles moving the camera with WASD, Q (up), and E (down), and turning with the mouse when the right mouse button is held. 
+- **moveSpeedMult**: The multiplier for how fast the camera will move.
+- **lookSpeedMult**: The multiplier for how much the mouse will turn the camera.
+### MoveForward (void)
+Moves the camera forward by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### MoveBackward (void)
+Moves the camera backward by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### MoveRight (void)
+Moves the camera right by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### MoveLeft (void)
+Moves the camera left by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### MoveUp (void)
+Moves the camera up by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### MoveDown (void)
+Moves the camera down by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### LookBy (void)
+Turns the camera by the specified vector. 
+- **vec**: The amount by which to learn, where vec.X represents the yaw delta and vec.Y the pitch delta.
+### LookBy (void)
+Turns the camera by the specified yaw and pitch values. 
+- **yaw**: The amount by which the camera's yaw will change.
+- **pitch**: The amount by which the camera's pitch will change.
+### LookAt (void)
+Turns the camera to look at the specified point. 
+- **pos**: The world space position that the camera will turn towards.
+### UpdateMatrices (void)
+Updates the camera's matrices. Should be called after changing one of the camera's properties' values. 
+### ProjectPointToScreen (void)
+Projects a 3D point to screen coordinates. 
+- **point**: The point to project, of type (int x, int y, int z).
+- **screenCoords**: An out (int x, int y, int z) representing the screen coordinates of the projected point.
+- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
+### ProjectPointToScreen (void)
+Projects a 3D point to screen coordinates. 
+- **point**: The point to project, of type Vector3.
+- **screenCoords**: An out Vector2 representing the screen coordinates of the projected point.
+- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
+### ProjectCircleToScreen (void)
+Projects and scales a circle in world space to the screen. 
+- **circleCenter**: The center of the circle to project.
+- **radius**: The radius of the circle to project.
+- **screenCoords**: An out Vector2 representing the screen coordinates of the projected circle.
+- **screenRadius**: An out float representing the radius of the projected circle.
+- **isInCamView**: An out boolean representing whether or not the point can be seen by the camera.
+### ProjectRectToScreen (void)
+Projects and scales a rectangle in world space to the screen. 
+- **rectCenter**: The center of the circle to project.
+- **width**: The width of the rectangle to project.
+- **height**: The height of the rectangle to project.
+- **screenCoords**: An out Vector2 representing the screen coordinates of the projected circle.
+- **screenWidth**: An out float representing the width of the projected circle.
+- **screenHeight**: An out float representing the height of the projected circle.
+- **isInCamView**: An out boolean representing whether or not the point can be seen by the camera.
 ## States
 ### SaveState (void)
 Saves the current state of the window to a buffer. 
