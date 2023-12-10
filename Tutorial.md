@@ -271,7 +271,7 @@ internal sealed class Tutorial {
     }
 }
 ```
-![Vertex colors gif](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/UVGradient.png)
+![UV Gradient](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/TutUVGradient.png)
 
 You may have noticed that in this code I use u.Width and u.Height instead of FL.Width and FL.Height. Using FL.Width/Height would work perfectly here, however there is a slight performance gain when using u.Width/Height instead. The same thing goes for other all other Uniform variables such as u.Time instead of FL.ElapsedTime.
 
