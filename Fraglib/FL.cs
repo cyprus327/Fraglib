@@ -962,7 +962,7 @@ public static class FL {
         /// <name>GetPixels</name>
         /// <returns>uint[]</returns>
         /// <summary>Gets the pixels of the texture.</summary>
-        public readonly uint[] GetPixels => pixels;
+        public readonly uint[] GetPixels { get => pixels; }
 
         /// <name>SetPixel</name>
         /// <returns>void</returns>
@@ -971,13 +971,11 @@ public static class FL {
         /// <param name="y">The y coordinate of the pixel.</param>
         /// <param name="color">The color to set the pixel.</param>
         public void SetPixel(int x, int y, uint color) {
-            int ind = y * Width + x;
-
-            if (ind < 0 || ind >= pixels.Length) {
+            if (x < 0 || x >= Width || y < 0 || y >= Height) {
                 return;
             }
 
-            pixels[ind] = color;
+            pixels[y * Width + x] = color;
         }
 
         /// <name>GetPixel</name>
@@ -993,6 +991,14 @@ public static class FL {
             }
 
             return pixels[ind];
+        }
+
+        /// <name>Clear</name>
+        /// <returns>void</returns>
+        /// <summary>Sets all pixels in the texture to the value specified.</summary>
+        /// <param name="color">The color to set all the pixels in the texture to.</param>
+        public void Clear(uint color = 4278190080) {
+            Array.Fill(pixels, color);
         }
 
         /// <name>ScaleTo</name>
@@ -1060,28 +1066,34 @@ public static class FL {
         /// <name>ctor</name>
         /// <returns>Camera</returns>
         /// <summary>Initializes a new instantce of the Camera struct with the specified properties.</summary>
+        /// <param name="targetWidth">The target width for the camera to render to.</param>
+        /// <param name="targetHeight">The target height for the camera to render to.</param>
         /// <param name="pos">The position in world space of the camera.</param>
         /// <param name="yawRad">The camera's orientation's yaw in radians.</param>
         /// <param name="pitchRad">The camera's orientation's pitch in radians.</param>
         /// <param name="fovDeg">The camera's field of view in degrees.</param>
-        public Camera(Vector3 pos, float yawRad = 0f, float pitchRad = 0f, float fovDeg = 90f) {
+        public Camera(Vector3 pos, int targetWidth, int targetHeight, float yawRad = 0f, float pitchRad = 0f, float fovDeg = 90f) {
             Pos = pos;
+            TargetWidth = Math.Clamp(targetWidth, 1, 10000);
+            TargetHeight = Math.Clamp(targetHeight, 1, 10000);
             Yaw = yawRad;
             Pitch = pitchRad;
             FOV = fovDeg;
 
-            YawPitchMatrix = Matrix4x4.CreateFromYawPitchRoll(yawRad, pitchRad, 0f);
+            UpdateMatrices();
         }
 
         /// <name>Yaw</name>
         /// <returns>float</returns>
-        /// <summary>The camera's current yaw in degrees. Can be set by using the LookBy or LookAt methods.</summary>
+        /// <summary>The camera's current yaw in radians. Can be set by using the LookBy or LookAt methods.</summary>
         public float Yaw { get; private set; }
+        const float MAX_YAW = MathF.PI * 1.99999f;
         
         /// <name>Pitch</name>
         /// <returns>float</returns>
-        /// <summary>The camera's current pitch in degrees. Can be set by using the LookBy or LookAt methods.</summary>
+        /// <summary>The camera's current pitch in radians. Can be set by using the LookBy or LookAt methods.</summary>
         public float Pitch { get; private set; }
+        const float MAX_PITCH = MathF.PI * 0.49999f;
 
         /// <name>YawPitchMatrix</name>
         /// <returns>Matrix4x4</returns>
@@ -1108,7 +1120,7 @@ public static class FL {
         /// <summary>Gets or sets camera's position in world space.</summary>
         public Vector3 Pos { get; set; }
 
-        /// <name>FOV<name>
+        /// <name>FOV</name>
         /// <returns>float</returns>
         /// <summary>Gets or sets the camera's field of view.</summary>
         public float FOV {
@@ -1117,7 +1129,7 @@ public static class FL {
         }
         private float fov = 90f;
 
-        /// <name>NearPlane<name>
+        /// <name>NearPlane</name>
         /// <returns>float</returns>
         /// <summary>Gets or sets the camera's near plane.</summary>
         public float NearPlane {
@@ -1126,7 +1138,7 @@ public static class FL {
         }
         private float nearPlane = 0.1f;
 
-        /// <name>FarPlane<name>
+        /// <name>FarPlane</name>
         /// <returns>float</returns>
         /// <summary>Gets or sets the camera's far plane.</summary>
         public float FarPlane {
@@ -1135,7 +1147,9 @@ public static class FL {
         }
         private float farPlane = 1000f;
 
-        const float MAX_PITCH = MathF.PI * 0.4999f;
+        public int TargetWidth { get; }
+
+        public int TargetHeight { get; }
 
         /// <name>HandleInputDefault</name>
         /// <returns>void</returns>
@@ -1224,7 +1238,7 @@ public static class FL {
         /// <param name="vec">The amount by which to learn, where vec.X represents the yaw delta and vec.Y the pitch delta.</param>
         public void LookBy(Vector2 vec) {
             Yaw -= vec.X;
-            Yaw %= 360f;
+            Yaw %= MAX_YAW;
             Pitch = Math.Clamp(Pitch + vec.Y, -MAX_PITCH, MAX_PITCH);
         }
 
@@ -1235,7 +1249,7 @@ public static class FL {
         /// <param name="pitch">The amount by which the camera's pitch will change.</param>
         public void LookBy(float yaw, float pitch) {
             Yaw -= yaw;
-            Yaw %= 360f;
+            Yaw %= MAX_YAW;
             Pitch = Math.Clamp(Pitch + pitch, -MAX_PITCH, MAX_PITCH);
         }
 
@@ -1247,7 +1261,7 @@ public static class FL {
             Vector3 dir = pos - Pos;
             float dist = dir.Length();
 
-            Yaw = MathF.Atan2(-dir.X, dir.Z) % 360f;
+            Yaw = MathF.Atan2(-dir.X, dir.Z) % MAX_YAW;
             Pitch = Math.Clamp(MathF.Asin(dir.Y / dist), -MAX_PITCH, MAX_PITCH);
         }
 
@@ -1257,7 +1271,7 @@ public static class FL {
         public void UpdateMatrices() {
             YawPitchMatrix = Matrix4x4.CreateFromYawPitchRoll(Yaw, Pitch, 0f);
             ViewMatrix = Matrix4x4.CreateLookAt(Pos, Pos + Vector3.Transform(-Vector3.UnitZ, YawPitchMatrix), Vector3.UnitY);
-            ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(DegToRad(fov), (float)windowWidth / windowHeight, nearPlane, farPlane);
+            ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(DegToRad(fov), (float)TargetWidth / TargetHeight, nearPlane, farPlane);
             ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
         }
 
@@ -1304,7 +1318,7 @@ public static class FL {
 
             screenCoords = NormalizeCoords(normalCoords);
 
-            screenRadius = radius * windowWidth / (2f * normalCoords.W);
+            screenRadius = radius * TargetWidth / (2f * normalCoords.W);
 
             isInCamView = normalCoords.Z >= -normalCoords.W && normalCoords.Z <= normalCoords.W;
         }
@@ -1324,16 +1338,16 @@ public static class FL {
 
             screenCoords = NormalizeCoords(normalCoords);
 
-            screenWidth = width * windowWidth / (2f * normalCoords.W);
-            screenHeight = height * windowHeight / (2f * normalCoords.W) * ((float)windowWidth / windowHeight); 
+            screenWidth = width * TargetWidth / (2f * normalCoords.W);
+            screenHeight = height * TargetHeight / (2f * normalCoords.W) * ((float)TargetWidth / TargetHeight); 
 
             isInCamView = normalCoords.Z >= -normalCoords.W && normalCoords.Z <= normalCoords.W;
         }
 
-        private static Vector2 NormalizeCoords(Vector4 normalCoords) {
+        private readonly Vector2 NormalizeCoords(Vector4 normalCoords) {
             return new(
-                (normalCoords.X / normalCoords.W + 1f) * 0.5f * windowWidth,
-                (1f - normalCoords.Y / normalCoords.W) * 0.5f * windowHeight
+                (normalCoords.X / normalCoords.W + 1f) * 0.5f * TargetWidth,
+                (1f - normalCoords.Y / normalCoords.W) * 0.5f * TargetHeight
             );
         }
     }
