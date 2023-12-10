@@ -430,8 +430,6 @@ With that, this tutorial comes to an end. If you'd like to see some more things 
 
 In Fraglib, the only images that can be used (for now) as Textures are 32 bit Bitmaps. This is because of [how the images are loaded into the Texture](https://github.com/cyprus327/Fraglib/blob/d55a77f1c38dc4bbddfa8205b5c641540e64167f/FL.cs#L678C19-L678C19) and the fact that the approach is tailor made specifically for 32 bit Bitmaps.
 
-Due to Buffer.MemoryCopy, it is actually faster to draw a texture than it is to draw a plain rectangle, if they're both large and you're drawing lots of them.
-
 To create a new Texture in Fraglib, create a new FL.Texture, as shown below.
 ```csharp
 // load a Texture from image.bmp
@@ -447,6 +445,181 @@ FL.Texture blankTexture = new(256, 256);
 There are multiple overloads to DrawTexture, all of which support transparency. This does make them significantly slower than DrawTextureFast, however, which doesn't support transparency. 
 
 The Texture struct of course has the methods you would expect, e.g. 'SetPixel(x, y, color)', 'GetPixel(x, y)', 'GetPixels'.
+
+## Cameras
+The Camera struct is a very easy way to make a simple 3D application with Fraglib.
+
+To create a new Camera in Fraglib, create a new FL.Camera, as shown below.
+```csharp
+FL.Camera camera = new(Vector3.Zero, RENDER_WIDTH, RENDER_HEIGHT, yawRad, pitchRad, fovDeg);
+```
+
+RENDER_WIDTH and RENDER_HEIGHT are the dimensions of the target for the camera object to render to.
+For example, if the camera is meant for use with a texture, RENDER_WIDTH would be the texture's width
+and RENDER_HEIGHT the texture's height, if the camera is meant for the entire window,
+RENDER_WIDTH would be the window's width and RENDER_HEIGHT the window's height.
+
+Below is an example creating a 10x10x10 point cloud.
+```csharp
+using Fraglib;
+
+const int WIDTH = 1024, HEIGHT = 768;
+
+FL.Camera cam = new(new(0f, 0f, 0f), WIDTH, HEIGHT);
+FL.Init(WIDTH, HEIGHT, "Point Cloud", () => {
+    FL.Clear();
+    // iterate over the point cloud
+    for (int x = 0; x < 50; x++) {
+        for (int y = 0; y < 50; y++) {
+            for (int z = 0; z < 50; z++) {
+                // project the point (x, y, z) to screen coordinates (sc)
+                cam.ProjectPointToScreen((x, y, z), out (int x, int y) sc, out bool inCamView);
+                // only draw the point if it can be seen by the camera
+                if (inCamView) {
+                    FL.SetPixel(sc.x, sc.y, FL.NewColor(x / 50f, y / 50f, z / 50f));
+                }
+            }
+        }
+    }
+
+    // default input handling so I don't have to write
+    // if (FL.GetKeyDown('W')) cam.MoveForward(10f) and so on
+    cam.HandleInputDefault(10f);
+});
+FL.Run();
+```
+
+![Point Cloud](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/PointCloud.png)
+
+There are also other helper projection methods, such as ProjectCircleToScreen and ProjectRectToScreen,
+below is an example that projects billboard textures to the screen.
+
+```csharp
+using System.Numerics;
+using Fraglib;
+
+const int WIDTH = 1024, HEIGHT = 768;
+
+FL.Texture colorwheel = new(@"C:\Test\colorwheel.bmp");
+
+// same setup as before
+FL.Camera cam = new(Vector3.Zero, WIDTH, HEIGHT);
+FL.Init(WIDTH, HEIGHT, "Billboard Textures", () => {
+    FL.Clear(FL.Turquoise);
+    for (int x = 0; x < 50; x += 10) {
+        for (int y = 0; y < 50; y += 10) {
+            for (int z = 0; z < 50; z += 10) {
+                // project a rectangle for the texture
+                cam.ProjectRectToScreen(
+                    new(x, y, z),
+                    colorwheel.Width / 100, colorwheel.Height / 100,
+                    out Vector2 sc,
+                    out float sw, out float sh,
+                    out bool inCamView
+                );
+                // draw the texture if it can be seen
+                if (inCamView) {
+                    FL.DrawTexture((int)sc.X, (int)sc.Y, (int)sw, (int)sh, colorwheel);
+                }
+            }
+        }
+    }
+
+    cam.HandleInputDefault(10f);
+});
+FL.Run();
+```
+
+![Texture Billboards](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/TextureBillboards.png)
+
+I haven't yet shown the effect of having different values for a camera object's target width and height,
+so that will be shown in the next section.
+
+## Render Target
+The SetRenderTarget method is used when changing the target of the drawing methods in Fraglib.
+For example, if I wanted to draw a circle onto an FL.Texture object, I would first have to Fraglib's
+rendering target to that texture.
+
+Here's what that would look like.
+```csharp
+// assuming tex is the texture we want to draw onto
+FL.SetRenderTarget(tex);
+// draw a red circle of radius 50 at (10, 10)
+FL.DrawCircle(10, 10, 50, FL.Red);
+// go back to drawing on the main window
+FL.ResetRenderTarget();
+```
+
+A more advanced / in depth example of using this is the splitscreen game below.
+Note that you may not understand what's going on here unless you've looked at the previous section
+on the Camera struct.
+```csharp
+using System.Numerics;
+using Fraglib;
+
+const int WIDTH = 1024, HEIGHT = 768;
+
+// initialize red player
+FL.Texture redTex = new(WIDTH, HEIGHT / 2);
+FL.Camera redCam = new(Vector3.Zero, redTex.Width, redTex.Height);
+
+// initialize blue player
+FL.Texture blueTex = new(WIDTH, HEIGHT / 2);
+FL.Camera blueCam = new(Vector3.Zero, blueTex.Width, blueTex.Height);
+
+FL.Init(WIDTH, HEIGHT, "Splitscreen Game", () => {
+    redTex.Clear(FL.LerpColors(FL.Red, FL.Black, 0.9f));
+    blueTex.Clear(FL.LerpColors(FL.Blue, FL.Black, 0.9f));
+    
+    // draw the point cloud world
+    bool inCamView;
+    for (int x = 0; x < 50; x += 2) {
+        for (int y = 0; y < 50; y += 2) {
+            for (int z = 0; z < 50; z += 2) {
+                uint col = FL.NewColor(x / 50f, y / 50f, z / 50f);
+
+                redCam.ProjectPointToScreen((x, y, z), out var screenCoord, out inCamView);
+                if (inCamView) {
+                    redTex.SetPixel(screenCoord.x, screenCoord.y, col);
+                }
+
+                blueCam.ProjectPointToScreen((x, y, z), out screenCoord, out inCamView);
+                if (inCamView) {
+                    blueTex.SetPixel(screenCoord.x, screenCoord.y, col);
+                }
+            }
+        }
+    }
+
+    // draw the players for each other
+    redCam.ProjectCircleToScreen(blueCam.Pos, 1f, out var sc, out float sr, out inCamView);
+    if (inCamView) {
+        FL.SetRenderTarget(redTex);
+        FL.DrawCircle((int)sc.X, (int)sc.Y, (int)sr, FL.Blue);
+        FL.ResetRenderTarget();
+    }
+    blueCam.ProjectCircleToScreen(redCam.Pos, 1f, out sc, out sr, out inCamView);
+    if (inCamView) {
+        FL.SetRenderTarget(blueTex);
+        FL.DrawCircle((int)sc.X, (int)sc.Y, (int)sr, FL.Red);
+        FL.ResetRenderTarget();
+    }
+
+    // handle input for each player
+    if (FL.GetKeyDown(' ')) {
+        blueCam.HandleInputDefault(8f);
+    } else {
+        redCam.HandleInputDefault(8f);
+    }
+
+    // draw each player's POV
+    FL.DrawTextureFast(0, HEIGHT / 2, redTex);
+    FL.DrawTextureFast(0, 0, blueTex);
+});
+FL.Run();
+```
+
+![Splitscreen Game](https://github.com/cyprus327/Fraglib/blob/main/.githubResources/SplitscreenGame.png)
 
 ## States
 
