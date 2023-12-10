@@ -1,4 +1,14 @@
 # Fraglib Documentation
+### SetRenderTarget (void)
+Changes the target of the drawing methods to the specified target. 
+- **renderTarget**: The new target to draw onto.
+- **targetWidth**: The width of the target.
+- **targetHeight**: The height of the target.
+### SetRenderTarget (void)
+Changes the target of the drawing methods to the specified texture. 
+- **tex**: The texture to change the rendering to.
+### ResetRenderTarget (void)
+Resets the rendering target to the main window. 
 ## Setup
 ### Init (void)
 Initializes the window with the specified width, height, and title. 
@@ -182,6 +192,9 @@ Sets a pixel in the texture at specified coordinates to specified color.
 Gets a pixel in the texture at specified coordinates. 
 - **x**: The x coordinate of the pixel.
 - **y**: The y coordinate of the pixel.
+### Clear (void)
+Sets all pixels in the texture to the value specified. 
+- **color**: The color to set all the pixels in the texture to.
 ### ScaleTo (Texture)
 Returns the parent texture scaled by the factors scaleX and scaleY. 
 - **scaleX**: The amount to scale the texture by horizontally.
@@ -199,14 +212,16 @@ Returns the parent texture cropped to the resolution specified.
 ## Camera
 ### ctor (Camera)
 Initializes a new instantce of the Camera struct with the specified properties. 
+- **targetWidth**: The target width for the camera to render to.
+- **targetHeight**: The target height for the camera to render to.
 - **pos**: The position in world space of the camera.
 - **yawRad**: The camera's orientation's yaw in radians.
 - **pitchRad**: The camera's orientation's pitch in radians.
 - **fovDeg**: The camera's field of view in degrees.
 ### Yaw (float)
-The camera's current yaw in degrees. Can be set by using the LookBy or LookAt methods. 
+The camera's current yaw in radians. Can be set by using the LookBy or LookAt methods. 
 ### Pitch (float)
-The camera's current pitch in degrees. Can be set by using the LookBy or LookAt methods. 
+The camera's current pitch in radians. Can be set by using the LookBy or LookAt methods. 
 ### YawPitchMatrix (Matrix4x4)
 The yaw-pitch rotation matrix of the camera. 
 ### ViewMatrix (Matrix4x4)

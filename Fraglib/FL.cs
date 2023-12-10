@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -11,6 +10,12 @@ public static unsafe partial class FL {
 
     private static uint* renderPtr = (uint*)0u;
 
+    /// <name>SetRenderTarget</name>
+    /// <returns>void</returns>
+    /// <summary>Changes the target of the drawing methods to the specified target.</summary>
+    /// <param name="renderTarget">The new target to draw onto.</param>
+    /// <param name="targetWidth">The width of the target.</param>
+    /// <param name="targetHeight">The height of the target.</param>
     public static void SetRenderTarget(uint[] renderTarget, int targetWidth, int targetHeight) {
         windowWidth = targetWidth;
         windowHeight = targetHeight;
@@ -19,10 +24,17 @@ public static unsafe partial class FL {
         }
     }
 
+    /// <name>SetRenderTarget</name>
+    /// <returns>void</returns>
+    /// <summary>Changes the target of the drawing methods to the specified texture.</summary>
+    /// <param name="tex">The texture to change the rendering to.</param>
     public static void SetRenderTarget(Texture tex) {
         SetRenderTarget(tex.GetPixels, tex.Width, tex.Height);
     }
 
+    /// <name>ResetRenderTarget</name>
+    /// <returns>void</returns>
+    /// <summary>Resets the rendering target to the main window.</summary>
     public static void ResetRenderTarget() {
         if (e is null) {
             return;
