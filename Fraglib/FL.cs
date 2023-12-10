@@ -1,12 +1,39 @@
+using System.ComponentModel.DataAnnotations;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Fraglib;
 
-public static unsafe class FL {
+public static unsafe partial class FL {
     private static Engine? e = null;
     private static bool initialized = false;
+
+    private static uint* renderPtr = (uint*)0u;
+
+    public static void SetRenderTarget(uint[] renderTarget, int targetWidth, int targetHeight) {
+        windowWidth = targetWidth;
+        windowHeight = targetHeight;
+        fixed (uint* ptr = renderTarget) {
+            renderPtr = ptr;
+        }
+    }
+
+    public static void SetRenderTarget(Texture tex) {
+        SetRenderTarget(tex.GetPixels, tex.Width, tex.Height);
+    }
+
+    public static void ResetRenderTarget() {
+        if (e is null) {
+            return;
+        }
+
+        windowWidth = e.WindowWidth;
+        windowHeight = e.WindowHeight;
+        fixed (uint* ptr = e.Screen) {
+            renderPtr = ptr;
+        }
+    }
 
 /// <region>Setup</region>
 #region setup
@@ -30,6 +57,10 @@ public static unsafe class FL {
         windowHeight = height;
         program ??= () => {};
         e = new DrawClearEngine(width, height, title, program);
+
+        fixed (uint* screenPtr = e.Screen) {
+            renderPtr = screenPtr;
+        }
 
         initialized = true;
     }
@@ -56,6 +87,10 @@ public static unsafe class FL {
         perFrame ??= () => {};
         e = new PerPixelEngine(width, height, title, perPixel, perFrame);
         ((PerPixelEngine)e).Accumulate = renderSettings.Accumulate;
+
+        fixed (uint* screenPtr = e.Screen) {
+            renderPtr = screenPtr;
+        }
 
         initialized = true;
     }
@@ -99,10 +134,10 @@ public static unsafe class FL {
 
         int ind = y * windowWidth + x;
         if (a != 255) {
-            color = AlphaBlend(e!.Screen[ind], color);
+            color = AlphaBlend(renderPtr[ind], color);
         }
 
-        e!.Screen[ind] = color;
+        renderPtr[ind] = color;
     }
 
     /// <name>GetPixel</name>
@@ -115,16 +150,34 @@ public static unsafe class FL {
             return 0;
         }
 
-        return e!.Screen[y * windowWidth + x];
+        return renderPtr[y * windowWidth + x];
     }
 
     /// <name>Clear</name>
     /// <returns>void</returns>
     /// <summary>Clears the window to the specified color.</summary>
     /// <param name="color">The color the window will get cleared to, default value of black (0xFF000000).</param>
-    public static unsafe void Clear(uint color = 0xFF000000) {
-        if (initialized) {
-            Array.Fill(e!.Screen, color);
+    public static void Clear(uint color = Black) {
+        if (!initialized) {
+            return;
+        }
+
+        FillPtr(renderPtr, 0, windowWidth * windowHeight, color);
+    }
+
+    [LibraryImport("kernel32.dll", EntryPoint = "RtlFillMemory", SetLastError = false)]
+    private static partial void FillMemory(IntPtr dest, uint length, byte fill);
+    private static void FillPtr(uint* ptr, int startInd, int length, uint value) {
+        if (value == Black || value == White) {
+            FillMemory((IntPtr)(renderPtr + startInd), (uint)length * sizeof(uint), (byte)value);
+            return;
+        }
+
+        uint* startPtr = ptr + startInd;
+        uint* endPtr = startPtr + length;
+        while (startPtr < endPtr) {
+            *startPtr = value;
+            startPtr++;
         }
     }
 
@@ -156,7 +209,7 @@ public static unsafe class FL {
     /// <param name="width">The width of the rectangle.</param>
     /// <param name="height">The height of the rectangle.</param>
     /// <param name="color">The color of the rectangle.</param>
-    public static unsafe void FillRect(int x, int y, int width, int height, uint color) {
+    public static void FillRect(int x, int y, int width, int height, uint color) {
         if (!initialized) {
             return;
         }
@@ -181,18 +234,16 @@ public static unsafe class FL {
 
         if (a == 255) {
             for (int i = 0; i < heightClipped; i++) {
-                Array.Fill(e!.Screen, color, (i + yClipped) * windowWidth + xClipped, widthClipped);
+                FillPtr(renderPtr, (i + yClipped) * windowWidth + xClipped, widthClipped, color);
             }
             return;
         }
 
-        fixed (uint* screenPtr = e!.Screen) {
-            uint* rowStartPtr = screenPtr + yClipped * windowWidth + xClipped;
-            for (int sy = 0; sy < heightClipped; sy++) {
-                uint* rowPtr = rowStartPtr + sy * windowWidth;
-                for (int sx = 0; sx < widthClipped; sx++) {
-                    *(rowPtr + sx) = AlphaBlend(rowPtr[sx], color);
-                }
+        uint* rowStartPtr = renderPtr + yClipped * windowWidth + xClipped;
+        for (int sy = 0; sy < heightClipped; sy++) {
+            uint* rowPtr = rowStartPtr + sy * windowWidth;
+            for (int sx = 0; sx < widthClipped; sx++) {
+                *(rowPtr + sx) = AlphaBlend(rowPtr[sx], color);
             }
         }
     }
@@ -204,7 +255,7 @@ public static unsafe class FL {
     /// <param name="centerY">The center coordinate of the cirlce along the y-axis.</param>
     /// <param name="radius">The radius of the circle.</param>
     /// <param name="color">The color of the circle.</param>
-    public static unsafe void DrawCircle(int centerX, int centerY, int radius, uint color) {
+    public static void DrawCircle(int centerX, int centerY, int radius, uint color) {
         if (!initialized) {
             return;
         }
@@ -250,7 +301,7 @@ public static unsafe class FL {
     /// <param name="centerY">The center coordinate of the cirlce along the y-axis.</param>
     /// <param name="radius">The radius of the circle.</param>
     /// <param name="color">The color of the circle.</param>
-    public static unsafe void FillCircle(int centerX, int centerY, int radius, uint color) {
+    public static void FillCircle(int centerX, int centerY, int radius, uint color) {
         if (!initialized || radius == 0) {
             return;
         }
@@ -266,28 +317,26 @@ public static unsafe class FL {
         int yEnd = centerY + radius;
         float radiusSquared = radius * radius;
 
-        fixed (uint* screenPtr = e!.Screen) {
-            if (a == 255) {
-                for (int x = xStart; x <= xEnd; x++) {
-                    for (int y = yStart; y <= yEnd; y++) {
-                        float dx = x - centerX;
-                        float dy = y - centerY;
-                        if (x >= 0 && x < windowWidth && y >= 0 && y < windowHeight && (dx * dx + dy * dy) <= radiusSquared) {
-                            *(screenPtr + y * windowWidth + x) = color;
-                        }
-                    }
-                }
-                return;
-            }
-
+        if (a == 255) {
             for (int x = xStart; x <= xEnd; x++) {
                 for (int y = yStart; y <= yEnd; y++) {
                     float dx = x - centerX;
                     float dy = y - centerY;
                     if (x >= 0 && x < windowWidth && y >= 0 && y < windowHeight && (dx * dx + dy * dy) <= radiusSquared) {
-                        int ind = y * windowWidth + x;
-                        *(screenPtr + ind) = AlphaBlend(screenPtr[ind], color);
+                        *(renderPtr + y * windowWidth + x) = color;
                     }
+                }
+            }
+            return;
+        }
+
+        for (int x = xStart; x <= xEnd; x++) {
+            for (int y = yStart; y <= yEnd; y++) {
+                float dx = x - centerX;
+                float dy = y - centerY;
+                if (x >= 0 && x < windowWidth && y >= 0 && y < windowHeight && (dx * dx + dy * dy) <= radiusSquared) {
+                    int ind = y * windowWidth + x;
+                    *(renderPtr + ind) = AlphaBlend(renderPtr[ind], color);
                 }
             }
         }
@@ -301,7 +350,7 @@ public static unsafe class FL {
     /// <param name="x1">The ending x coordinate of the line.</param>
     /// <param name="y1">The ending y coordinate of the line.</param>
     /// <param name="color">The color of the line.</param>
-    public static unsafe void DrawLine(int x0, int y0, int x1, int y1, uint color) {
+    public static void DrawLine(int x0, int y0, int x1, int y1, uint color) {
         if (!initialized) {
             return;
         }
@@ -320,36 +369,10 @@ public static unsafe class FL {
 
         int er = dx - dy;
 
-        fixed (uint* screenPtr = e!.Screen) {
-            if (a == 255) {
-                for (int i = 0; i < 10000; i++) {
-                    if (x0 >= 0 && x0 < windowWidth && y0 >= 0 && y0 < windowHeight) {
-                        *(screenPtr + y0 * windowWidth + x0) = color;
-                    }
-
-                    if (x0 == x1 && y0 == y1) {
-                        break;
-                    }
-
-                    int e2 = 2 * er;
-
-                    if (e2 > -dy) {
-                        er -= dy;
-                        x0 += sx;
-                    }
-
-                    if (e2 < dx) {
-                        er += dx;
-                        y0 += sy;
-                    }
-                }
-                return;
-            }
-
+        if (a == 255) {
             for (int i = 0; i < 10000; i++) {
                 if (x0 >= 0 && x0 < windowWidth && y0 >= 0 && y0 < windowHeight) {
-                    int ind = y0 * windowWidth + x0;
-                    *(screenPtr + ind) = AlphaBlend(screenPtr[ind], color);
+                    *(renderPtr + y0 * windowWidth + x0) = color;
                 }
 
                 if (x0 == x1 && y0 == y1) {
@@ -368,6 +391,30 @@ public static unsafe class FL {
                     y0 += sy;
                 }
             }
+            return;
+        }
+
+        for (int i = 0; i < 10000; i++) {
+            if (x0 >= 0 && x0 < windowWidth && y0 >= 0 && y0 < windowHeight) {
+                int ind = y0 * windowWidth + x0;
+                *(renderPtr + ind) = AlphaBlend(renderPtr[ind], color);
+            }
+
+            if (x0 == x1 && y0 == y1) {
+                break;
+            }
+
+            int e2 = 2 * er;
+
+            if (e2 > -dy) {
+                er -= dy;
+                x0 += sx;
+            }
+
+            if (e2 < dx) {
+                er += dx;
+                y0 += sy;
+            }
         }
     }
 
@@ -379,7 +426,7 @@ public static unsafe class FL {
     /// <param name="y0">The starting y coordinate of the line.</param>
     /// <param name="y1">The ending y coordinate of the line.</param>
     /// <param name="color">The color of the line.</param>
-    public static unsafe void DrawVerticalLine(int x, int y0, int y1, uint color) {
+    public static void DrawVerticalLine(int x, int y0, int y1, uint color) {
         if (!initialized || x < 0 || x >= windowWidth || y0 >= windowHeight || y1 < 0) {
             return;
         }
@@ -397,20 +444,18 @@ public static unsafe class FL {
             y1 = windowHeight - 1;
         }
 
-        fixed (uint* screenPtr = e!.Screen) {
-            int stride = Width;
-            uint* rowPtr = screenPtr + y0 * stride + x;
-            if (a == 255) {
-                for (int y = y0; y <= y1; y++) {
-                    *rowPtr = color;
-                    rowPtr += stride;
-                }
-                return;
-            }
-
+        int stride = Width;
+        uint* rowPtr = renderPtr + y0 * stride + x;
+        if (a == 255) {
             for (int y = y0; y <= y1; y++) {
-                *rowPtr = AlphaBlend(rowPtr[0], color);
+                *rowPtr = color;
+                rowPtr += stride;
             }
+            return;
+        }
+
+        for (int y = y0; y <= y1; y++) {
+            *rowPtr = AlphaBlend(rowPtr[0], color);
         }
     }
 
@@ -422,7 +467,7 @@ public static unsafe class FL {
     /// <param name="x1">The ending x coordinate of the line.</param>
     /// <param name="y">The y coordinate of the line.</param>
     /// <param name="color">The color of the line.</param>
-    public static unsafe void DrawHorizontalLine(int x0, int x1, int y, uint color) {
+    public static void DrawHorizontalLine(int x0, int x1, int y, uint color) {
         if (!initialized || y < 0 || y >= windowHeight) {
             return;
         }
@@ -445,17 +490,15 @@ public static unsafe class FL {
         }
 
         if (a == 255) {
-            Array.Fill(e!.Screen, color, x0 + y * windowWidth, x1 - x0);
+            FillPtr(renderPtr, x0 + y * windowWidth, x1 - x0, color);
             return;
         }
 
-        fixed (uint* screenPtr = e!.Screen) {
-            int startInd = y * windowWidth + x0;
-            uint* startPtr = screenPtr + startInd;
-            uint* endPtr = startPtr + (x1 - x0);
-            for (uint* currentPtr = startPtr; currentPtr <= endPtr; currentPtr++) {
-                *currentPtr = AlphaBlend(currentPtr[0], color);
-            }
+        int startInd = y * windowWidth + x0;
+        uint* startPtr = renderPtr + startInd;
+        uint* endPtr = startPtr + (x1 - x0);
+        for (uint* currentPtr = startPtr; currentPtr <= endPtr; currentPtr++) {
+            *currentPtr = AlphaBlend(currentPtr[0], color);
         }
     }
 
@@ -575,7 +618,7 @@ public static unsafe class FL {
     /// <summary>Fills a solid polygon of specified color with specified vertices.</summary>
     /// <param name="color">The color of the polygon.</param>
     /// <param name="vertices">The vertices of the polygon to draw. Must have a length >= 3.</param>
-    public static unsafe void FillPolygon(uint color, params Vector2[] vertices) {
+    public static void FillPolygon(uint color, params Vector2[] vertices) {
         if (!initialized || vertices.Length < 3) {
             return;
         }
@@ -597,44 +640,42 @@ public static unsafe class FL {
         int maxYBound = Math.Min(maxY, windowHeight - 1);
         int maxXBound = windowWidth - 1;
 
-        fixed (uint* screenPtr = e!.Screen) {
-            int length = vertices.Length;
-            for (int y = minYBound; y <= maxYBound; y++) {
-                List<int> intersections = new();
+        int length = vertices.Length;
+        for (int y = minYBound; y <= maxYBound; y++) {
+            List<int> intersections = new();
 
-                int j = length - 1;
-                for (int i = 0; i < length; i++) {
-                    Vector2 currentVertex = vertices[i];
-                    Vector2 nextVertex = vertices[j];
+            int j = length - 1;
+            for (int i = 0; i < length; i++) {
+                Vector2 currentVertex = vertices[i];
+                Vector2 nextVertex = vertices[j];
 
-                    if ((currentVertex.Y < y && nextVertex.Y >= y) || (nextVertex.Y < y && currentVertex.Y >= y)) {
-                        int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
-                        intersections.Add(intersectionX);
-                    }
-
-                    j = i;
+                if ((currentVertex.Y < y && nextVertex.Y >= y) || (nextVertex.Y < y && currentVertex.Y >= y)) {
+                    int intersectionX = (int)(currentVertex.X + (y - currentVertex.Y) * (nextVertex.X - currentVertex.X) / (nextVertex.Y - currentVertex.Y));
+                    intersections.Add(intersectionX);
                 }
 
-                intersections.Sort();
+                j = i;
+            }
 
-                int count = intersections.Count;
-                uint* rowPtr = screenPtr + y * windowWidth;
-                
-                if (a == 255) {
-                    for (int i = 0; i < count; i += 2) {
-                        uint* endPtr = rowPtr + Math.Min(intersections[Math.Min(i + 1, count - 1)], maxXBound);
-                        for (uint* startPtr = rowPtr + Math.Max(intersections[i], 0); startPtr <= endPtr; startPtr++) {
-                            *startPtr = color;
-                        }
-                    }
-                    continue;
-                }
+            intersections.Sort();
 
+            int count = intersections.Count;
+            uint* rowPtr = renderPtr + y * windowWidth;
+            
+            if (a == 255) {
                 for (int i = 0; i < count; i += 2) {
                     uint* endPtr = rowPtr + Math.Min(intersections[Math.Min(i + 1, count - 1)], maxXBound);
                     for (uint* startPtr = rowPtr + Math.Max(intersections[i], 0); startPtr <= endPtr; startPtr++) {
-                        *startPtr = AlphaBlend(startPtr[0], color);
+                        *startPtr = color;
                     }
+                }
+                continue;
+            }
+
+            for (int i = 0; i < count; i += 2) {
+                uint* endPtr = rowPtr + Math.Min(intersections[Math.Min(i + 1, count - 1)], maxXBound);
+                for (uint* startPtr = rowPtr + Math.Max(intersections[i], 0); startPtr <= endPtr; startPtr++) {
+                    *startPtr = AlphaBlend(startPtr[0], color);
                 }
             }
         }
@@ -689,7 +730,7 @@ public static unsafe class FL {
     /// <param name="x">The x coordinate to draw the texture at.</param>
     /// <param name="y">The y coordinate to draw the texture at.</param>
     /// <param name="texture">The Texture to draw.</param>
-    public static unsafe void DrawTextureFast(int x, int y, Texture texture) {
+    public static void DrawTextureFast(int x, int y, Texture texture) {
         if (!initialized) {
             return;
         }
@@ -706,9 +747,9 @@ public static unsafe class FL {
 
         uint numBytes = (uint)(endX - startX) * sizeof(uint);
 
-        fixed (uint* screenPtr = &e!.Screen[0], texturePtr = &texture.GetPixels[0]) {
+        fixed (uint* texturePtr = texture.GetPixels) {
             for (int sy = startY; sy < endY; sy++) {
-                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
+                uint* screenRowPtr = renderPtr + (y + sy) * windowWidth + x;
                 uint* textureRowPtr = texturePtr + sy * textureWidth;
 
                 Unsafe.CopyBlock(screenRowPtr + startX, textureRowPtr + startX, numBytes);
@@ -723,7 +764,7 @@ public static unsafe class FL {
     /// <param name="x">The x coordinate to draw the texture at.</param>
     /// <param name="y">The y coordinate to draw the texture at.</param>
     /// <param name="texture">The Texture to draw.</param>
-    public static unsafe void DrawTexture(int x, int y, Texture texture) {
+    public static  void DrawTexture(int x, int y, Texture texture) {
         if (!initialized) {
             return;
         }
@@ -739,12 +780,12 @@ public static unsafe class FL {
             return;
         }
 
-        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+        fixed (uint* texturePtr = texture.GetPixels) {
             int screenOffset = y * windowWidth + x;
             int textureOffset = 0;
 
             for (int sy = startY; sy < endY; sy++) {
-                uint* screenRowPtr = screenPtr + screenOffset;
+                uint* screenRowPtr = renderPtr + screenOffset;
                 uint* textureRowPtr = texturePtr + textureOffset;
 
                 for (int sx = startX; sx < endX; sx++) {
@@ -793,7 +834,7 @@ public static unsafe class FL {
     /// <param name="scaleX">The amount to scale the by texture horizontally.</param>
     /// <param name="scaleY">The amount to scale the by texture vertically.</param>
     /// <param name="texture">The Texture to draw.</param>
-    public static unsafe void DrawTexture(int x, int y, float scaleX, float scaleY, Texture texture) {
+    public static  void DrawTexture(int x, int y, float scaleX, float scaleY, Texture texture) {
         if (!initialized || scaleX <= 0 || scaleY <= 0) {
             return;
         }
@@ -811,9 +852,9 @@ public static unsafe class FL {
             return;
         }
 
-        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+        fixed (uint* texturePtr = texture.GetPixels) {
             for (int sy = startY; sy < endY; sy++) {
-                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
+                uint* screenRowPtr = renderPtr + (y + sy) * windowWidth + x;
 
                 int textureY = (int)(sy / scaleY);
                 for (int sx = startX; sx < endX; sx++) {
@@ -875,7 +916,7 @@ public static unsafe class FL {
     /// <param name="texWidth">The width of the cropped texture section.</param>
     /// <param name="texHeight">The height of the cropped texture section.</param>
     /// <param name="texture">The Texture from which to draw the cropped section.</param>
-    public static unsafe void DrawTexture(int x, int y, int texStartX, int texStartY, int texWidth, int texHeight, Texture texture) {
+    public static  void DrawTexture(int x, int y, int texStartX, int texStartY, int texWidth, int texHeight, Texture texture) {
         if (!initialized) {
             return;
         }
@@ -887,9 +928,9 @@ public static unsafe class FL {
         int endX = Math.Min(texWidth, Math.Min(textureWidth - texStartX, windowWidth - x));
         int endY = Math.Min(texHeight, Math.Min(textureHeight - texStartY, windowHeight - y));
         
-        fixed (uint* screenPtr = e!.Screen, texturePtr = texture.GetPixels) {
+        fixed (uint* texturePtr = texture.GetPixels) {
             for (int sy = startY; sy < endY; sy++) {
-                uint* screenRowPtr = screenPtr + (y + sy) * windowWidth + x;
+                uint* screenRowPtr = renderPtr + (y + sy) * windowWidth + x;
                 uint* textureRowPtr = texturePtr + (texStartY + sy) * textureWidth + texStartX;
 
                 for (int sx = startX; sx < endX; sx++) {
@@ -1044,7 +1085,7 @@ public static unsafe class FL {
         /// <returns>void</returns>
         /// <summary>Sets all pixels in the texture to the value specified.</summary>
         /// <param name="color">The color to set all the pixels in the texture to.</param>
-        public void Clear(uint color = 4278190080) {
+        public void Clear(uint color = Black) {
             Array.Fill(pixels, color);
         }
 
@@ -1423,7 +1464,7 @@ public static unsafe class FL {
     /// <returns>void</returns>
     /// <summary>Sets the window to a previously saved state.</summary>
     /// <param name="state">An int that corresponds to the previously saved buffer, generated from SaveScreen.</param>
-    public static unsafe void LoadState(int state) {
+    public static  void LoadState(int state) {
         if (e is null) {
             return;
         }
@@ -1432,11 +1473,9 @@ public static unsafe class FL {
             return;
         }
 
-        unsafe {
-            fixed (uint* screenPtr = e.Screen, statePtr = _states[state]) {
-                uint numBytes = (uint)e.Screen.Length * sizeof(uint);
-                Unsafe.CopyBlock(screenPtr, statePtr, numBytes);
-            }
+        fixed (uint* screenPtr = e.Screen, statePtr = _states[state]) {
+            uint numBytes = (uint)e.Screen.Length * sizeof(uint);
+            Unsafe.CopyBlock(screenPtr, statePtr, numBytes);
         }
     }
 
@@ -1481,67 +1520,67 @@ public static unsafe class FL {
     /// <name>Black</name>
     /// <returns>uint</returns>
     /// <summary>The color black, 4278190080.</summary>
-    public static uint Black => 4278190080;
+    public const uint Black = 4278190080;
     
     /// <name>Gray</name>
     /// <returns>uint</returns>
     /// <summary>The color gray, 4286611584.</summary>
-    public static uint Gray => 4286611584;
+    public const uint Gray = 4286611584;
     
     /// <name>White</name>
     /// <returns>uint</returns>
     /// <summary>The color white, 4294967295.</summary>
-    public static uint White => 4294967295;
+    public const uint White = 4294967295;
     
     /// <name>Red</name>
     /// <returns>uint</returns>
     /// <summary>The color red, 4278190335.</summary>
-    public static uint Red => 4278190335;
+    public const uint Red = 4278190335;
 
     /// <name>Green</name>
     /// <returns>uint</returns>
     /// <summary>The color green, 4278255360.</summary>
-    public static uint Green => 4278255360;
+    public const uint Green = 4278255360;
 
     /// <name>Blue</name>
     /// <returns>uint</returns>
     /// <summary>The color blue, 4294901760.</summary>
-    public static uint Blue => 4294901760;
+    public const uint Blue = 4294901760;
 
     /// <name>Yellow</name>
     /// <returns>uint</returns>
     /// <summary>The color yellow, either 4278255615.</summary>
-    public static uint Yellow => 4278255615;
+    public const uint Yellow = 4278255615;
 
     /// <name>Orange</name>
     /// <returns>uint</returns>
     /// <summary>The color orange, either 4278232575.</summary>
-    public static uint Orange => 4278232575;
+    public const uint Orange = 4278232575;
 
     /// <name>Cyan</name>
     /// <returns>uint</returns>
     /// <summary>The color cyan, either 4294967040.</summary>
-    public static uint Cyan => 4294967040;
+    public const uint Cyan = 4294967040;
 
     /// <name>Magenta</name>
     /// <returns>uint</returns>
     /// <summary>The color magenta, either 4294902015.</summary>
-    public static uint Magenta => 4294902015;
+    public const uint Magenta = 4294902015;
 
     /// <name>Turquoise</name>
     /// <returns>uint</returns>
     /// <summary>The color turquoise, either 4291878976.</summary>
-    public static uint Turquoise => 4291878976;
+    public const uint Turquoise = 4291878976;
 
     /// <name>Lavender</name>
     /// <returns>uint</returns>
     /// <summary>The color lavender, either 4294633190.</summary>
-    public static uint Lavender => 4294633190;
+    public const uint Lavender = 4294633190;
 
     /// <name>Crimson</name>
     /// <returns>uint</returns>
     /// <summary>The color crimson, either 4282127580.</summary>
-    public static uint Crimson => 4282127580;
+    public const uint Crimson = 4282127580;
     
     /// <name>Rainbow</name>
     /// <returns>uint</returns>
