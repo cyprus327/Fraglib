@@ -884,7 +884,7 @@ public static class FL {
 /// <region>Textures</region>
 #region textures
     public readonly struct Texture {
-        /// <name>Texture</name>
+        /// <name>ctor</name>
         /// <returns>Texture</returns>
         /// <summary>Creates a Texture from a Bitmap image. The alpha channel of the bitmap isn't taken into account for now.</summary>
         /// <param name="bmpImagePath">The path to a Bitmap image to create the texture from.</param>
@@ -951,6 +951,7 @@ public static class FL {
         /// <returns>int</returns>
         /// <summary>The texture's width.</summary>
         public int Width { get; }
+
         /// <name>Height</name>
         /// <returns>int</returns>
         /// <summary>The texture's height.</summary>
@@ -1052,6 +1053,291 @@ public static class FL {
         }
     }
 #endregion textures
+
+/// <region>Camera</region>
+#region camera
+    public struct Camera {
+        /// <name>ctor</name>
+        /// <returns>Camera</returns>
+        /// <summary>Initializes a new instantce of the Camera struct with the specified properties.</summary>
+        /// <param name="pos">The position in world space of the camera.</param>
+        /// <param name="yawRad">The camera's orientation's yaw in radians.</param>
+        /// <param name="pitchRad">The camera's orientation's pitch in radians.</param>
+        /// <param name="fovDeg">The camera's field of view in degrees.</param>
+        public Camera(Vector3 pos, float yawRad = 0f, float pitchRad = 0f, float fovDeg = 90f) {
+            Pos = pos;
+            Yaw = yawRad;
+            Pitch = pitchRad;
+            FOV = fovDeg;
+
+            YawPitchMatrix = Matrix4x4.CreateFromYawPitchRoll(yawRad, pitchRad, 0f);
+        }
+
+        /// <name>Yaw</name>
+        /// <returns>float</returns>
+        /// <summary>The camera's current yaw in degrees. Can be set by using the LookBy or LookAt methods.</summary>
+        public float Yaw { get; private set; }
+        
+        /// <name>Pitch</name>
+        /// <returns>float</returns>
+        /// <summary>The camera's current pitch in degrees. Can be set by using the LookBy or LookAt methods.</summary>
+        public float Pitch { get; private set; }
+
+        /// <name>YawPitchMatrix</name>
+        /// <returns>Matrix4x4</returns>
+        /// <summary>The yaw-pitch rotation matrix of the camera.</summary>
+        public Matrix4x4 YawPitchMatrix { get; private set; }
+
+        /// <name>ViewMatrix</name>
+        /// <returns>Matrix4x4</returns>
+        /// <summary>The view matrix of the camera.</summary>
+        public Matrix4x4 ViewMatrix { get; private set; }
+
+        /// <name>ProjectionMatrix</name>
+        /// <returns>Matrix4x4</returns>
+        /// <summary>The projection matrix of the camera.</summary>
+        public Matrix4x4 ProjectionMatrix { get; private set; }
+
+        /// <name>ViewProjectionMatrix</name>
+        /// <returns>Matrix4x4</returns>
+        /// <summary>The view-projection matrix of the camera (ViewMatrix * ProjectionMatrix).</summary>
+        public Matrix4x4 ViewProjectionMatrix { get; private set; }
+
+        /// <name>Pos</name>
+        /// <returns>Vector3</returns>
+        /// <summary>Gets or sets camera's position in world space.</summary>
+        public Vector3 Pos { get; set; }
+
+        /// <name>FOV<name>
+        /// <returns>float</returns>
+        /// <summary>Gets or sets the camera's field of view.</summary>
+        public float FOV {
+            readonly get => fov;
+            set => fov = Math.Clamp(value, 1f, 179f);
+        }
+        private float fov = 90f;
+
+        /// <name>NearPlane<name>
+        /// <returns>float</returns>
+        /// <summary>Gets or sets the camera's near plane.</summary>
+        public float NearPlane {
+            readonly get => nearPlane;
+            set => nearPlane = Math.Clamp(value, 0.01f, farPlane - 0.01f);
+        }
+        private float nearPlane = 0.1f;
+
+        /// <name>FarPlane<name>
+        /// <returns>float</returns>
+        /// <summary>Gets or sets the camera's far plane.</summary>
+        public float FarPlane {
+            readonly get => farPlane;
+            set => farPlane = Math.Clamp(value, nearPlane + 0.01f, 10000f);
+        }
+        private float farPlane = 1000f;
+
+        const float MAX_PITCH = MathF.PI * 0.4999f;
+
+        /// <name>HandleInputDefault</name>
+        /// <returns>void</returns>
+        /// <summary>Purely for convenience, handles moving the camera with WASD, Q (up), and E (down), and turning with the mouse when the right mouse button is held.</summary>
+        /// <param name="moveSpeedMult">The multiplier for how fast the camera will move.</param>
+        /// <param name="lookSpeedMult">The multiplier for how much the mouse will turn the camera.</param>
+        public void HandleInputDefault(float moveSpeedMult = 2f, float lookSpeedMult = 0.005f) {
+            float amount = moveSpeedMult * DeltaTime;
+            if (GetKeyDown('W')) {
+                MoveForward(amount);
+            } else if (GetKeyDown('S')) {
+                MoveBackward(amount);
+            }
+            if (GetKeyDown('A')) {
+                MoveLeft(amount);
+            } else if (GetKeyDown('D')) {
+                MoveRight(amount);
+            }
+            if (GetKeyDown('E')) {
+                MoveUp(amount);
+            } else if (GetKeyDown('Q')) {
+                MoveDown(amount);
+            }
+
+            if (RMBDown()) {
+                MouseGrabType = MouseGrabType.Grabbed;
+                LookBy(MouseDelta * lookSpeedMult);
+            } else {
+                MouseGrabType = MouseGrabType.None;
+            }
+
+            UpdateMatrices();
+        }
+
+        /// <name>MoveForward</name>
+        /// <returns>void</returns>
+        /// <summary>Moves the camera forward by the specified amount.</summary>
+        /// <param name="amount">The amount by which to move the camera.</param>
+        public void MoveForward(float amount) {
+            Pos += Vector3.Transform(-Vector3.UnitZ, YawPitchMatrix) * amount;
+        }
+
+        /// <name>MoveBackward</name>
+        /// <returns>void</returns>
+        /// <summary>Moves the camera backward by the specified amount.</summary>
+        /// <param name="amount">The amount by which to move the camera.</param>
+        public void MoveBackward(float amount) {
+            Pos += Vector3.Transform(Vector3.UnitZ, YawPitchMatrix) * amount;
+        }
+
+        /// <name>MoveRight</name>
+        /// <returns>void</returns>
+        /// <summary>Moves the camera right by the specified amount.</summary>
+        /// <param name="amount">The amount by which to move the camera.</param>
+        public void MoveRight(float amount) {
+            Pos += Vector3.Transform(Vector3.UnitX, YawPitchMatrix) * amount;
+        }
+
+        /// <name>MoveLeft</name>
+        /// <returns>void</returns>
+        /// <summary>Moves the camera left by the specified amount.</summary>
+        /// <param name="amount">The amount by which to move the camera.</param>
+        public void MoveLeft(float amount) {
+            Pos += Vector3.Transform(-Vector3.UnitX, YawPitchMatrix) * amount;
+        }
+
+        /// <name>MoveUp</name>
+        /// <returns>void</returns>
+        /// <summary>Moves the camera up by the specified amount.</summary>
+        /// <param name="amount">The amount by which to move the camera.</param>
+        public void MoveUp(float amount) {
+            Pos = new(Pos.X, Pos.Y - amount, Pos.Z);
+        }
+
+        /// <name>MoveDown</name>
+        /// <returns>void</returns>
+        /// <summary>Moves the camera down by the specified amount.</summary>
+        /// <param name="amount">The amount by which to move the camera.</param>
+        public void MoveDown(float amount) {
+            Pos = new(Pos.X, Pos.Y + amount, Pos.Z);
+        }
+
+        /// <name>LookBy</name>
+        /// <returns>void</returns>
+        /// <summary>Turns the camera by the specified vector.</summary>
+        /// <param name="vec">The amount by which to learn, where vec.X represents the yaw delta and vec.Y the pitch delta.</param>
+        public void LookBy(Vector2 vec) {
+            Yaw -= vec.X;
+            Yaw %= 360f;
+            Pitch = Math.Clamp(Pitch + vec.Y, -MAX_PITCH, MAX_PITCH);
+        }
+
+        /// <name>LookBy</name>
+        /// <returns>void</returns>
+        /// <summary>Turns the camera by the specified yaw and pitch values.</summary>
+        /// <param name="yaw">The amount by which the camera's yaw will change.</param>
+        /// <param name="pitch">The amount by which the camera's pitch will change.</param>
+        public void LookBy(float yaw, float pitch) {
+            Yaw -= yaw;
+            Yaw %= 360f;
+            Pitch = Math.Clamp(Pitch + pitch, -MAX_PITCH, MAX_PITCH);
+        }
+
+        /// <name>LookAt</name>
+        /// <returns>void</returns>
+        /// <summary>Turns the camera to look at the specified point.</summary>
+        /// <param name="pos">The world space position that the camera will turn towards.</param>
+        public void LookAt(Vector3 pos) {
+            Vector3 dir = pos - Pos;
+            float dist = dir.Length();
+
+            Yaw = MathF.Atan2(-dir.X, dir.Z) % 360f;
+            Pitch = Math.Clamp(MathF.Asin(dir.Y / dist), -MAX_PITCH, MAX_PITCH);
+        }
+
+        /// <name>UpdateMatrices</name>
+        /// <returns>void</returns>
+        /// <summary>Updates the camera's matrices. Should be called after changing one of the camera's properties' values.</summary>
+        public void UpdateMatrices() {
+            YawPitchMatrix = Matrix4x4.CreateFromYawPitchRoll(Yaw, Pitch, 0f);
+            ViewMatrix = Matrix4x4.CreateLookAt(Pos, Pos + Vector3.Transform(-Vector3.UnitZ, YawPitchMatrix), Vector3.UnitY);
+            ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(DegToRad(fov), (float)windowWidth / windowHeight, nearPlane, farPlane);
+            ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
+        }
+
+        /// <name>ProjectPointToScreen</name>
+        /// <returns>void</returns>
+        /// <summary>Projects a 3D point to screen coordinates.</summary>
+        /// <param name="point">The point to project, of type (int x, int y, int z).</param>
+        /// <param name="screenCoords">An out (int x, int y, int z) representing the screen coordinates of the projected point.</param>
+        /// <param name="isInCamView">An out bool representing whether or not the point can be seen by the camera.</param>
+        public readonly void ProjectPointToScreen((int x, int y, int z) point, out (int x, int y) screenCoords, out bool isInCamView) {
+            Vector4 normalCoords = Vector4.Transform(new Vector4(point.x, point.y, point.z, 1f), ViewProjectionMatrix);
+
+            Vector2 sc = NormalizeCoords(normalCoords);
+            screenCoords.x = (int)sc.X;
+            screenCoords.y = (int)sc.Y;
+
+            isInCamView = normalCoords.Z >= 0f && normalCoords.Z <= normalCoords.W;
+        }
+
+        /// <name>ProjectPointToScreen</name>
+        /// <returns>void</returns>
+        /// <summary>Projects a 3D point to screen coordinates.</summary>
+        /// <param name="point">The point to project, of type Vector3.</param>
+        /// <param name="screenCoords">An out Vector2 representing the screen coordinates of the projected point.</param>
+        /// <param name="isInCamView">An out bool representing whether or not the point can be seen by the camera.</param>
+        public readonly void ProjectPointToScreen(Vector3 point, out Vector2 screenCoords, out bool isInCamView) {
+            Vector4 normalCoords = Vector4.Transform(new Vector4(point, 1f), ViewProjectionMatrix);
+
+            screenCoords = NormalizeCoords(normalCoords);
+
+            isInCamView = normalCoords.Z >= 0f && normalCoords.Z <= normalCoords.W;
+        }
+
+        /// <name>ProjectCircleToScreen</name>
+        /// <returns>void</returns>
+        /// <summary>Projects and scales a circle in world space to the screen.</summary>
+        /// <param name="circleCenter">The center of the circle to project.</param>
+        /// <param name="radius">The radius of the circle to project.</param>
+        /// <param name="screenCoords">An out Vector2 representing the screen coordinates of the projected circle.</param>
+        /// <param name="screenRadius">An out float representing the radius of the projected circle.</param>
+        /// <param name="isInCamView">An out boolean representing whether or not the point can be seen by the camera.</param>
+        public readonly void ProjectCircleToScreen(Vector3 circleCenter, float radius, out Vector2 screenCoords, out float screenRadius, out bool isInCamView) {
+            Vector4 normalCoords = Vector4.Transform(new Vector4(circleCenter, 1f), ViewProjectionMatrix);
+
+            screenCoords = NormalizeCoords(normalCoords);
+
+            screenRadius = radius * windowWidth / (2f * normalCoords.W);
+
+            isInCamView = normalCoords.Z >= -normalCoords.W && normalCoords.Z <= normalCoords.W;
+        }
+
+        /// <name>ProjectRectToScreen</name>
+        /// <returns>void</returns>
+        /// <summary>Projects and scales a rectangle in world space to the screen.</summary>
+        /// <param name="rectCenter">The center of the circle to project.</param>
+        /// <param name="width">The width of the rectangle to project.</param>
+        /// <param name="height">The height of the rectangle to project.</param>
+        /// <param name="screenCoords">An out Vector2 representing the screen coordinates of the projected circle.</param>
+        /// <param name="screenWidth">An out float representing the width of the projected circle.</param>
+        /// <param name="screenHeight">An out float representing the height of the projected circle.</param>
+        /// <param name="isInCamView">An out boolean representing whether or not the point can be seen by the camera.</param>
+        public readonly void ProjectRectToScreen(Vector3 rectCenter, float width, float height, out Vector2 screenCoords, out float screenWidth, out float screenHeight, out bool isInCamView) {
+            Vector4 normalCoords = Vector4.Transform(new Vector4(rectCenter, 1f), ViewProjectionMatrix);
+
+            screenCoords = NormalizeCoords(normalCoords);
+
+            screenWidth = width * windowWidth / (2f * normalCoords.W);
+            screenHeight = height * windowHeight / (2f * normalCoords.W) * ((float)windowWidth / windowHeight); 
+
+            isInCamView = normalCoords.Z >= -normalCoords.W && normalCoords.Z <= normalCoords.W;
+        }
+
+        private static Vector2 NormalizeCoords(Vector4 normalCoords) {
+            return new(
+                (normalCoords.X / normalCoords.W + 1f) * 0.5f * windowWidth,
+                (1f - normalCoords.Y / normalCoords.W) * 0.5f * windowHeight
+            );
+        }
+    }
+#endregion camera
 
 /// <region>States</region>
 #region states
@@ -2047,6 +2333,15 @@ public static class FL {
     /// <returns>Vector2</returns>
     /// <summary>The amount the mouse has moved from the last frame to the current frame.</summary>
     public static Vector2 MouseDelta => new(e?.MouseState.Delta.X ?? 0f, e?.MouseState.Delta.Y ?? 0f);
+
+    public static MouseGrabType MouseGrabType {
+        get => e?.MouseGrabType ?? MouseGrabType.None;
+        set {
+            if (e is not null) {
+                e.MouseGrabType = value;
+            }
+        }
+    }
 
     public static uint[] WindowBuffer {
         get => e is null ? Array.Empty<uint>() : e.Screen;
