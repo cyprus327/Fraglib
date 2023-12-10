@@ -33,6 +33,7 @@ internal abstract class Engine : GameWindow {
     public int TargetFramerate { get; set; } = 144;
     public int PixelSize { get; set; } = 1;
     public ScaleType ScaleType { get; set; } = ScaleType.None;
+    public MouseGrabType MouseGrabType { get; set; } = MouseGrabType.None;
     
     private int programHandle;
     private int vertexArrayHandle;
@@ -194,6 +195,8 @@ internal abstract class Engine : GameWindow {
     protected override void OnUpdateFrame(FrameEventArgs args) {
         base.OnUpdateFrame(args);
 
+        CursorState = MouseGrabType == MouseGrabType.Grabbed ? CursorState.Grabbed : CursorState.Normal;
+
         float t = (float)args.Time;
 
         if (VSync == VSyncMode.On) {
@@ -219,7 +222,7 @@ internal abstract class Engine : GameWindow {
         frameTimer = 0f;
     }
 
-    private int CompileShader(ShaderType type, string source) {
+    private static int CompileShader(ShaderType type, string source) {
         int shader = GL.CreateShader(type);
         GL.ShaderSource(shader, source);
         GL.CompileShader(shader);
@@ -240,4 +243,9 @@ internal abstract class Engine : GameWindow {
 public enum ScaleType {
     None,
     Average
+}
+
+public enum MouseGrabType {
+    None,
+    Grabbed
 }
