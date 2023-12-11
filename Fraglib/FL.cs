@@ -1531,68 +1531,68 @@ public static unsafe partial class FL {
 
     /// <name>Black</name>
     /// <returns>uint</returns>
-    /// <summary>The color black, 4278190080.</summary>
-    public const uint Black = 4278190080;
+    /// <summary>The color black, 0xFF000000.</summary>
+    public const uint Black = 0xFF000000;
     
     /// <name>Gray</name>
     /// <returns>uint</returns>
-    /// <summary>The color gray, 4286611584.</summary>
-    public const uint Gray = 4286611584;
+    /// <summary>The color gray, 0xFF808080.</summary>
+    public const uint Gray = 0xFF808080;
     
     /// <name>White</name>
     /// <returns>uint</returns>
-    /// <summary>The color white, 4294967295.</summary>
-    public const uint White = 4294967295;
+    /// <summary>The color white, 0xFFFFFFFF.</summary>
+    public const uint White = 0xFFFFFFFF;
     
     /// <name>Red</name>
     /// <returns>uint</returns>
-    /// <summary>The color red, 4278190335.</summary>
-    public const uint Red = 4278190335;
+    /// <summary>The color red, 0xFF0000FF.</summary>
+    public const uint Red = 0xFF0000FF;
 
     /// <name>Green</name>
     /// <returns>uint</returns>
-    /// <summary>The color green, 4278255360.</summary>
-    public const uint Green = 4278255360;
+    /// <summary>The color green, 0xFF00FF00.</summary>
+    public const uint Green = 0xFF00FF00;
 
     /// <name>Blue</name>
     /// <returns>uint</returns>
-    /// <summary>The color blue, 4294901760.</summary>
-    public const uint Blue = 4294901760;
+    /// <summary>The color blue, 0xFFFF0000.</summary>
+    public const uint Blue = 0xFFFF0000;
 
     /// <name>Yellow</name>
     /// <returns>uint</returns>
-    /// <summary>The color yellow, either 4278255615.</summary>
-    public const uint Yellow = 4278255615;
+    /// <summary>The color yellow, 0xFF00FFFF.</summary>
+    public const uint Yellow = 0xFF00FFFF;
 
     /// <name>Orange</name>
     /// <returns>uint</returns>
-    /// <summary>The color orange, either 4278232575.</summary>
-    public const uint Orange = 4278232575;
+    /// <summary>The color orange, 0xFF00A5FF.</summary>
+    public const uint Orange = 0xFF00A5FF;
 
     /// <name>Cyan</name>
     /// <returns>uint</returns>
-    /// <summary>The color cyan, either 4294967040.</summary>
-    public const uint Cyan = 4294967040;
+    /// <summary>The color cyan, 0xFFFFFF00.</summary>
+    public const uint Cyan = 0xFFFFFF00;
 
     /// <name>Magenta</name>
     /// <returns>uint</returns>
-    /// <summary>The color magenta, either 4294902015.</summary>
-    public const uint Magenta = 4294902015;
+    /// <summary>The color magenta, 0xFFFF00FF.</summary>
+    public const uint Magenta = 0xFFFF00FF;
 
     /// <name>Turquoise</name>
     /// <returns>uint</returns>
-    /// <summary>The color turquoise, either 4291878976.</summary>
-    public const uint Turquoise = 4291878976;
+    /// <summary>The color turquoise, FFD0E040.</summary>
+    public const uint Turquoise = 0xFFD0E040;
 
     /// <name>Lavender</name>
     /// <returns>uint</returns>
-    /// <summary>The color lavender, either 4294633190.</summary>
-    public const uint Lavender = 4294633190;
+    /// <summary>The color lavender, 0xFFFAE6E6.</summary>
+    public const uint Lavender = 0xFFFAE6E6;
 
     /// <name>Crimson</name>
     /// <returns>uint</returns>
-    /// <summary>The color crimson, either 4282127580.</summary>
-    public const uint Crimson = 4282127580;
+    /// <summary>The color crimson, 0xFF3C14DC.</summary>
+    public const uint Crimson = 0xFF3C14DC;
     
     /// <name>Rainbow</name>
     /// <returns>uint</returns>
