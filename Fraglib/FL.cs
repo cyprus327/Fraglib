@@ -186,12 +186,43 @@ public static unsafe partial class FL {
         }
 
         uint* startPtr = ptr + startInd;
-        uint* endPtr = startPtr + length;
+        uint* endPtr = ptr + length;
+        while (startPtr + 16 <= endPtr) {
+            *startPtr = value;
+            *(startPtr + 1) = value;
+            *(startPtr + 2) = value;
+            *(startPtr + 3) = value;
+            *(startPtr + 4) = value;
+            *(startPtr + 5) = value;
+            *(startPtr + 6) = value;
+            *(startPtr + 7) = value;
+            *(startPtr + 8) = value;
+            *(startPtr + 9) = value;
+            *(startPtr + 10) = value;
+            *(startPtr + 11) = value;
+            *(startPtr + 12) = value;
+            *(startPtr + 13) = value;
+            *(startPtr + 14) = value;
+            *(startPtr + 15) = value;
+            startPtr += 16;
+        }
         while (startPtr < endPtr) {
             *startPtr = value;
             startPtr++;
         }
     }
+
+    private static void TestTestTest(int[] arr, int offset, int length, int value) {
+
+        // 1
+        fixed (int* arrPtr = &arr[0]) {
+            int* startPtr = arrPtr + offset;
+            int* endPtr = arrPtr + length;
+            while (startPtr < endPtr) {
+                *startPtr = value;
+                startPtr++;
+            }
+        }
 
     /// <name>DrawRect</name>
     /// <returns>void</returns>
