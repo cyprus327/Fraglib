@@ -212,18 +212,6 @@ public static unsafe partial class FL {
         }
     }
 
-    private static void TestTestTest(int[] arr, int offset, int length, int value) {
-
-        // 1
-        fixed (int* arrPtr = &arr[0]) {
-            int* startPtr = arrPtr + offset;
-            int* endPtr = arrPtr + length;
-            while (startPtr < endPtr) {
-                *startPtr = value;
-                startPtr++;
-            }
-        }
-
     /// <name>DrawRect</name>
     /// <returns>void</returns>
     /// <summary>Draws a rectangle of specified size and color at the specified coordinates.</summary>
