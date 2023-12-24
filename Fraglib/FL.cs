@@ -720,38 +720,42 @@ public static unsafe partial class FL {
     /// <param name="y">The y coordinate on the window to draw the string to.</param>
     /// <param name="fontScale">The font size the string will be drawn at.</param>
     /// <param name="color">The color the string will br drawn with.</param>
-    public static void DrawString(string str, int x, int y, int fontScale, uint color) {
+    public static void DrawString(string str, int x, int y, float fontScale, uint color) {
         if (!initialized) {
             return;
         }
 
-        fontScale = Math.Max(1, fontScale);
-        
-        const int HEIGHT = 5;
-        int charHeight = HEIGHT * fontScale;
+        fontScale = Math.Max(0.1f, fontScale);
+
+        const int H = 5;
+        int charHeight = (int)(H * fontScale);
 
         int startX = x;
 
         foreach (char c in str) {
             int cInd = GetTextCharInd(c);
-            
+
             if (cInd == _font.Length) {
-                y -= charHeight + fontScale / 2;
+                y -= charHeight + (int)(fontScale / 2);
                 x = startX;
                 continue;
             }
 
-            int charWidth = _font[cInd].Length / 5 * fontScale;
+            int unscaledWidth = _font[cInd].Length / H;
+            int charWidth = Math.Max(1, (int)(unscaledWidth * fontScale));
 
             for (int i = 0; i < charHeight; i++) {
                 for (int j = 0; j < charWidth; j++) {
-                    if (_font[cInd][j / fontScale + i / fontScale * (charWidth / fontScale)] == 1) {
+                    int originalX = (int)(j / fontScale);
+                    int originalY = (int)(i / fontScale);
+
+                    if (originalX < unscaledWidth && originalY < H && _font[cInd][originalX + originalY * unscaledWidth] == 1) {
                         SetPixel(x + j, y - i + charHeight, color);
                     }
                 }
             }
 
-            x += charWidth + fontScale / 2;
+            x += charWidth + (int)(fontScale / 2);
         }
     }
 
