@@ -39,7 +39,7 @@ internal sealed class PerPixelEngine : Engine {
         uniforms.DeltaTime = dt;
 
         int length = Screen.Length;
-        int width = WindowWidth, height = WindowHeight;
+        int width = FL.Width, height = FL.Height;
         int ps = PixelSize, cw = width / ps;
         if (accumulate) {
             if (frameInd++ == 0) {

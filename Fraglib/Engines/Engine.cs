@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.Common;
 using OpenTK.Graphics.OpenGL4;
@@ -12,24 +13,22 @@ internal abstract class Engine : GameWindow {
             Title = title,
             StartVisible = false,
             StartFocused = true,
-            MinimumSize = (width, height),
+            //MinimumSize = (width, height),
             MaximumSize = (width, height),
         }) {
         CenterWindow();
 
         Screen = new uint[width * height];
-        WindowHeight = height;
-        WindowWidth = width;
         WindowTitle = title;
     }
     
-    public readonly int WindowHeight, WindowWidth;
-    public readonly uint[] Screen;
+    public readonly ConcurrentQueue<Action> DeferQueue = new();
+
+    public uint[] Screen;
     public readonly string WindowTitle;
 
     public float ElapsedTime { get; private set; } = 0f;
     public float DeltaTime { get; private set; } = 0f;
-    public bool VSyncEnabled { get => VSync == VSyncMode.On; set => VSync = value ? VSyncMode.On : VSyncMode.Off; }
     public int TargetFramerate { get; set; } = 144;
     public int PixelSize { get; set; } = 1;
     public ScaleType ScaleType { get; set; } = ScaleType.None;
@@ -205,7 +204,7 @@ internal abstract class Engine : GameWindow {
 
             DeltaTime = t;
             ElapsedTime += t;
-            return;
+            goto HANDLE_DEFERED_ACTIONS;
         }
 
         frameTimer += t;
@@ -220,6 +219,21 @@ internal abstract class Engine : GameWindow {
         ElapsedTime += frameTimer;
 
         frameTimer = 0f;
+
+        HANDLE_DEFERED_ACTIONS:
+        while (DeferQueue.TryDequeue(out var a)) {
+            a();
+        }
+    }
+
+    protected override void OnResize(ResizeEventArgs e) {
+        base.OnResize(e);
+
+        GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
+
+        Array.Resize(ref Screen, ClientSize.X * ClientSize.Y);
+
+        FL.ResetRenderTarget();
     }
 
     private static int CompileShader(ShaderType type, string source) {
