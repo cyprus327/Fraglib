@@ -1261,35 +1261,43 @@ public static unsafe partial class FL {
         /// <name>Width</name>
         /// <returns>int</returns>
         /// <summary>The width of the sprite in the spritesheet.</summary>
-        public readonly int Width;
+        public int Width { get; init; }
         
         /// <name>Height</name>
         /// <returns>int</returns>
         /// <summary>The height of the sprite in the spritesheet.</summary>
-        public readonly int Height;
+        public int Height { get; init; }
         
         /// <name>Width</name>
         /// <returns>int</returns>
         /// <summary>The spacing between sprites on the spritesheet.</summary>
-        public readonly int Spacing;
+        public int Spacing { get; init; }
 
+        /// <name>X</name>
+        /// <returns>int</returns>
+        /// <summary>The current x position of the sprite in the spritesheet.</summary>
+        public int X { get; set; } = 0;
+
+        /// <name>Y</name>
+        /// <returns>int</returns>
+        /// <summary>The current y position of the sprite in the spritesheet.</summary>
+        public int Y { get; set; } = 0;
+        
         private readonly Texture _tex;
-
-        private int xPos = 0, yPos = 0;
 
         /// <name>Step</name>
         /// <returns>void</returns>
         /// <summary>Steps the sprite forward once in the spritesheet based on the current position and spacing.</summary>
         public void Step() {
-            xPos += Width + Spacing;
+            X += Width + Spacing;
 
-            if (xPos + Width > _tex.Width) {
-                xPos = 0;
-                yPos += Height + Spacing;
+            if (X + Width > _tex.Width) {
+                X = 0;
+                Y += Height + Spacing;
             }
 
-            if (yPos + Height > _tex.Height) {
-                yPos = 0;
+            if (Y + Height > _tex.Height) {
+                Y = 0;
             }
         }
 
@@ -1299,15 +1307,15 @@ public static unsafe partial class FL {
         /// <param name="xInd">The x index for the sprite to be moved to.</param>
         /// <param name="yInd">The y index for the sprite to be moved to.</param>
         public void StepTo(int xInd, int yInd) {
-            xPos = xInd * (Width + Spacing);
-            yPos = yInd * (Height + Spacing);
+            X = xInd * (Width + Spacing);
+            Y = yInd * (Height + Spacing);
 
-            if (xPos + Width > _tex.Width) {
-                xPos = 0;
+            if (X + Width > _tex.Width) {
+                X = 0;
             }
 
-            if (yPos + Height > _tex.Height) {
-                yPos = 0;
+            if (Y + Height > _tex.Height) {
+                Y = 0;
             }
         }
 
@@ -1315,7 +1323,7 @@ public static unsafe partial class FL {
         /// <returns>Texture</returns>
         /// <summary>Gets the current sprite in the spritesheet.</summary>
         public readonly Texture GetCurrent() {
-            return _tex.CropTo(xPos, yPos, Width, Height);
+            return _tex.CropTo(X, Y, Width, Height);
         }
     }
 #endregion textures
