@@ -9,6 +9,8 @@ Changes the target of the drawing methods to the specified texture.
 - **tex**: The texture to change the rendering to.
 ### ResetRenderTarget (void)
 Resets the rendering target to the main window. 
+### Defer (void)
+Defer the invocation of an action until the end of the frame. Deferred actions are performed FIFO. 
 ## Setup
 ### Init (void)
 Initializes the window with the specified width, height, and title. 
@@ -100,6 +102,13 @@ Draws the outline of a triangle of specified color with specified vertices. Shou
 - **v1**: The 2nd vertex.
 - **v2**: The 3rd vertex.
 - **color**: The color of the triangle.
+### DrawTriangle (void)
+Draws the outline of the specified triangle. Should be used over DrawPolygon if the polygon is a triangle. 
+- **tri**: The triangle to draw. The triangle will not be projected, and the Z component of each vertex will be ignored.
+### DrawTriangle (void)
+Draws the outline of the specified triangle using the specified color. Should be used over DrawPolygon if the polygon is a triangle. 
+- **tri**: The triangle to draw. The triangle will not be projected, and the Z component of each vertex will be ignored.
+- **color**: The color to draw the triangle.
 ### FillTriangle (void)
 Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle. 
 - **x0**: The x coordinate of the 1st vertex.
@@ -115,6 +124,13 @@ Fills a solid triangle of specified color with specified vertices. Should be use
 - **v1**: The 2nd vertex.
 - **v2**: The 3rd vertex.
 - **color**: The color of the triangle.
+### FillTriangle (void)
+Fills a solid triangle. Should be used over FillPolygon if the polygon is a triangle. 
+- **tri**: The triangle to draw. The triangle will not be projected, and the Z component of each vertex will be ignored.
+### FillTriangle (void)
+Fills a solid triangle to the color specified. Should be used over FillPolygon if the polygon is a triangle. 
+- **tri**: The triangle to draw. The triangle will not be projected, and the Z component of each vertex will be ignored.
+- **color**: The color to draw the triangle.
 ### DrawPolygon (void)
 Draws the outline of a polygon of specified color with specified vertices. 
 - **color**: The color of the polygon.
@@ -177,6 +193,7 @@ Clones a Texture.
 Creates an empty Texture of specified width and height. 
 - **width**: The width of the texture.
 - **height**: The height of the texture.
+- **startColor**: Optional starting color for the texture.
 ### Width (int)
 The texture's width. 
 ### Height (int)
@@ -209,35 +226,49 @@ Returns the parent texture cropped to the resolution specified.
 - **texStartY**: The y coordinate within the texture where cropping starts.
 - **texWidth**: The width of the cropped texture section.
 - **texHeight**: The height of the cropped texture section.
+### ctor (Sprite)
+Initializes a new Sprite on the given sprite sheet. 
+### Width (int)
+The width of the sprite in the spritesheet. 
+### Height (int)
+The height of the sprite in the spritesheet. 
+### Width (int)
+The spacing between sprites on the spritesheet. 
+### Step (void)
+Steps the sprite forward once in the spritesheet based on the current position and spacing. 
+### StepTo (void)
+Moves the sprite to the specified incices in the spritesheet, with (0, 0) being the bottom left. 
+- **xInd**: The x index for the sprite to be moved to.
+- **yInd**: The y index for the sprite to be moved to.
+### GetCurrent (Texture)
+Gets the current sprite in the spritesheet. 
 ## Camera
+### ctor (Camera)
+Initializes a camera targeting the main window in projection mode at position (0, 0, 0). 
 ### ctor (Camera)
 Initializes a new instantce of the Camera struct with the specified properties. 
 - **targetWidth**: The target width for the camera to render to.
 - **targetHeight**: The target height for the camera to render to.
-- **pos**: The position in world space of the camera.
-- **yawRad**: The camera's orientation's yaw in radians.
-- **pitchRad**: The camera's orientation's pitch in radians.
-- **fovDeg**: The camera's field of view in degrees.
 ### Yaw (float)
 The camera's current yaw in radians. Can be set by using the LookBy or LookAt methods. 
 ### Pitch (float)
 The camera's current pitch in radians. Can be set by using the LookBy or LookAt methods. 
-### YawPitchMatrix (Matrix4x4)
-The yaw-pitch rotation matrix of the camera. 
-### ViewMatrix (Matrix4x4)
-The view matrix of the camera. 
-### ProjectionMatrix (Matrix4x4)
-The projection matrix of the camera. 
-### ViewProjectionMatrix (Matrix4x4)
-The view-projection matrix of the camera (ViewMatrix * ProjectionMatrix). 
 ### Pos (Vector3)
 Gets or sets camera's position in world space. 
 ### FOV (float)
-Gets or sets the camera's field of view. 
+Gets or sets the camera's field of view, only applies to projection mode. 
+### Zoom (float)
+Gets or sets the camera's zoom, only applies to orthographic mode. 
 ### NearPlane (float)
 Gets or sets the camera's near plane. 
 ### FarPlane (float)
 Gets or sets the camera's far plane. 
+### TargetWidth (int)
+The width of what the camera is rendering to (e.g. the main window or a texture). 
+### TargetHeight (int)
+The height of what the camera is rendering to (e.g. the main window or a texture). 
+### OrthographicMode (bool)
+Controls whether or not the camera will render in projection or orthographic. 
 ### HandleInputDefault (void)
 Purely for convenience, handles moving the camera with WASD, Q (up), and E (down), and turning with the mouse when the right mouse button is held. 
 - **moveSpeedMult**: The multiplier for how fast the camera will move.
@@ -272,6 +303,16 @@ Turns the camera to look at the specified point.
 - **pos**: The world space position that the camera will turn towards.
 ### UpdateMatrices (void)
 Updates the camera's matrices. Should be called after changing one of the camera's properties' values. 
+### CanSeePoint (bool)
+Returns whether or not the camera can see the point specified. 
+- **point**: The point to check.
+### CanSeeCircle (bool)
+Returns whether or not the camera can see the circle specified. 
+- **circleCenter**: The center of the circle to check.
+- **circleRadius**: The radius of the circle to check.
+### CanSeeTri (bool)
+Returns whether or not the camera can see the triangle specified. 
+- **tri**: The triangle to check.
 ### ProjectPointToScreen (void)
 Projects a 3D point to screen coordinates. 
 - **point**: The point to project, of type (int x, int y, int z).
@@ -288,7 +329,7 @@ Projects and scales a circle in world space to the screen.
 - **radius**: The radius of the circle to project.
 - **screenCoords**: An out Vector2 representing the screen coordinates of the projected circle.
 - **screenRadius**: An out float representing the radius of the projected circle.
-- **isInCamView**: An out boolean representing whether or not the point can be seen by the camera.
+- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
 ### ProjectRectToScreen (void)
 Projects and scales a rectangle in world space to the screen. 
 - **rectCenter**: The center of the circle to project.
@@ -297,7 +338,43 @@ Projects and scales a rectangle in world space to the screen.
 - **screenCoords**: An out Vector2 representing the screen coordinates of the projected circle.
 - **screenWidth**: An out float representing the width of the projected circle.
 - **screenHeight**: An out float representing the height of the projected circle.
-- **isInCamView**: An out boolean representing whether or not the point can be seen by the camera.
+- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
+### ProjectTriToScreen (void)
+Projects, scales, and clips a triangle to the screen. This method isn't yet perfect. 
+- **tri**: The triangle to project.
+- **screenTris**: An out List<Triangle> containing the result of projecting the triangle to the screen.
+- **isInCamView**: An out bool representing whether or not the triangle is in the camera's frustum.
+## Game Objects
+### ctor (Mesh)
+Initializes a new instantce of the Mesh struct created from the speciied OBJ file. 
+- **objFilePath**: The OBJ file to create the mesh from.
+### ctor (Mesh)
+Initializes a new instantce of the Mesh struct with triangles specified. 
+- **tris**: The mesh's triangles.
+### Tris (List<Triangle>)
+The mesh's current triangles. 
+### Cube (Mesh)
+Creates a Mesh with 12 triangles defining a cube. 
+### ctor (Triangle)
+Initializes an empty Triangle. 
+### ctor (Triangle)
+Initializes a new Triangle with the specified vertices 
+- **v1**: The first of the triangle's vertices.
+- **v2**: The second of the triangle's vertices.
+- **v3**: The third of the triangle's vertices.
+### ctor (Triangle)
+Initializes a new Triangle with the specified vertices 
+- **v1**: The first of the triangle's vertices. The Z will be ignored.
+- **v2**: The second of the triangle's vertices. The Z will be ignored.
+- **v3**: The third of the triangle's vertices. The Z will be ignored.
+### Color (uint)
+Gets or sets the color of the triangle. 
+### Verts (Vector3[])
+Gets the vertices of the triangle. 
+### GetNormal (Vector3)
+Calculates the normal of the triangle. 
+### GetCenter (Vector3)
+Calculates the center of the triangle. 
 ## States
 ### SaveState (void)
 Saves the current state of the window to a buffer. 
@@ -309,31 +386,31 @@ Sets the window to a previously saved state.
 Clears any previously saved states. 
 ## Colors
 ### Black (uint)
-The color black, 4278190080. 
+The color black, 0xFF000000. 
 ### Gray (uint)
-The color gray, 4286611584. 
+The color gray, 0xFF808080. 
 ### White (uint)
-The color white, 4294967295. 
+The color white, 0xFFFFFFFF. 
 ### Red (uint)
-The color red, 4278190335. 
+The color red, 0xFF0000FF. 
 ### Green (uint)
-The color green, 4278255360. 
+The color green, 0xFF00FF00. 
 ### Blue (uint)
-The color blue, 4294901760. 
+The color blue, 0xFFFF0000. 
 ### Yellow (uint)
-The color yellow, either 4278255615. 
+The color yellow, 0xFF00FFFF. 
 ### Orange (uint)
-The color orange, either 4278232575. 
+The color orange, 0xFF00A5FF. 
 ### Cyan (uint)
-The color cyan, either 4294967040. 
+The color cyan, 0xFFFFFF00. 
 ### Magenta (uint)
-The color magenta, either 4294902015. 
+The color magenta, 0xFFFF00FF. 
 ### Turquoise (uint)
-The color turquoise, either 4291878976. 
+The color turquoise, 0xFFD0E040. 
 ### Lavender (uint)
-The color lavender, either 4294633190. 
+The color lavender, 0xFFFAE6E6. 
 ### Crimson (uint)
-The color crimson, either 4282127580. 
+The color crimson, 0xFF3C14DC. 
 ### Rainbow (uint)
 A color that cycles through all the full rainbow based on ElapsedTime. 
 - **timeScale**: Optional parameter that controls how fast the color changes.
