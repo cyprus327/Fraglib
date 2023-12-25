@@ -16,12 +16,10 @@ public static unsafe partial class FL {
     /// <param name="renderTarget">The new target to draw onto.</param>
     /// <param name="targetWidth">The width of the target.</param>
     /// <param name="targetHeight">The height of the target.</param>
-    public static void SetRenderTarget(uint[] renderTarget, int targetWidth, int targetHeight) {
+    public static void SetRenderTarget(uint* renderTarget, int targetWidth, int targetHeight) {
         windowWidth = targetWidth;
         windowHeight = targetHeight;
-        fixed (uint* ptr = renderTarget) {
-            renderPtr = ptr;
-        }
+        renderPtr = renderTarget;
     }
 
     /// <name>SetRenderTarget</name>
@@ -29,7 +27,9 @@ public static unsafe partial class FL {
     /// <summary>Changes the target of the drawing methods to the specified texture.</summary>
     /// <param name="tex">The texture to change the rendering to.</param>
     public static void SetRenderTarget(Texture tex) {
-        SetRenderTarget(tex.GetPixels, tex.Width, tex.Height);
+        fixed (uint* ptr = tex.GetPixels()) {
+            SetRenderTarget(ptr, tex.Width, tex.Height);
+        }
     }
 
     /// <name>ResetRenderTarget</name>
@@ -40,11 +40,22 @@ public static unsafe partial class FL {
             return;
         }
 
-        windowWidth = e.WindowWidth;
-        windowHeight = e.WindowHeight;
+        windowWidth = e.ClientSize.X;
+        windowHeight = e.ClientSize.Y;
         fixed (uint* ptr = e.Screen) {
             renderPtr = ptr;
         }
+    }
+
+    /// <name>Defer</name>
+    /// <returns>void</returns>
+    /// <summary>Defer the invocation of an action until the end of the frame. Deferred actions are performed FIFO.</summary>
+    public static void Defer(Action action) {
+        if (!initialized) {
+            return;
+        }
+
+        e!.DeferQueue.Enqueue(action);
     }
 
 /// <region>Setup</region>
@@ -117,7 +128,7 @@ public static unsafe partial class FL {
             return;
         }
 
-        e.VSyncEnabled = renderSettings.VSync;
+        e.VSync = renderSettings.VSync ? OpenTK.Windowing.Common.VSyncMode.On : OpenTK.Windowing.Common.VSyncMode.Off;
         e.PixelSize = renderSettings.PixelSize;
         e.ScaleType = renderSettings.ScaleType;
         e.TargetFramerate = renderSettings.TargetFramerate;
@@ -177,39 +188,12 @@ public static unsafe partial class FL {
         FillPtr(renderPtr, 0, windowWidth * windowHeight, color);
     }
 
-    [LibraryImport("kernel32.dll", EntryPoint = "RtlFillMemory", SetLastError = false)]
-    private static partial void FillMemory(IntPtr dest, uint length, byte fill);
-    private static void FillPtr(uint* ptr, int startInd, int length, uint value) {
-        if (value == Black || value == White) {
-            FillMemory((IntPtr)(renderPtr + startInd), (uint)length * sizeof(uint), (byte)value);
+    private static void FillPtr(uint* array, int startIndex, int count, uint value) {
+        if (startIndex < 0 || startIndex + count > windowWidth * windowHeight) {
             return;
         }
 
-        uint* startPtr = ptr + startInd;
-        uint* endPtr = ptr + length;
-        while (startPtr + 16 <= endPtr) {
-            *startPtr = value;
-            *(startPtr + 1) = value;
-            *(startPtr + 2) = value;
-            *(startPtr + 3) = value;
-            *(startPtr + 4) = value;
-            *(startPtr + 5) = value;
-            *(startPtr + 6) = value;
-            *(startPtr + 7) = value;
-            *(startPtr + 8) = value;
-            *(startPtr + 9) = value;
-            *(startPtr + 10) = value;
-            *(startPtr + 11) = value;
-            *(startPtr + 12) = value;
-            *(startPtr + 13) = value;
-            *(startPtr + 14) = value;
-            *(startPtr + 15) = value;
-            startPtr += 16;
-        }
-        while (startPtr < endPtr) {
-            *startPtr = value;
-            startPtr++;
-        }
+        new Span<uint>(array + startIndex, count).Fill(value);
     }
 
     /// <name>DrawRect</name>
@@ -391,12 +375,16 @@ public static unsafe partial class FL {
             return;
         }
 
+        x0 = Math.Clamp(x0, -1, windowWidth);
+        y0 = Math.Clamp(y0, -1, windowHeight);
+        x1 = Math.Clamp(x1, -1, windowWidth);
+        y1 = Math.Clamp(y1, -1, windowHeight);
+
         int dx = Math.Abs(x1 - x0);
         int dy = Math.Abs(y1 - y0);
 
         int sx = x0 < x1 ? 1 : -1;
         int sy = y0 < y1 ? 1 : -1;
-        int syw = sy * windowWidth;
 
         int er = dx - dy;
 
@@ -475,7 +463,7 @@ public static unsafe partial class FL {
             y1 = windowHeight - 1;
         }
 
-        int stride = Width;
+        int stride = windowWidth;
         uint* rowPtr = renderPtr + y0 * stride + x;
         if (a == 255) {
             for (int y = y0; y <= y1; y++) {
@@ -513,7 +501,7 @@ public static unsafe partial class FL {
         }
 
         if (x1 >= windowWidth) {
-            x1 = windowWidth - 1;
+            x1 = windowWidth;
         }
 
         if (x0 > x1) {
@@ -528,8 +516,9 @@ public static unsafe partial class FL {
         int startInd = y * windowWidth + x0;
         uint* startPtr = renderPtr + startInd;
         uint* endPtr = startPtr + (x1 - x0);
-        for (uint* currentPtr = startPtr; currentPtr <= endPtr; currentPtr++) {
-            *currentPtr = AlphaBlend(currentPtr[0], color);
+        while (startPtr < endPtr) {
+            *startPtr = AlphaBlend(startPtr[0], color);
+            startPtr++;
         }
     }
 
@@ -564,6 +553,33 @@ public static unsafe partial class FL {
         DrawTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
     }
 
+    /// <name>DrawTriangle</name>
+    /// <returns>void</returns>
+    /// <summary>Draws the outline of the specified triangle. Should be used over DrawPolygon if the polygon is a triangle.</summary>
+    /// <param name="tri">The triangle to draw. The triangle will not be projected, and the Z component of each vertex will be ignored.</param>
+    public static void DrawTriangle(Triangle tri) {
+        DrawTriangle(
+            (int)tri.Verts[0].X, (int)tri.Verts[0].Y,
+            (int)tri.Verts[1].X, (int)tri.Verts[1].Y,
+            (int)tri.Verts[2].X, (int)tri.Verts[2].Y,
+            tri.Color
+        );
+    }
+
+    /// <name>DrawTriangle</name>
+    /// <returns>void</returns>
+    /// <summary>Draws the outline of the specified triangle using the specified color. Should be used over DrawPolygon if the polygon is a triangle.</summary>
+    /// <param name="tri">The triangle to draw. The triangle will not be projected, and the Z component of each vertex will be ignored.</param>
+    /// <param name="color">The color to draw the triangle.</param>
+    public static void DrawTriangle(Triangle tri, uint color) {
+        DrawTriangle(
+            (int)tri.Verts[0].X, (int)tri.Verts[0].Y,
+            (int)tri.Verts[1].X, (int)tri.Verts[1].Y,
+            (int)tri.Verts[2].X, (int)tri.Verts[2].Y,
+            color
+        );
+    }
+
     /// <name>FillTriangle</name>
     /// <returns>void</returns>
     /// <summary>Fills a solid triangle of specified color with specified vertices. Should be used over FillPolygon if the polygon is a triangle.</summary>
@@ -578,6 +594,11 @@ public static unsafe partial class FL {
         if (!initialized) {
             return;
         }
+
+        x0 = Math.Clamp(x0, -1, windowWidth);
+        y0 = Math.Clamp(y0, -1, windowHeight);
+        x1 = Math.Clamp(x1, -1, windowWidth);
+        y1 = Math.Clamp(y1, -1, windowHeight);
 
         if (y1 < y0) {
             (x0, y0, x1, y1) = (x1, y1, x0, y0);
@@ -625,6 +646,33 @@ public static unsafe partial class FL {
     /// <param name="color">The color of the triangle.</param>
     public static void FillTriangle(Vector2 v0, Vector2 v1, Vector2 v2, uint color) {
         FillTriangle((int)v0.X, (int)v0.Y, (int)v1.X, (int)v1.Y, (int)v2.X, (int)v2.Y, color);
+    }
+
+    /// <name>FillTriangle</name>
+    /// <returns>void</returns>
+    /// <summary>Fills a solid triangle. Should be used over FillPolygon if the polygon is a triangle.</summary>
+    /// <param name="tri">The triangle to draw. The triangle will not be projected, and the Z component of each vertex will be ignored.</param>
+    public static void FillTriangle(Triangle tri) {
+        FillTriangle(
+            (int)tri.Verts[0].X, (int)tri.Verts[0].Y,
+            (int)tri.Verts[1].X, (int)tri.Verts[1].Y,
+            (int)tri.Verts[2].X, (int)tri.Verts[2].Y,
+            tri.Color
+        );
+    }
+
+    /// <name>FillTriangle</name>
+    /// <returns>void</returns>
+    /// <summary>Fills a solid triangle to the color specified. Should be used over FillPolygon if the polygon is a triangle.</summary>
+    /// <param name="tri">The triangle to draw. The triangle will not be projected, and the Z component of each vertex will be ignored.</param>
+    /// <param name="color">The color to draw the triangle.</param>
+    public static void FillTriangle(Triangle tri, uint color) {
+        FillTriangle(
+            (int)tri.Verts[0].X, (int)tri.Verts[0].Y,
+            (int)tri.Verts[1].X, (int)tri.Verts[1].Y,
+            (int)tri.Verts[2].X, (int)tri.Verts[2].Y,
+            color
+        );
     }
 
     /// <name>DrawPolygon</name>
@@ -782,7 +830,7 @@ public static unsafe partial class FL {
 
         uint numBytes = (uint)(endX - startX) * sizeof(uint);
 
-        fixed (uint* texturePtr = texture.GetPixels) {
+        fixed (uint* texturePtr = texture.GetPixels()) {
             for (int sy = startY; sy < endY; sy++) {
                 uint* screenRowPtr = renderPtr + (y + sy) * windowWidth + x;
                 uint* textureRowPtr = texturePtr + sy * textureWidth;
@@ -815,7 +863,7 @@ public static unsafe partial class FL {
             return;
         }
 
-        fixed (uint* texturePtr = texture.GetPixels) {
+        fixed (uint* texturePtr = texture.GetPixels()) {
             int screenOffset = y * windowWidth + x;
             int textureOffset = 0;
 
@@ -826,11 +874,11 @@ public static unsafe partial class FL {
                 for (int sx = startX; sx < endX; sx++) {
                     uint texPixel = textureRowPtr[sx];
 
-                    if ((texPixel & 0xFF000000) == 0) {
+                    if ((texPixel & Black) == 0) {
                         continue;
                     }
 
-                    if ((texPixel & 0xFF000000) == 0xFF000000) {
+                    if ((texPixel & Black) == Black) {
                         *(screenRowPtr + sx) = texPixel;
                         continue;
                     }
@@ -869,7 +917,7 @@ public static unsafe partial class FL {
     /// <param name="scaleX">The amount to scale the by texture horizontally.</param>
     /// <param name="scaleY">The amount to scale the by texture vertically.</param>
     /// <param name="texture">The Texture to draw.</param>
-    public static  void DrawTexture(int x, int y, float scaleX, float scaleY, Texture texture) {
+    public static  void DrawTexture(int x, int y, float scaleX, float scaleY, Texture texture, bool fastForLargeScale = false) {
         if (!initialized || scaleX <= 0 || scaleY <= 0) {
             return;
         }
@@ -881,25 +929,38 @@ public static unsafe partial class FL {
         int startX = Math.Max(0, -x);
         int startY = Math.Max(0, -y);
         int endX = Math.Min(scaledWidth, windowWidth - x);
-        int endY = Math.Min(scaledHeight, windowHeight - y);
+        int endY = Math.Min(scaledHeight, windowHeight - y);        
 
         if (endX <= 0 || endY <= 0) {
             return;
         }
 
-        fixed (uint* texturePtr = texture.GetPixels) {
+        fixed (uint* texturePtr = texture.GetPixels()) {
+            int pixelWidth = (int)(scaleX + 0.5f);
+            int pixelHeight = (int)(scaleY + 0.5f);
+            if (fastForLargeScale && pixelWidth >= 3 && pixelHeight >= 3) {
+                for (int sy = startY; sy < endY; sy += pixelHeight) {
+                    int textureY = (int)(sy / scaleY);
+                    for (int sx = startX; sx < endX; sx += pixelWidth) {
+                        int textureX = (int)(sx / scaleX);
+                        uint texPixel = texturePtr[textureX + textureY * textureWidth];
+                        FillRect(x + sx, y + sy, pixelWidth, pixelHeight, texPixel);
+                    }
+                }
+                return;
+            }
+        
             for (int sy = startY; sy < endY; sy++) {
                 uint* screenRowPtr = renderPtr + (y + sy) * windowWidth + x;
-
                 int textureY = (int)(sy / scaleY);
                 for (int sx = startX; sx < endX; sx++) {
                     uint texPixel = texturePtr[textureY * textureWidth + (int)(sx / scaleX)];
 
-                    if ((texPixel & 0xFF000000) == 0) {
+                    if ((texPixel & Black) == 0) {
                         continue;
                     }
 
-                    if ((texPixel & 0xFF000000) == 0xFF000000) {
+                    if ((texPixel & Black) == Black) {
                         *(screenRowPtr + sx) = texPixel;
                         continue;
                     }
@@ -935,8 +996,8 @@ public static unsafe partial class FL {
     /// <param name="scaledX">The width to scale the texture to in pixels</param>
     /// <param name="scaledY">The height to scale the texture to in pixels.</param>
     /// <param name="texture">The Texture to draw.</param>
-    public static void DrawTexture(int x, int y, int scaledX, int scaledY, Texture texture) {
-        DrawTexture(x, y, (float)scaledX / texture.Width, (float)scaledY / texture.Height, texture);
+    public static void DrawTexture(int x, int y, int scaledX, int scaledY, Texture texture, bool fastForLargeScale = false) {
+        DrawTexture(x, y, (float)scaledX / texture.Width, (float)scaledY / texture.Height, texture, fastForLargeScale);
     }
 
     /// <name>DrawTexture</name>
@@ -963,7 +1024,7 @@ public static unsafe partial class FL {
         int endX = Math.Min(texWidth, Math.Min(textureWidth - texStartX, windowWidth - x));
         int endY = Math.Min(texHeight, Math.Min(textureHeight - texStartY, windowHeight - y));
         
-        fixed (uint* texturePtr = texture.GetPixels) {
+        fixed (uint* texturePtr = texture.GetPixels()) {
             for (int sy = startY; sy < endY; sy++) {
                 uint* screenRowPtr = renderPtr + (y + sy) * windowWidth + x;
                 uint* textureRowPtr = texturePtr + (texStartY + sy) * textureWidth + texStartX;
@@ -971,11 +1032,11 @@ public static unsafe partial class FL {
                 for (int sx = startX; sx < endX; sx++) {
                     uint texPixel = textureRowPtr[sx];
 
-                    if ((texPixel & 0xFF000000) == 0) {
+                    if ((texPixel & Black) == 0) {
                         continue;
                     }
 
-                    if ((texPixel & 0xFF000000) == 0xFF000000) {
+                    if ((texPixel & Black) == Black) {
                         *(screenRowPtr + sx) = texPixel;
                         continue;
                     }
@@ -1055,7 +1116,7 @@ public static unsafe partial class FL {
             Height = texture.Height;
 
             pixels = new uint[Width * Height];
-            Array.Copy(texture.GetPixels, pixels, texture.GetPixels.Length);
+            Array.Copy(texture.GetPixels(), pixels, texture.GetPixels().Length);
         }
 
         /// <name>Texture</name>
@@ -1063,29 +1124,33 @@ public static unsafe partial class FL {
         /// <summary>Creates an empty Texture of specified width and height.</summary>
         /// <param name="width">The width of the texture.</param>
         /// <param name="height">The height of the texture.</param>
-        public Texture(int width, int height) {
+        /// <param name="startColor">Optional starting color for the texture.</param>
+        public Texture(int width, int height, uint startColor = 0) {
             Width = width;
             Height = height;
 
             pixels = new uint[width * height];
+            Array.Fill(pixels, startColor);
         }
 
         /// <name>Width</name>
         /// <returns>int</returns>
         /// <summary>The texture's width.</summary>
-        public int Width { get; }
+        public readonly int Width;
 
         /// <name>Height</name>
         /// <returns>int</returns>
         /// <summary>The texture's height.</summary>
-        public int Height { get; }
+        public readonly int Height;
 
         private readonly uint[] pixels;
 
         /// <name>GetPixels</name>
         /// <returns>uint[]</returns>
         /// <summary>Gets the pixels of the texture.</summary>
-        public readonly uint[] GetPixels { get => pixels; }
+        public readonly uint[] GetPixels() {
+            return pixels;
+        }
 
         /// <name>SetPixel</name>
         /// <returns>void</returns>
@@ -1181,6 +1246,78 @@ public static unsafe partial class FL {
             return croppedTexture;
         }
     }
+
+    public struct Sprite {
+        /// <name>ctor</name>
+        /// <returns>Sprite</returns>
+        /// <summary>Initializes a new Sprite on the given sprite sheet.</summary>
+        public Sprite(Texture spriteSheet, int spriteWidth, int spriteHeight, int spacing = 0) {
+            _tex = spriteSheet;
+            Width = spriteWidth;
+            Height = spriteHeight;
+            Spacing = spacing;
+        }
+
+        /// <name>Width</name>
+        /// <returns>int</returns>
+        /// <summary>The width of the sprite in the spritesheet.</summary>
+        public readonly int Width;
+        
+        /// <name>Height</name>
+        /// <returns>int</returns>
+        /// <summary>The height of the sprite in the spritesheet.</summary>
+        public readonly int Height;
+        
+        /// <name>Width</name>
+        /// <returns>int</returns>
+        /// <summary>The spacing between sprites on the spritesheet.</summary>
+        public readonly int Spacing;
+
+        private readonly Texture _tex;
+
+        private int xPos = 0, yPos = 0;
+
+        /// <name>Step</name>
+        /// <returns>void</returns>
+        /// <summary>Steps the sprite forward once in the spritesheet based on the current position and spacing.</summary>
+        public void Step() {
+            xPos += Width + Spacing;
+
+            if (xPos + Width > _tex.Width) {
+                xPos = 0;
+                yPos += Height + Spacing;
+            }
+
+            if (yPos + Height > _tex.Height) {
+                yPos = 0;
+            }
+        }
+
+        /// <name>StepTo</name>
+        /// <returns>void</returns>
+        /// <summary>Moves the sprite to the specified incices in the spritesheet, with (0, 0) being the bottom left.</summary>
+        /// <param name="xInd">The x index for the sprite to be moved to.</param>
+        /// <param name="yInd">The y index for the sprite to be moved to.</param>
+        public void StepTo(int xInd, int yInd) {
+            xPos = xInd * (Width + Spacing);
+            yPos = yInd * (Height + Spacing);
+
+            if (xPos + Width > _tex.Width) {
+                xPos = 0;
+            }
+
+            if (yPos + Height > _tex.Height) {
+                yPos = 0;
+            }
+        }
+
+        /// <name>GetCurrent</name>
+        /// <returns>Texture</returns>
+        /// <summary>Gets the current sprite in the spritesheet.</summary>
+        public readonly Texture GetCurrent() {
+            return _tex.CropTo(xPos, yPos, Width, Height);
+        }
+    }
 #endregion textures
 
 /// <region>Camera</region>
@@ -1188,20 +1325,25 @@ public static unsafe partial class FL {
     public struct Camera {
         /// <name>ctor</name>
         /// <returns>Camera</returns>
+        /// <summary>Initializes a camera targeting the main window in projection mode at position (0, 0, 0).</summary>
+        public Camera() {
+            if (!initialized) {
+                throw new Exception(@"You must either use the ctor with parameters or use this ctor after calling Init.");
+            }
+
+            Pos = Vector3.Zero;
+            TargetWidth = windowWidth;
+            TargetHeight = windowHeight;
+        }
+
+        /// <name>ctor</name>
+        /// <returns>Camera</returns>
         /// <summary>Initializes a new instantce of the Camera struct with the specified properties.</summary>
         /// <param name="targetWidth">The target width for the camera to render to.</param>
         /// <param name="targetHeight">The target height for the camera to render to.</param>
-        /// <param name="pos">The position in world space of the camera.</param>
-        /// <param name="yawRad">The camera's orientation's yaw in radians.</param>
-        /// <param name="pitchRad">The camera's orientation's pitch in radians.</param>
-        /// <param name="fovDeg">The camera's field of view in degrees.</param>
-        public Camera(Vector3 pos, int targetWidth, int targetHeight, float yawRad = 0f, float pitchRad = 0f, float fovDeg = 90f) {
-            Pos = pos;
+        public Camera(int targetWidth, int targetHeight) {
             TargetWidth = Math.Clamp(targetWidth, 1, 10000);
             TargetHeight = Math.Clamp(targetHeight, 1, 10000);
-            Yaw = yawRad;
-            Pitch = pitchRad;
-            FOV = fovDeg;
 
             UpdateMatrices();
         }
@@ -1209,48 +1351,37 @@ public static unsafe partial class FL {
         /// <name>Yaw</name>
         /// <returns>float</returns>
         /// <summary>The camera's current yaw in radians. Can be set by using the LookBy or LookAt methods.</summary>
-        public float Yaw { get; private set; }
+        public float Yaw { get; private set; } = 0f;
         const float MAX_YAW = MathF.PI * 1.99999f;
         
         /// <name>Pitch</name>
         /// <returns>float</returns>
         /// <summary>The camera's current pitch in radians. Can be set by using the LookBy or LookAt methods.</summary>
-        public float Pitch { get; private set; }
+        public float Pitch { get; private set; } = 0f;
         const float MAX_PITCH = MathF.PI * 0.49999f;
-
-        /// <name>YawPitchMatrix</name>
-        /// <returns>Matrix4x4</returns>
-        /// <summary>The yaw-pitch rotation matrix of the camera.</summary>
-        public Matrix4x4 YawPitchMatrix { get; private set; }
-
-        /// <name>ViewMatrix</name>
-        /// <returns>Matrix4x4</returns>
-        /// <summary>The view matrix of the camera.</summary>
-        public Matrix4x4 ViewMatrix { get; private set; }
-
-        /// <name>ProjectionMatrix</name>
-        /// <returns>Matrix4x4</returns>
-        /// <summary>The projection matrix of the camera.</summary>
-        public Matrix4x4 ProjectionMatrix { get; private set; }
-
-        /// <name>ViewProjectionMatrix</name>
-        /// <returns>Matrix4x4</returns>
-        /// <summary>The view-projection matrix of the camera (ViewMatrix * ProjectionMatrix).</summary>
-        public Matrix4x4 ViewProjectionMatrix { get; private set; }
-
+        
         /// <name>Pos</name>
         /// <returns>Vector3</returns>
         /// <summary>Gets or sets camera's position in world space.</summary>
-        public Vector3 Pos { get; set; }
+        public Vector3 Pos { get; set; } = Vector3.Zero;
 
         /// <name>FOV</name>
         /// <returns>float</returns>
-        /// <summary>Gets or sets the camera's field of view.</summary>
-        public float FOV {
+        /// <summary>Gets or sets the camera's field of view, only applies to projection mode.</summary>
+        public float FOV { 
             readonly get => fov;
             set => fov = Math.Clamp(value, 1f, 179f);
         }
         private float fov = 90f;
+
+        /// <name>Zoom</name>
+        /// <returns>float</returns>
+        /// <summary>Gets or sets the camera's zoom, only applies to orthographic mode.</summary>
+        public float Zoom {
+            readonly get => zoom;
+            set => zoom = Math.Clamp(value, float.Epsilon, float.MaxValue);
+        }
+        private float zoom = 1f;
 
         /// <name>NearPlane</name>
         /// <returns>float</returns>
@@ -1270,9 +1401,22 @@ public static unsafe partial class FL {
         }
         private float farPlane = 1000f;
 
-        public int TargetWidth { get; }
+        /// <name>TargetWidth</name>
+        /// <returns>int</returns>
+        /// <summary>The width of what the camera is rendering to (e.g. the main window or a texture).</summary>
+        public int TargetWidth { get; init; }
 
-        public int TargetHeight { get; }
+        /// <name>TargetHeight</name>
+        /// <returns>int</returns>
+        /// <summary>The height of what the camera is rendering to (e.g. the main window or a texture).</summary>
+        public int TargetHeight { get; init; }
+
+        /// <name>OrthographicMode</name>
+        /// <returns>bool</returns>
+        /// <summary>Controls whether or not the camera will render in projection or orthographic.</summary>
+        public bool OrthographicMode { get; set; } = false;
+
+        private Matrix4x4 yawPitchMat, viewMat, renderMat, viewRenderMat;
 
         /// <name>HandleInputDefault</name>
         /// <returns>void</returns>
@@ -1280,26 +1424,45 @@ public static unsafe partial class FL {
         /// <param name="moveSpeedMult">The multiplier for how fast the camera will move.</param>
         /// <param name="lookSpeedMult">The multiplier for how much the mouse will turn the camera.</param>
         public void HandleInputDefault(float moveSpeedMult = 2f, float lookSpeedMult = 0.005f) {
-            float amount = moveSpeedMult * DeltaTime;
-            if (GetKeyDown('W')) {
-                MoveForward(amount);
-            } else if (GetKeyDown('S')) {
-                MoveBackward(amount);
+            float amount;
+            if (OrthographicMode) {
+                amount = moveSpeedMult / MathF.Max(1f, Zoom) * DeltaTime;
+                lookSpeedMult /= MathF.Min(1f, Zoom);
+
+                if (GetKeyDown('W')) {
+                    MoveUp(amount);
+                } else if (GetKeyDown('S')) {
+                    MoveDown(amount);
+                }
+                if (GetKeyDown('E')) {
+                    Zoom *= MathF.Pow(2f, DeltaTime);
+                } else if (GetKeyDown('Q')) {
+                    Zoom *= MathF.Pow(0.5f, DeltaTime);
+                }
+            } else {
+                amount = moveSpeedMult * DeltaTime;
+
+                if (GetKeyDown('W')) {
+                    MoveForward(amount);
+                } else if (GetKeyDown('S')) {
+                    MoveBackward(amount);
+                }
+                if (GetKeyDown('E')) {
+                    MoveUp(amount);
+                } else if (GetKeyDown('Q')) {
+                    MoveDown(amount);
+                }
             }
+
             if (GetKeyDown('A')) {
                 MoveLeft(amount);
             } else if (GetKeyDown('D')) {
                 MoveRight(amount);
             }
-            if (GetKeyDown('E')) {
-                MoveUp(amount);
-            } else if (GetKeyDown('Q')) {
-                MoveDown(amount);
-            }
 
             if (RMBDown()) {
                 MouseGrabType = MouseGrabType.Grabbed;
-                LookBy(MouseDelta * lookSpeedMult);
+                LookBy(lookSpeedMult * MouseDelta);
             } else {
                 MouseGrabType = MouseGrabType.None;
             }
@@ -1312,7 +1475,7 @@ public static unsafe partial class FL {
         /// <summary>Moves the camera forward by the specified amount.</summary>
         /// <param name="amount">The amount by which to move the camera.</param>
         public void MoveForward(float amount) {
-            Pos += Vector3.Transform(-Vector3.UnitZ, YawPitchMatrix) * amount;
+            Pos += Vector3.Transform(-Vector3.UnitZ, yawPitchMat) * amount;
         }
 
         /// <name>MoveBackward</name>
@@ -1320,7 +1483,7 @@ public static unsafe partial class FL {
         /// <summary>Moves the camera backward by the specified amount.</summary>
         /// <param name="amount">The amount by which to move the camera.</param>
         public void MoveBackward(float amount) {
-            Pos += Vector3.Transform(Vector3.UnitZ, YawPitchMatrix) * amount;
+            Pos += Vector3.Transform(Vector3.UnitZ, yawPitchMat) * amount;
         }
 
         /// <name>MoveRight</name>
@@ -1328,7 +1491,7 @@ public static unsafe partial class FL {
         /// <summary>Moves the camera right by the specified amount.</summary>
         /// <param name="amount">The amount by which to move the camera.</param>
         public void MoveRight(float amount) {
-            Pos += Vector3.Transform(Vector3.UnitX, YawPitchMatrix) * amount;
+            Pos += Vector3.Transform(Vector3.UnitX, yawPitchMat) * amount;
         }
 
         /// <name>MoveLeft</name>
@@ -1336,7 +1499,7 @@ public static unsafe partial class FL {
         /// <summary>Moves the camera left by the specified amount.</summary>
         /// <param name="amount">The amount by which to move the camera.</param>
         public void MoveLeft(float amount) {
-            Pos += Vector3.Transform(-Vector3.UnitX, YawPitchMatrix) * amount;
+            Pos += Vector3.Transform(-Vector3.UnitX, yawPitchMat) * amount;
         }
 
         /// <name>MoveUp</name>
@@ -1392,10 +1555,45 @@ public static unsafe partial class FL {
         /// <returns>void</returns>
         /// <summary>Updates the camera's matrices. Should be called after changing one of the camera's properties' values.</summary>
         public void UpdateMatrices() {
-            YawPitchMatrix = Matrix4x4.CreateFromYawPitchRoll(Yaw, Pitch, 0f);
-            ViewMatrix = Matrix4x4.CreateLookAt(Pos, Pos + Vector3.Transform(-Vector3.UnitZ, YawPitchMatrix), Vector3.UnitY);
-            ProjectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(DegToRad(fov), (float)TargetWidth / TargetHeight, nearPlane, farPlane);
-            ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
+            yawPitchMat = Matrix4x4.CreateFromYawPitchRoll(Yaw, Pitch, 0f);
+            viewMat = Matrix4x4.CreateLookAt(Pos, Pos + Vector3.Transform(-Vector3.UnitZ, yawPitchMat), Vector3.UnitY);
+            renderMat = OrthographicMode ? 
+                Matrix4x4.CreateOrthographic(TargetWidth / Zoom, TargetHeight / Zoom, nearPlane, farPlane) : 
+                Matrix4x4.CreatePerspectiveFieldOfView(DegToRad(fov), (float)TargetWidth / TargetHeight, nearPlane, farPlane);
+            viewRenderMat = viewMat * renderMat;
+        }
+
+        /// <name>CanSeePoint</name>
+        /// <returns>bool</returns>
+        /// <summary>Returns whether or not the camera can see the point specified.</summary>
+        /// <param name="point">The point to check.</param>
+        public readonly bool CanSeePoint(Vector3 point) {
+            Vector4 clipSpace = Vector4.Transform(new Vector4(point, 1f), viewRenderMat);
+            clipSpace /= clipSpace.W == 0f ? float.Epsilon : clipSpace.W;
+            return Math.Abs(clipSpace.X) <= 1f &&
+                Math.Abs(clipSpace.Y) <= 1f &&
+                clipSpace.Z >= -1f &&
+                clipSpace.Z <= 1f;
+        }
+
+        /// <name>CanSeeCircle</name>
+        /// <returns>bool</returns>
+        /// <summary>Returns whether or not the camera can see the circle specified.</summary>
+        /// <param name="circleCenter">The center of the circle to check.</param>
+        /// <param name="circleRadius">The radius of the circle to check.</param>
+        public readonly bool CanSeeCircle(Vector3 circleCenter, float circleRadius) {
+            Vector4 clipSpace = Vector4.Transform(new Vector4(circleCenter, 1f), viewRenderMat);
+            return clipSpace.X + circleRadius >= -clipSpace.W && clipSpace.X - circleRadius <= clipSpace.W &&
+                clipSpace.Y + circleRadius >= -clipSpace.W && clipSpace.Y - circleRadius <= clipSpace.W &&
+                clipSpace.Z >= 0f && clipSpace.Z - circleRadius <= clipSpace.W;
+        }
+
+        /// <name>CanSeeTri</name>
+        /// <returns>bool</returns>
+        /// <summary>Returns whether or not the camera can see the triangle specified.</summary>
+        /// <param name="tri">The triangle to check.</param>
+        public readonly bool CanSeeTri(Triangle tri) {
+            return Vector3.Dot(tri.GetNormal(), tri.GetCenter() - Pos) > 0f;
         }
 
         /// <name>ProjectPointToScreen</name>
@@ -1405,13 +1603,17 @@ public static unsafe partial class FL {
         /// <param name="screenCoords">An out (int x, int y, int z) representing the screen coordinates of the projected point.</param>
         /// <param name="isInCamView">An out bool representing whether or not the point can be seen by the camera.</param>
         public readonly void ProjectPointToScreen((int x, int y, int z) point, out (int x, int y) screenCoords, out bool isInCamView) {
-            Vector4 normalCoords = Vector4.Transform(new Vector4(point.x, point.y, point.z, 1f), ViewProjectionMatrix);
+            Vector4 clipSpace = Vector4.Transform(new Vector4(point.x, point.y, point.z, 1f), viewRenderMat);
 
-            Vector2 sc = NormalizeCoords(normalCoords);
+            Vector2 sc = NormalizeCoordsToScreen(clipSpace);
             screenCoords.x = (int)sc.X;
             screenCoords.y = (int)sc.Y;
 
-            isInCamView = normalCoords.Z >= 0f && normalCoords.Z <= normalCoords.W;
+            clipSpace /= clipSpace.W == 0f ? float.Epsilon : clipSpace.W;
+            isInCamView = Math.Abs(clipSpace.X) <= 1f &&
+                Math.Abs(clipSpace.Y) <= 1f &&
+                clipSpace.Z >= -1f &&
+                clipSpace.Z <= 1f;
         }
 
         /// <name>ProjectPointToScreen</name>
@@ -1421,12 +1623,17 @@ public static unsafe partial class FL {
         /// <param name="screenCoords">An out Vector2 representing the screen coordinates of the projected point.</param>
         /// <param name="isInCamView">An out bool representing whether or not the point can be seen by the camera.</param>
         public readonly void ProjectPointToScreen(Vector3 point, out Vector2 screenCoords, out bool isInCamView) {
-            Vector4 normalCoords = Vector4.Transform(new Vector4(point, 1f), ViewProjectionMatrix);
+            Vector4 clipSpace = Vector4.Transform(new Vector4(point, 1f), viewRenderMat);
 
-            screenCoords = NormalizeCoords(normalCoords);
+            screenCoords = NormalizeCoordsToScreen(clipSpace);
 
-            isInCamView = normalCoords.Z >= 0f && normalCoords.Z <= normalCoords.W;
+            clipSpace /= clipSpace.W == 0f ? float.Epsilon : clipSpace.W;
+            isInCamView = Math.Abs(clipSpace.X) <= 1f &&
+                Math.Abs(clipSpace.Y) <= 1f &&
+                clipSpace.Z >= -1f &&
+                clipSpace.Z <= 1f;
         }
+
 
         /// <name>ProjectCircleToScreen</name>
         /// <returns>void</returns>
@@ -1435,15 +1642,17 @@ public static unsafe partial class FL {
         /// <param name="radius">The radius of the circle to project.</param>
         /// <param name="screenCoords">An out Vector2 representing the screen coordinates of the projected circle.</param>
         /// <param name="screenRadius">An out float representing the radius of the projected circle.</param>
-        /// <param name="isInCamView">An out boolean representing whether or not the point can be seen by the camera.</param>
+        /// <param name="isInCamView">An out bool representing whether or not the point can be seen by the camera.</param>
         public readonly void ProjectCircleToScreen(Vector3 circleCenter, float radius, out Vector2 screenCoords, out float screenRadius, out bool isInCamView) {
-            Vector4 normalCoords = Vector4.Transform(new Vector4(circleCenter, 1f), ViewProjectionMatrix);
+            Vector4 clipSpace = Vector4.Transform(new Vector4(circleCenter, 1f), viewRenderMat);
 
-            screenCoords = NormalizeCoords(normalCoords);
+            screenCoords = NormalizeCoordsToScreen(clipSpace);
 
-            screenRadius = radius * TargetWidth / (2f * normalCoords.W);
+            screenRadius = radius * TargetWidth / (2f * clipSpace.W);
 
-            isInCamView = normalCoords.Z >= -normalCoords.W && normalCoords.Z <= normalCoords.W;
+            isInCamView = clipSpace.X + radius >= -clipSpace.W && clipSpace.X - radius <= clipSpace.W &&
+                clipSpace.Y + radius >= -clipSpace.W && clipSpace.Y - radius <= clipSpace.W &&
+                clipSpace.Z >= 0f && clipSpace.Z - radius <= clipSpace.W;
         }
 
         /// <name>ProjectRectToScreen</name>
@@ -1455,26 +1664,385 @@ public static unsafe partial class FL {
         /// <param name="screenCoords">An out Vector2 representing the screen coordinates of the projected circle.</param>
         /// <param name="screenWidth">An out float representing the width of the projected circle.</param>
         /// <param name="screenHeight">An out float representing the height of the projected circle.</param>
-        /// <param name="isInCamView">An out boolean representing whether or not the point can be seen by the camera.</param>
+        /// <param name="isInCamView">An out bool representing whether or not the point can be seen by the camera.</param>
         public readonly void ProjectRectToScreen(Vector3 rectCenter, float width, float height, out Vector2 screenCoords, out float screenWidth, out float screenHeight, out bool isInCamView) {
-            Vector4 normalCoords = Vector4.Transform(new Vector4(rectCenter, 1f), ViewProjectionMatrix);
+            Vector4 clipSpace = Vector4.Transform(new Vector4(rectCenter, 1f), viewRenderMat);
 
-            screenCoords = NormalizeCoords(normalCoords);
+            screenCoords = NormalizeCoordsToScreen(clipSpace);
 
-            screenWidth = width * TargetWidth / (2f * normalCoords.W);
-            screenHeight = height * TargetHeight / (2f * normalCoords.W) * ((float)TargetWidth / TargetHeight); 
+            screenWidth = width * TargetWidth / (2f * clipSpace.W);
+            screenHeight = height * TargetHeight / (2f * clipSpace.W) * ((float)TargetWidth / TargetHeight); 
 
-            isInCamView = normalCoords.Z >= -normalCoords.W && normalCoords.Z <= normalCoords.W;
+            clipSpace /= clipSpace.W == 0f ? float.Epsilon : clipSpace.W;
+            isInCamView = Math.Abs(clipSpace.X) <= 1f &&
+                Math.Abs(clipSpace.Y) <= 1f &&
+                clipSpace.Z >= -1f &&
+                clipSpace.Z <= 1f;
         }
 
-        private readonly Vector2 NormalizeCoords(Vector4 normalCoords) {
+        /// <name>ProjectTriToScreen</name>
+        /// <returns>void</returns>
+        /// <summary>Projects, scales, and clips a triangle to the screen. This method isn't yet perfect.</summary>
+        /// <param name="tri">The triangle to project.</param>
+        /// <param name="screenTris">An out List<Triangle> containing the result of projecting the triangle to the screen.</param>
+        /// <param name="isInCamView">An out bool representing whether or not the triangle is in the camera's frustum.</param>
+        public readonly void ProjectTriToScreen(Triangle tri, out List<Triangle> screenTris, out bool isInCamView) {
+            List<byte> outsidePointInds = new(3);
+            Triangle test = new() { Color = tri.Color };
+            for (byte i = 0; i < 3; i++) {
+                ProjectPointToScreen(tri.Verts[i], out var sc, out bool inCamView);
+                if (!inCamView) {
+                    outsidePointInds.Add(i);
+                }
+                test.Verts[i] = new(sc, 0f);
+            }
+
+            if (outsidePointInds.Count == 0) {
+                isInCamView = true;
+                screenTris = new(1) { test };
+                return;
+            }
+
+            screenTris = ClipTriangle(test, outsidePointInds);
+            isInCamView = screenTris.Capacity != 0;
+            if (!isInCamView) {
+                screenTris = new(1) { test };
+            }
+        }
+
+        private readonly List<Triangle> ClipTriangle(Triangle tri, List<byte> outsidePointInds) {
+            static Vector2 Clip(Vector2 ls, Vector2 op, int w, int h) {
+                float slope = (op.Y - ls.Y) / (op.X - ls.X);
+
+                if (op.X < 0f) {
+                    op.X = 0f;
+                    op.Y = ls.Y + slope * (0f - ls.X);
+                } else if (op.X >= w) {
+                    op.X = w;
+                    op.Y = ls.Y + slope * (w - ls.X);
+                }
+
+                if (op.Y < 0f) {
+                    op.Y = 0f;
+                    op.X = ls.X + 1f / slope * (0f - ls.Y);
+                } else if (op.Y >= h) {
+                    op.Y = h;
+                    op.X = ls.X + 1f / slope * (h - ls.Y);
+                }
+
+                return op;
+            }
+
+            static bool Intersect(Vector2 s1, Vector2 e1, Vector2 s2, Vector2 e2, out Vector2 intersection) {
+                float denom = (e2.Y - s2.Y) * (e1.X - s1.X) - (e2.X - s2.X) * (e1.Y - s1.Y);
+
+                if (denom == 0) {
+                    goto END;
+                }
+
+                float ua = ((e2.X - s2.X) * (s1.Y - s2.Y) - (e2.Y - s2.Y) * (s1.X - s2.X)) / denom;
+                float ub = ((e1.X - s1.X) * (s1.Y - s2.Y) - (e1.Y - s1.Y) * (s1.X - s2.X)) / denom;
+
+                if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
+                    float intersectionX = s1.X + ua * (e1.X - s1.X);
+                    float intersectionY = s1.Y + ua * (e1.Y - s1.Y);
+                    intersection = new(intersectionX, intersectionY);
+                    return true;
+                }
+
+                END:
+                intersection = Vector2.Zero;
+                return false;
+            }
+
+            const byte BOTTOM = 1, LEFT = 2, TOP = 4, RIGHT = 8;
+
+            Vector2[] verts2D = new Vector2[3];
+            for (byte i = 0; i < 3; i++) {
+                verts2D[i] = new(tri.Verts[i].X, tri.Verts[i].Y);
+            }
+
+            List<Triangle> output;
+            Vector2 a, b, c, a_, b_, c_;
+
+            HashSet<byte> d = new(3);
+            for (byte i = 0; i < 3; i++) {
+                byte q = 0;
+
+                if (verts2D[i].X < 0f) {
+                    q |= LEFT;
+                } else if (verts2D[i].X >= TargetWidth) {
+                    q |= RIGHT;
+                }
+                if (verts2D[i].Y < 0f) {
+                    q |= BOTTOM;
+                } else if (verts2D[i].Y >= TargetHeight) {
+                    q |= TOP;
+                }
+
+                d.Add(q);
+            }
+
+            if (outsidePointInds.Count == 3) {
+                if (d.Count == 1) {
+                    return new(0);
+                }
+
+                if (d.Count == 2) {
+                    return new(2);
+                }
+
+                if (d.Count == 3) {
+                    return new(5);
+                }
+
+                return new(1);
+            }
+
+            // https://gabrielgambetta.com/computer-graphics-from-scratch/images/r14-clip-triangle1.png
+            if (outsidePointInds.Count == 2) {
+                a = verts2D.Where((v, i) => !outsidePointInds.Contains((byte)i)).First();
+                b = verts2D[outsidePointInds[0]];
+                c = verts2D[outsidePointInds[1]];
+
+                b_ = Clip(a, b, TargetWidth, TargetHeight);
+                c_ = Clip(a, c, TargetWidth, TargetHeight);
+
+                bool sameX = b_.X == c_.X, sameY = b_.Y == c_.Y;
+                if ((sameX && !sameY) || (!sameX && sameY)) {
+                    return new(1) { new(a, b_, c_) { Color = Red } };
+                }
+
+                output = new(2) { new(a, b_, c_) { Color = Red } };
+
+                if (d.Contains(BOTTOM | LEFT)) {
+                    output.Add(new(b_, Vector2.Zero, c_) { Color = Magenta });
+                } else if (d.Contains(BOTTOM | RIGHT)) {
+                    output.Add(new(c_, b_, new(TargetWidth, 0f)) { Color = Magenta });
+                } else if (d.Contains(TOP | LEFT)) {
+                    output.Add(new(b_, new(0f, TargetHeight), c_) { Color = Magenta });
+                } else if (d.Contains(TOP | RIGHT)) {
+                    output.Add(new(b_, c_, new(TargetWidth, TargetHeight)) { Color = Magenta });
+                } else if (d.Contains(TOP) && d.Contains(BOTTOM)) {
+                    if (Intersect(b, c, new(0f, TargetHeight), new(TargetHeight, TargetWidth), out Vector2 b__) &&
+                        Intersect(c, b, new(0f, 0f), new(0f, TargetWidth), out Vector2 c__)) {
+                        output.Add(new(b__, c_, c__) { Color = Rand() });
+                        output.Add(new(b__, b_, c_) { Color = Rand() });
+                    }
+                }
+
+                return output;
+            }
+
+            // https://gabrielgambetta.com/computer-graphics-from-scratch/images/r14-clip-triangle2.png
+            var insidePoints = verts2D.Where((v, i) => !outsidePointInds.Contains((byte)i));
+            a = insidePoints.First();
+            b = insidePoints.Last();
+            c = verts2D[outsidePointInds[0]];
+
+            a_ = Clip(a, c, TargetWidth, TargetHeight);
+            b_ = Clip(b, c, TargetWidth, TargetHeight);
+
+            if (a_.X == b_.X || a_.Y == b_.Y) {
+                return new(2) { 
+                    new(a, b, a_) { Color = Blue },
+                    new(b, a_, b_) { Color = Green }
+                };
+            }
+
+            output = new(3) { 
+                new(a, b, a_) { Color = Blue },
+                new(b, a_, b_) { Color = Green }
+            };
+
+            if (d.Contains(BOTTOM | LEFT)) {
+                output.Add(new(b_, a_, Vector2.Zero) { Color = Magenta });
+            } else if (d.Contains(BOTTOM | RIGHT)) {
+                output.Add(new(b_, a_, new(TargetWidth, 0f)) { Color = Magenta });
+            } else if (d.Contains(TOP | LEFT)) {
+                output.Add(new(a_, b_, new(0f, TargetHeight)) { Color = Magenta });
+            } else if (d.Contains(TOP | RIGHT)) {
+                output.Add(new(a_, b_, new(TargetWidth, TargetHeight)) { Color = Magenta });
+            }
+
+            return output;
+        }
+
+        private readonly Vector2 NormalizeCoordsToScreen(Vector4 normalCoords) {
             return new(
-                (normalCoords.X / normalCoords.W + 1f) * 0.5f * TargetWidth,
+                (1f + normalCoords.X / normalCoords.W) * 0.5f * TargetWidth,
                 (1f - normalCoords.Y / normalCoords.W) * 0.5f * TargetHeight
             );
         }
     }
 #endregion camera
+
+/// <region>Game Objects</region>
+#region game objects
+    public readonly struct Mesh {
+        /// <name>ctor</name>
+        /// <returns>Mesh</returns>
+        /// <summary>Initializes a new instantce of the Mesh struct created from the speciied OBJ file.</summary>
+        /// <param name="objFilePath">The OBJ file to create the mesh from.</param>
+        public Mesh(string objFilePath) {
+            Tris = new();
+            FileStream fs = new(objFilePath, FileMode.Open, FileAccess.Read);
+            StreamReader stream = new(fs);
+            if (!stream.BaseStream.CanRead) {
+                return;
+            }
+
+            List<Vector3?> verts = new();
+
+            while (!stream.EndOfStream) {
+                string? line = stream.ReadLine();
+
+                if (string.IsNullOrEmpty(line)) {
+                    continue;
+                }
+
+                if (line[0] == 'v') {
+                    if (line[1] != ' ') {
+                        continue;
+                    }
+
+                    string[] info = line.Split(' ');
+                    verts.Add(new(
+                        Convert.ToSingle(info[1]),
+                        -Convert.ToSingle(info[2]),
+                        Convert.ToSingle(info[3])
+                    ));
+                } else if (line[0] == 'f') {
+                    string[] info = line.Split(' ');
+                    int[] f;
+                    if (info[1].Contains('/')) {
+                        f = new int[info.Length];
+                        for (int i = 1; i < info.Length; i++) {
+                            if (info[i] == "\n") {
+                                break;
+                            }
+                            f[i - 1] = Convert.ToInt32(info[i].Split('/')[0]);
+                        }
+                    } else {
+                        f = new int[3] {
+                            Convert.ToInt32(info[1]),
+                            Convert.ToInt32(info[2]),
+                            Convert.ToInt32(info[3])
+                        };
+                    }
+
+                    Vector3? v1 = verts[f[0] - 1];
+                    Vector3? v2 = verts[f[1] - 1]; 
+                    Vector3? v3 = verts[f[2] - 1]; 
+                    if (v1 != null && v2 != null && v3 != null) {
+                        Tris.Add(new((Vector3)v1, (Vector3)v2, (Vector3)v3));
+                    }
+                }
+            }
+        }
+
+        /// <name>ctor</name>
+        /// <returns>Mesh</returns>
+        /// <summary>Initializes a new instantce of the Mesh struct with triangles specified.</summary>
+        /// <param name="tris">The mesh's triangles.</param>
+        public Mesh(List<Triangle> tris) {
+            Tris = tris;
+        }
+
+        /// <name>Tris</name>
+        /// <returns>List<Triangle></returns>
+        /// <summary>The mesh's current triangles.</summary>
+        public readonly List<Triangle> Tris { get; init; }
+
+        /// <name>Cube</name>
+        /// <returns>Mesh</returns>
+        /// <summary>Creates a Mesh with 12 triangles defining a cube.</summary>
+        public static Mesh Cube => new(
+            new List<Triangle> {
+                //south
+                new(new Vector3(0f, 0f, 0f), new Vector3(0f, 1f, 0f), new Vector3(1f, 1f, 0f)),
+                new(new Vector3(0f, 0f, 0f), new Vector3(1f, 1f, 0f), new Vector3(1f, 0f, 0f)),
+
+                // east                                                                                                   
+                new(new Vector3(1f, 0f, 0f), new Vector3(1f, 1f, 0f), new Vector3(1f, 1f, 1f)),
+                new(new Vector3(1f, 0f, 0f), new Vector3(1f, 1f, 1f), new Vector3(1f, 0f, 1f)),
+
+                // north                                                                                                                                         
+                new(new Vector3(1f, 0f, 1f), new Vector3(1f, 1f, 1f), new Vector3(0f, 1f, 1f)),
+                new(new Vector3(1f, 0f, 1f), new Vector3(0f, 1f, 1f), new Vector3(0f, 0f, 1f)),
+                                                                                                                        
+                // west                                                                                                                           
+                new(new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 1f), new Vector3(0f, 1f, 0f)),
+                new(new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(0f, 0f, 0f)),
+                                                                                                                        
+                // top                                                                                                                            
+                new(new Vector3(0f, 1f, 0f), new Vector3(0f, 1f, 1f), new Vector3(1f, 1f, 1f)),
+                new(new Vector3(0f, 1f, 0f), new Vector3(1f, 1f, 1f), new Vector3(1f, 1f, 0f)),
+                                                                                                                        
+                // bottom                                                                                                                      
+                new(new Vector3(1f, 0f, 1f), new Vector3(0f, 0f, 1f), new Vector3(0f, 0f, 0f)),
+                new(new Vector3(1f, 0f, 1f), new Vector3(0f, 0f, 0f), new Vector3(1f, 0f, 0f))
+            }
+        );
+    }
+
+    public struct Triangle {
+        /// <name>ctor</name>
+        /// <returns>Triangle</returns>
+        /// <summary>Initializes an empty Triangle.</summary>
+        public Triangle() { 
+            Verts = new Vector3[3];
+        }
+
+        /// <name>ctor</name>
+        /// <returns>Triangle</returns>
+        /// <summary>Initializes a new Triangle with the specified vertices</summary>
+        /// <param name="v1">The first of the triangle's vertices.</param>
+        /// <param name="v2">The second of the triangle's vertices.</param>
+        /// <param name="v3">The third of the triangle's vertices.</param>
+        public Triangle(Vector3 v1, Vector3 v2, Vector3 v3) {
+            Verts = new Vector3[3] {
+                v1, v2, v3
+            };
+        }
+
+        /// <name>ctor</name>
+        /// <returns>Triangle</returns>
+        /// <summary>Initializes a new Triangle with the specified vertices</summary>
+        /// <param name="v1">The first of the triangle's vertices. The Z will be ignored.</param>
+        /// <param name="v2">The second of the triangle's vertices. The Z will be ignored.</param>
+        /// <param name="v3">The third of the triangle's vertices. The Z will be ignored.</param>
+        public Triangle(Vector2 v1, Vector2 v2, Vector2 v3) {
+            Verts = new Vector3[3] {
+                new(v1, 0f), new(v2, 0f), new(v3, 0f)
+            };
+        }
+
+        /// <name>Color</name>
+        /// <returns>uint</returns>
+        /// <summary>Gets or sets the color of the triangle.</summary>
+        public uint Color { get; set; } = White;
+
+        /// <name>Verts</name>
+        /// <returns>Vector3[]</returns>
+        /// <summary>Gets the vertices of the triangle.</summary>
+        public Vector3[] Verts { get; }
+
+        /// <name>GetNormal</name>
+        /// <returns>Vector3</returns>
+        /// <summary>Calculates the normal of the triangle.</summary>
+        public readonly Vector3 GetNormal() {
+            return Vector3.Normalize(Vector3.Cross(Verts[1] - Verts[0], Verts[2] - Verts[1]));
+        }
+
+        /// <name>GetCenter</name>
+        /// <returns>Vector3</returns>
+        /// <summary>Calculates the center of the triangle.</summary>
+        public readonly Vector3 GetCenter() {
+            return (Verts[0] + Verts[1] + Verts[2]) / 3f;
+        }
+    }
+#endregion game objects
 
 /// <region>States</region>
 #region states
@@ -1525,31 +2093,31 @@ public static unsafe partial class FL {
 /// <region>Colors</region>
 #region colors
     private static uint AlphaBlend(uint background, uint foreground) {
-        byte alpha = (byte)(foreground >> 24);
+        byte a = (byte)(foreground >> 24);
 
-        if (alpha == 0) {
+        if (a == 0) {
             return background;
         }
 
-        if (alpha == 255) {
+        if (a == 255) {
             return foreground;
         }
 
-        byte redF = (byte)(foreground >> 16);
-        byte greenF = (byte)(foreground >> 8);
-        byte blueF = (byte)foreground;
+        byte fr = (byte)(foreground >> 16);
+        byte fg = (byte)(foreground >> 8);
+        byte fb = (byte)foreground;
 
-        byte redB = (byte)(background >> 16);
-        byte greenB = (byte)(background >> 8);
-        byte blueB = (byte)background;
+        byte br = (byte)(background >> 16);
+        byte bg = (byte)(background >> 8);
+        byte bb = (byte)background;
 
-        byte oneMinusAlpha = (byte)(255 - alpha);
+        byte ia = (byte)(255 - a);
 
-        byte red = (byte)((redF * alpha + redB * oneMinusAlpha) / 255);
-        byte green = (byte)((greenF * alpha + greenB * oneMinusAlpha) / 255);
-        byte blue = (byte)((blueF * alpha + blueB * oneMinusAlpha) / 255);
+        byte r = (byte)((fr * a + br * ia + 128) >> 8);
+        byte g = (byte)((fg * a + bg * ia + 128) >> 8);
+        byte b = (byte)((fb * a + bb * ia + 128) >> 8);
 
-        return (uint)((alpha << 24) | (red << 16) | (green << 8) | blue);
+        return (uint)((0xFF << 24) | (r << 16) | (g << 8) | b);
     }
 
     /// <name>Black</name>
@@ -1604,7 +2172,7 @@ public static unsafe partial class FL {
 
     /// <name>Turquoise</name>
     /// <returns>uint</returns>
-    /// <summary>The color turquoise, FFD0E040.</summary>
+    /// <summary>The color turquoise, 0xFFD0E040.</summary>
     public const uint Turquoise = 0xFFD0E040;
 
     /// <name>Lavender</name>
@@ -2314,31 +2882,32 @@ public static unsafe partial class FL {
     /// <summary>Calcualtes the size in pixels of a string drawn with DrawString.</summary>
     /// <param name="str">The string to measure the size of.</param>
     /// <param name="fontScale">The fontScale the string will be measued at.</param>
-    public static (int x, int y) MeasureString(string str, int fontScale) {
+    public static (int x, int y) MeasureString(string str, float fontScale) {
         if (str == string.Empty) {
             return (0, 0);
         }
 
-        fontScale = Math.Max(1, fontScale);
-        
-        int charHeight = 5 * fontScale;
+        fontScale = Math.Max(0.1f, fontScale);
+
+        int charHeight = (int)(5 * fontScale);
 
         (int x, int y) size = (0, charHeight);
 
         int lineCount = 1;
         foreach (char c in str) {
             int cInd = GetTextCharInd(c);
-            
+
             if (cInd == _font.Length) {
                 lineCount++;
                 size.y += charHeight;
                 continue;
             }
 
-            size.x += _font[cInd].Length / 5 * fontScale + fontScale / 2;
+            int charWidth = Math.Max(1, (int)(_font[cInd].Length / 5 * fontScale));
+            size.x += charWidth + (int)(fontScale / 2);
         }
 
-        size.x -= fontScale / 2;
+        size.x -= (int)(fontScale / 2);
         size.x /= lineCount;
         return size;
     }
@@ -2537,8 +3106,8 @@ public static unsafe partial class FL {
 
     //===========================================================
     // Input
-    [DllImport("user32.dll")] 
-    private static extern short GetAsyncKeyState(int key);
+    [LibraryImport("user32.dll")] 
+    private static partial short GetAsyncKeyState(int key);
     
     private static readonly Dictionary<char, bool> _previousKeyStates = new();
 
@@ -2748,7 +3317,7 @@ public static unsafe partial class FL {
     /// <summary>Returns the fractional part of the input float in the range [0.0, 1.0).</summary>
     /// <param name="f">The input from which to get the fractional part.</param>
     public static float Fract(float f) {
-        return f - MathF.Floor(f);
+        return f - (int)f;
     }
 
     /// <name>Fract</name>
