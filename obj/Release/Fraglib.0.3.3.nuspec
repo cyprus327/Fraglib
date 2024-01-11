@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>Fraglib</id>
+    <version>0.3.3</version>
+    <authors>cyprus327</authors>
+    <license type="file">LICENSE.txt</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <readme>README.md</readme>
+    <description>A unique high level C# rendering library. https://github.com/cyprus327/Fraglib</description>
+    <dependencies>
+      <group targetFramework="net7.0">
+        <dependency id="OpenTK" version="4.7.7" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="D:\Common\Repos\Fraglib\bin\Release\net7.0\Fraglib.dll" target="lib\net7.0\Fraglib.dll" />
+    <file src="D:\Common\Repos\Fraglib\LICENSE.txt" target="LICENSE.txt" />
+    <file src="D:\Common\Repos\Fraglib\README.md" target="README.md" />
+  </files>
+</package>
