@@ -182,199 +182,6 @@ and dimensions (texWidth, texHeight) within the provided texture.
 - **texWidth**: The width of the cropped texture section.
 - **texHeight**: The height of the cropped texture section.
 - **texture**: The Texture from which to draw the cropped section.
-## Textures
-### ctor (Texture)
-Creates a Texture from a Bitmap image. The alpha channel of the bitmap isn't taken into account for now. 
-- **bmpImagePath**: The path to a Bitmap image to create the texture from.
-### Texture (Texture)
-Clones a Texture. 
-- **texture**: The texture to create a copy of.
-### Texture (Texture)
-Creates an empty Texture of specified width and height. 
-- **width**: The width of the texture.
-- **height**: The height of the texture.
-- **startColor**: Optional starting color for the texture.
-### Width (int)
-The texture's width. 
-### Height (int)
-The texture's height. 
-### GetPixels (uint[])
-Gets the pixels of the texture. 
-### SetPixel (void)
-Sets a pixel in the texture at specified coordinates to specified color. 
-- **x**: The x coordinate of the pixel.
-- **y**: The y coordinate of the pixel.
-- **color**: The color to set the pixel.
-### GetPixel (uint)
-Gets a pixel in the texture at specified coordinates. 
-- **x**: The x coordinate of the pixel.
-- **y**: The y coordinate of the pixel.
-### Clear (void)
-Sets all pixels in the texture to the value specified. 
-- **color**: The color to set all the pixels in the texture to.
-### ScaleTo (Texture)
-Returns the parent texture scaled by the factors scaleX and scaleY. 
-- **scaleX**: The amount to scale the texture by horizontally.
-- **scaleY**: The amount to scale the texture by vertically.
-### ScaleTo (Texture)
-Returns the parent texture scaled to the resolution scaledX x scaledY. 
-- **scaledX**: The width to scale the texture to in pixels.
-- **scaledY**: The height to scale the texture to in pixels.
-### CropTo (Texture)
-Returns the parent texture cropped to the resolution specified. 
-- **texStartX**: The x coordinate within the texture where cropping starts.
-- **texStartY**: The y coordinate within the texture where cropping starts.
-- **texWidth**: The width of the cropped texture section.
-- **texHeight**: The height of the cropped texture section.
-### ctor (Sprite)
-Initializes a new Sprite on the given sprite sheet. 
-### Width (int)
-The width of the sprite in the spritesheet. 
-### Height (int)
-The height of the sprite in the spritesheet. 
-### Width (int)
-The spacing between sprites on the spritesheet. 
-### Step (void)
-Steps the sprite forward once in the spritesheet based on the current position and spacing. 
-### StepTo (void)
-Moves the sprite to the specified incices in the spritesheet, with (0, 0) being the bottom left. 
-- **xInd**: The x index for the sprite to be moved to.
-- **yInd**: The y index for the sprite to be moved to.
-### GetCurrent (Texture)
-Gets the current sprite in the spritesheet. 
-## Camera
-### ctor (Camera)
-Initializes a camera targeting the main window in projection mode at position (0, 0, 0). 
-### ctor (Camera)
-Initializes a new instantce of the Camera struct with the specified properties. 
-- **targetWidth**: The target width for the camera to render to.
-- **targetHeight**: The target height for the camera to render to.
-### Yaw (float)
-The camera's current yaw in radians. Can be set by using the LookBy or LookAt methods. 
-### Pitch (float)
-The camera's current pitch in radians. Can be set by using the LookBy or LookAt methods. 
-### Pos (Vector3)
-Gets or sets camera's position in world space. 
-### FOV (float)
-Gets or sets the camera's field of view, only applies to projection mode. 
-### Zoom (float)
-Gets or sets the camera's zoom, only applies to orthographic mode. 
-### NearPlane (float)
-Gets or sets the camera's near plane. 
-### FarPlane (float)
-Gets or sets the camera's far plane. 
-### TargetWidth (int)
-The width of what the camera is rendering to (e.g. the main window or a texture). 
-### TargetHeight (int)
-The height of what the camera is rendering to (e.g. the main window or a texture). 
-### OrthographicMode (bool)
-Controls whether or not the camera will render in projection or orthographic. 
-### HandleInputDefault (void)
-Purely for convenience, handles moving the camera with WASD, Q (up), and E (down), and turning with the mouse when the right mouse button is held. 
-- **moveSpeedMult**: The multiplier for how fast the camera will move.
-- **lookSpeedMult**: The multiplier for how much the mouse will turn the camera.
-### MoveForward (void)
-Moves the camera forward by the specified amount. 
-- **amount**: The amount by which to move the camera.
-### MoveBackward (void)
-Moves the camera backward by the specified amount. 
-- **amount**: The amount by which to move the camera.
-### MoveRight (void)
-Moves the camera right by the specified amount. 
-- **amount**: The amount by which to move the camera.
-### MoveLeft (void)
-Moves the camera left by the specified amount. 
-- **amount**: The amount by which to move the camera.
-### MoveUp (void)
-Moves the camera up by the specified amount. 
-- **amount**: The amount by which to move the camera.
-### MoveDown (void)
-Moves the camera down by the specified amount. 
-- **amount**: The amount by which to move the camera.
-### LookBy (void)
-Turns the camera by the specified vector. 
-- **vec**: The amount by which to learn, where vec.X represents the yaw delta and vec.Y the pitch delta.
-### LookBy (void)
-Turns the camera by the specified yaw and pitch values. 
-- **yaw**: The amount by which the camera's yaw will change.
-- **pitch**: The amount by which the camera's pitch will change.
-### LookAt (void)
-Turns the camera to look at the specified point. 
-- **pos**: The world space position that the camera will turn towards.
-### UpdateMatrices (void)
-Updates the camera's matrices. Should be called after changing one of the camera's properties' values. 
-### CanSeePoint (bool)
-Returns whether or not the camera can see the point specified. 
-- **point**: The point to check.
-### CanSeeCircle (bool)
-Returns whether or not the camera can see the circle specified. 
-- **circleCenter**: The center of the circle to check.
-- **circleRadius**: The radius of the circle to check.
-### CanSeeTri (bool)
-Returns whether or not the camera can see the triangle specified. 
-- **tri**: The triangle to check.
-### ProjectPointToScreen (void)
-Projects a 3D point to screen coordinates. 
-- **point**: The point to project, of type (int x, int y, int z).
-- **screenCoords**: An out (int x, int y, int z) representing the screen coordinates of the projected point.
-- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
-### ProjectPointToScreen (void)
-Projects a 3D point to screen coordinates. 
-- **point**: The point to project, of type Vector3.
-- **screenCoords**: An out Vector2 representing the screen coordinates of the projected point.
-- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
-### ProjectCircleToScreen (void)
-Projects and scales a circle in world space to the screen. 
-- **circleCenter**: The center of the circle to project.
-- **radius**: The radius of the circle to project.
-- **screenCoords**: An out Vector2 representing the screen coordinates of the projected circle.
-- **screenRadius**: An out float representing the radius of the projected circle.
-- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
-### ProjectRectToScreen (void)
-Projects and scales a rectangle in world space to the screen. 
-- **rectCenter**: The center of the circle to project.
-- **width**: The width of the rectangle to project.
-- **height**: The height of the rectangle to project.
-- **screenCoords**: An out Vector2 representing the screen coordinates of the projected circle.
-- **screenWidth**: An out float representing the width of the projected circle.
-- **screenHeight**: An out float representing the height of the projected circle.
-- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
-### ProjectTriToScreen (void)
-Projects, scales, and clips a triangle to the screen. This method isn't yet perfect. 
-- **tri**: The triangle to project.
-- **screenTris**: An out List<Triangle> containing the result of projecting the triangle to the screen.
-- **isInCamView**: An out bool representing whether or not the triangle is in the camera's frustum.
-## Game Objects
-### ctor (Mesh)
-Initializes a new instantce of the Mesh struct created from the speciied OBJ file. 
-- **objFilePath**: The OBJ file to create the mesh from.
-### ctor (Mesh)
-Initializes a new instantce of the Mesh struct with triangles specified. 
-- **tris**: The mesh's triangles.
-### Tris (List<Triangle>)
-The mesh's current triangles. 
-### Cube (Mesh)
-Creates a Mesh with 12 triangles defining a cube. 
-### ctor (Triangle)
-Initializes an empty Triangle. 
-### ctor (Triangle)
-Initializes a new Triangle with the specified vertices 
-- **v1**: The first of the triangle's vertices.
-- **v2**: The second of the triangle's vertices.
-- **v3**: The third of the triangle's vertices.
-### ctor (Triangle)
-Initializes a new Triangle with the specified vertices 
-- **v1**: The first of the triangle's vertices. The Z will be ignored.
-- **v2**: The second of the triangle's vertices. The Z will be ignored.
-- **v3**: The third of the triangle's vertices. The Z will be ignored.
-### Color (uint)
-Gets or sets the color of the triangle. 
-### Verts (Vector3[])
-Gets the vertices of the triangle. 
-### GetNormal (Vector3)
-Calculates the normal of the triangle. 
-### GetCenter (Vector3)
-Calculates the center of the triangle. 
 ## States
 ### SaveState (void)
 Saves the current state of the window to a buffer. 
@@ -512,8 +319,8 @@ Calcualtes the size in pixels of a string drawn with DrawString.
 - **str**: The string to measure the size of.
 - **fontScale**: The fontScale the string will be measued at.
 ## Render Settings
-### RenderSettings (struct)
-The struct defining the settings which will be applied when FL.Init is called. 
+### ctor (RenderSettings)
+The class defining the settings which will be applied when FL.Init is called. 
 ### PixelSize (int)
 Gets or sets the pixel size of the window. Clamped in the range [1, 100]. 
 ### VSync (bool)
@@ -631,3 +438,202 @@ Returns the fractional part of the input Vector2 in the range [0.0, 1.0).
 ### Fract (Vector3)
 Returns the fractional part of the input Vector3 in the range [0.0, 1.0). 
 - **vec**: The input from which to get the fractional part.
+## Triangle
+### ctor (Triangle)
+Initializes an empty Triangle. 
+### ctor (Triangle)
+Initializes a new Triangle with the specified vertices 
+- **v1**: The first of the triangle's vertices.
+- **v2**: The second of the triangle's vertices.
+- **v3**: The third of the triangle's vertices.
+### ctor (Triangle)
+Initializes a new Triangle with the specified vertices 
+- **v1**: The first of the triangle's vertices. The Z will be ignored.
+- **v2**: The second of the triangle's vertices. The Z will be ignored.
+- **v3**: The third of the triangle's vertices. The Z will be ignored.
+### Color (uint)
+Gets or sets the color of the triangle. 
+### Verts (Vector3[])
+Gets the vertices of the triangle. 
+### GetNormal (Vector3)
+Calculates the normal of the triangle. 
+### GetCenter (Vector3)
+Calculates the center of the triangle. 
+## Texture
+### ctor (Texture)
+Creates a Texture from a Bitmap image. The alpha channel of the bitmap isn't taken into account for now. 
+- **bmpImagePath**: The path to a Bitmap image to create the texture from.
+### Texture (Texture)
+Clones a Texture. 
+- **texture**: The texture to create a copy of.
+### Texture (Texture)
+Creates an empty Texture of specified width and height. 
+- **width**: The width of the texture.
+- **height**: The height of the texture.
+- **startColor**: Optional starting color for the texture.
+### Width (int)
+The texture's width. 
+### Height (int)
+The texture's height. 
+### GetPixels (uint[])
+Gets the pixels of the texture. 
+### SetPixel (void)
+Sets a pixel in the texture at specified coordinates to specified color. 
+- **x**: The x coordinate of the pixel.
+- **y**: The y coordinate of the pixel.
+- **color**: The color to set the pixel.
+### GetPixel (uint)
+Gets a pixel in the texture at specified coordinates. 
+- **x**: The x coordinate of the pixel.
+- **y**: The y coordinate of the pixel.
+### Clear (void)
+Sets all pixels in the texture to the value specified. 
+- **color**: The color to set all the pixels in the texture to.
+### ScaleTo (Texture)
+Returns the parent texture scaled by the factors scaleX and scaleY. 
+- **scaleX**: The amount to scale the texture by horizontally.
+- **scaleY**: The amount to scale the texture by vertically.
+### ScaleTo (Texture)
+Returns the parent texture scaled to the resolution scaledX x scaledY. 
+- **scaledX**: The width to scale the texture to in pixels.
+- **scaledY**: The height to scale the texture to in pixels.
+### CropTo (Texture)
+Returns the parent texture cropped to the resolution specified. 
+- **texStartX**: The x coordinate within the texture where cropping starts.
+- **texStartY**: The y coordinate within the texture where cropping starts.
+- **texWidth**: The width of the cropped texture section.
+- **texHeight**: The height of the cropped texture section.
+## Sprite
+### ctor (Sprite)
+Initializes a new Sprite on the given sprite sheet. 
+### Width (int)
+The width of the sprite in the spritesheet. 
+### Height (int)
+The height of the sprite in the spritesheet. 
+### Width (int)
+The spacing between sprites on the spritesheet. 
+### X (int)
+The current x position of the sprite in the spritesheet. 
+### Y (int)
+The current y position of the sprite in the spritesheet. 
+### Step (void)
+Steps the sprite forward once in the spritesheet based on the current position and spacing. 
+### StepTo (void)
+Moves the sprite to the specified incices in the spritesheet, with (0, 0) being the bottom left. 
+- **xInd**: The x index for the sprite to be moved to.
+- **yInd**: The y index for the sprite to be moved to.
+### GetCurrent (Texture)
+Gets the current sprite in the spritesheet. 
+## Mesh
+### ctor (Mesh)
+Initializes a new instantce of the Mesh struct created from the speciied OBJ file. 
+- **objFilePath**: The OBJ file to create the mesh from.
+### ctor (Mesh)
+Initializes a new instantce of the Mesh struct with triangles specified. 
+- **tris**: The mesh's triangles.
+### Tris (List<Triangle>)
+The mesh's current triangles. 
+### Cube (Mesh)
+Creates a Mesh with 12 triangles defining a cube. 
+## Camera
+### ctor (Camera)
+Initializes a camera targeting the main window in projection mode at position (0, 0, 0). 
+### ctor (Camera)
+Initializes a new instantce of the Camera struct with the specified properties. 
+- **targetWidth**: The target width for the camera to render to.
+- **targetHeight**: The target height for the camera to render to.
+### Yaw (float)
+The camera's current yaw in radians. Can be set by using the LookBy or LookAt methods. 
+### Pitch (float)
+The camera's current pitch in radians. Can be set by using the LookBy or LookAt methods. 
+### Pos (Vector3)
+Gets or sets camera's position in world space. 
+### FOV (float)
+Gets or sets the camera's field of view, only applies to projection mode. 
+### Zoom (float)
+Gets or sets the camera's zoom, only applies to orthographic mode. 
+### NearPlane (float)
+Gets or sets the camera's near plane. 
+### FarPlane (float)
+Gets or sets the camera's far plane. 
+### TargetWidth (int)
+The width of what the camera is rendering to (e.g. the main window or a texture). 
+### TargetHeight (int)
+The height of what the camera is rendering to (e.g. the main window or a texture). 
+### OrthographicMode (bool)
+Controls whether or not the camera will render in projection or orthographic. 
+### HandleInputDefault (void)
+Purely for convenience, handles moving the camera with WASD, Q (up), and E (down), and turning with the mouse when the right mouse button is held. 
+- **moveSpeedMult**: The multiplier for how fast the camera will move.
+- **lookSpeedMult**: The multiplier for how much the mouse will turn the camera.
+### MoveForward (void)
+Moves the camera forward by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### MoveBackward (void)
+Moves the camera backward by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### MoveRight (void)
+Moves the camera right by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### MoveLeft (void)
+Moves the camera left by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### MoveUp (void)
+Moves the camera up by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### MoveDown (void)
+Moves the camera down by the specified amount. 
+- **amount**: The amount by which to move the camera.
+### LookBy (void)
+Turns the camera by the specified vector. 
+- **vec**: The amount by which to learn, where vec.X represents the yaw delta and vec.Y the pitch delta.
+### LookBy (void)
+Turns the camera by the specified yaw and pitch values. 
+- **yaw**: The amount by which the camera's yaw will change.
+- **pitch**: The amount by which the camera's pitch will change.
+### LookAt (void)
+Turns the camera to look at the specified point. 
+- **pos**: The world space position that the camera will turn towards.
+### UpdateMatrices (void)
+Updates the camera's matrices. Should be called after changing one of the camera's properties' values. 
+### CanSeePoint (bool)
+Returns whether or not the camera can see the point specified. 
+- **point**: The point to check.
+### CanSeeCircle (bool)
+Returns whether or not the camera can see the circle specified. 
+- **circleCenter**: The center of the circle to check.
+- **circleRadius**: The radius of the circle to check.
+### CanSeeTri (bool)
+Returns whether or not the camera can see the triangle specified. 
+- **tri**: The triangle to check.
+### ProjectPointToScreen (void)
+Projects a 3D point to screen coordinates. 
+- **point**: The point to project, of type (int x, int y, int z).
+- **screenCoords**: An out (int x, int y, int z) representing the screen coordinates of the projected point.
+- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
+### ProjectPointToScreen (void)
+Projects a 3D point to screen coordinates. 
+- **point**: The point to project, of type Vector3.
+- **screenCoords**: An out Vector2 representing the screen coordinates of the projected point.
+- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
+### ProjectCircleToScreen (void)
+Projects and scales a circle in world space to the screen. 
+- **circleCenter**: The center of the circle to project.
+- **radius**: The radius of the circle to project.
+- **screenCoords**: An out Vector2 representing the screen coordinates of the projected circle.
+- **screenRadius**: An out float representing the radius of the projected circle.
+- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
+### ProjectRectToScreen (void)
+Projects and scales a rectangle in world space to the screen. 
+- **rectCenter**: The center of the circle to project.
+- **width**: The width of the rectangle to project.
+- **height**: The height of the rectangle to project.
+- **screenCoords**: An out Vector2 representing the screen coordinates of the projected circle.
+- **screenWidth**: An out float representing the width of the projected circle.
+- **screenHeight**: An out float representing the height of the projected circle.
+- **isInCamView**: An out bool representing whether or not the point can be seen by the camera.
+### ProjectTriToScreen (void)
+Projects, scales, and clips a triangle to the screen. This method isn't yet perfect. 
+- **tri**: The triangle to project.
+- **screenTris**: An out List<Triangle> containing the result of projecting the triangle to the screen.
+- **isInCamView**: An out bool representing whether or not the triangle is in the camera's frustum.
