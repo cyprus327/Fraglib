@@ -1,4 +1,6 @@
+using System.Drawing;
 using System.Numerics;
+using System.Xml;
 
 namespace Fraglib;
 
@@ -14,8 +16,7 @@ public static unsafe partial class FL {
             }
 
             Pos = Vector3.Zero;
-            TargetWidth = windowWidth;
-            TargetHeight = windowHeight;
+            this = new Camera(windowWidth, windowHeight);
         }
 
         /// <name>ctor</name>
@@ -26,6 +27,13 @@ public static unsafe partial class FL {
         public Camera(int targetWidth, int targetHeight) {
             TargetWidth = Math.Clamp(targetWidth, 1, 10000);
             TargetHeight = Math.Clamp(targetHeight, 1, 10000);
+
+            _planes = new (Vector2 point, Vector2 dir)[] { 
+                (Vector2.Zero, Vector2.UnitX),
+                (Vector2.Zero, Vector2.UnitY),
+                (new(TargetWidth, TargetHeight), -Vector2.UnitX),
+                (new(TargetWidth, TargetHeight), -Vector2.UnitY)
+            };
 
             UpdateMatrices();
         }
@@ -46,6 +54,8 @@ public static unsafe partial class FL {
         /// <returns>Vector3</returns>
         /// <summary>Gets or sets camera's position in world space.</summary>
         public Vector3 Pos { get; set; } = Vector3.Zero;
+
+        public Vector3 Forward { get; set; } = -Vector3.UnitZ;
 
         /// <name>FOV</name>
         /// <returns>float</returns>
@@ -99,6 +109,8 @@ public static unsafe partial class FL {
         public bool OrthographicMode { get; set; } = false;
 
         private Matrix4x4 yawPitchMat, viewMat, renderMat, viewRenderMat;
+
+        private readonly (Vector2 point, Vector2 dir)[] _planes;
 
         /// <name>HandleInputDefault</name>
         /// <returns>void</returns>
@@ -237,8 +249,9 @@ public static unsafe partial class FL {
         /// <returns>void</returns>
         /// <summary>Updates the camera's matrices. Should be called after changing one of the camera's properties' values.</summary>
         public void UpdateMatrices() {
+            Forward = Vector3.Transform(-Vector3.UnitZ, yawPitchMat);
             yawPitchMat = Matrix4x4.CreateFromYawPitchRoll(Yaw, Pitch, 0f);
-            viewMat = Matrix4x4.CreateLookAt(Pos, Pos + Vector3.Transform(-Vector3.UnitZ, yawPitchMat), Vector3.UnitY);
+            viewMat = Matrix4x4.CreateLookAt(Pos, Pos + Forward, Vector3.Transform(Vector3.UnitY, yawPitchMat));
             renderMat = OrthographicMode ? 
                 Matrix4x4.CreateOrthographic(TargetWidth / Zoom, TargetHeight / Zoom, nearPlane, farPlane) : 
                 Matrix4x4.CreatePerspectiveFieldOfView(DegToRad(fov), (float)TargetWidth / TargetHeight, nearPlane, farPlane);
@@ -285,17 +298,8 @@ public static unsafe partial class FL {
         /// <param name="screenCoords">An out (int x, int y, int z) representing the screen coordinates of the projected point.</param>
         /// <param name="isInCamView">An out bool representing whether or not the point can be seen by the camera.</param>
         public readonly void ProjectPointToScreen((int x, int y, int z) point, out (int x, int y) screenCoords, out bool isInCamView) {
-            Vector4 clipSpace = Vector4.Transform(new Vector4(point.x, point.y, point.z, 1f), viewRenderMat);
-
-            Vector2 sc = NormalizeCoordsToScreen(clipSpace);
-            screenCoords.x = (int)sc.X;
-            screenCoords.y = (int)sc.Y;
-
-            clipSpace /= clipSpace.W == 0f ? float.Epsilon : clipSpace.W;
-            isInCamView = Math.Abs(clipSpace.X) <= 1f &&
-                Math.Abs(clipSpace.Y) <= 1f &&
-                clipSpace.Z >= -1f &&
-                clipSpace.Z <= 1f;
+            ProjectPointToScreen(new Vector3(point.x, point.y, point.z), out Vector2 sc, out isInCamView);
+            screenCoords = ((int)sc.X, (int)sc.Y);
         }
 
         /// <name>ProjectPointToScreen</name>
@@ -307,9 +311,10 @@ public static unsafe partial class FL {
         public readonly void ProjectPointToScreen(Vector3 point, out Vector2 screenCoords, out bool isInCamView) {
             Vector4 clipSpace = Vector4.Transform(new Vector4(point, 1f), viewRenderMat);
 
+            clipSpace /= clipSpace.W;
+
             screenCoords = NormalizeCoordsToScreen(clipSpace);
 
-            clipSpace /= clipSpace.W == 0f ? float.Epsilon : clipSpace.W;
             isInCamView = Math.Abs(clipSpace.X) <= 1f &&
                 Math.Abs(clipSpace.Y) <= 1f &&
                 clipSpace.Z >= -1f &&
@@ -369,184 +374,142 @@ public static unsafe partial class FL {
         /// <param name="screenTris">An out List<Triangle> containing the result of projecting the triangle to the screen.</param>
         /// <param name="isInCamView">An out bool representing whether or not the triangle is in the camera's frustum.</param>
         public readonly void ProjectTriToScreen(Triangle tri, out List<Triangle> screenTris, out bool isInCamView) {
-            List<byte> outsidePointInds = new(3);
             Triangle test = new() { Color = tri.Color };
-            for (byte i = 0; i < 3; i++) {
-                ProjectPointToScreen(tri.Verts[i], out var sc, out bool inCamView);
-                if (!inCamView) {
-                    outsidePointInds.Add(i);
-                }
+            int insidePointCount = 0;
+            for (int i = 0; i < 3; i++) {
+                ProjectPointToScreen(tri.Verts[i], out Vector2 sc, out bool inCamView);
                 test.Verts[i] = new(sc, 0f);
+
+                if (inCamView) {
+                    insidePointCount++;
+                }
             }
 
-            if (outsidePointInds.Count == 0) {
+            screenTris = new(1) { test };
+
+            if (insidePointCount == 3) {
                 isInCamView = true;
-                screenTris = new(1) { test };
+                return;
+            }
+            
+            if (insidePointCount == 0) {
+                // const byte BOTTOM = 1, TOP = 2, LEFT = 4, RIGHT = 8;
+                // HashSet<byte> p = new(3);
+                // for (int i = 0; i < 3; i++) {
+                //     byte curr = 0;
+                //     if (test.Verts[i].X < 0) {
+                //         curr |= LEFT;
+                //     } else if (test.Verts[i].X >= TargetWidth) {
+                //         curr |= RIGHT;
+                //     }
+                //     if (test.Verts[i].Y < 0) {
+                //         curr |= BOTTOM;
+                //     } else if (test.Verts[i].Y >= TargetHeight) {
+                //         curr |= TOP;
+                //     }
+                //     if (curr != 0) {
+                //         p.Add(curr);
+                //     }
+                // }
+
+                // if (p.Count <= 1 || (p.Count == 2 && (
+                //     (p.Contains(TOP) && (p.Contains(TOP | RIGHT) || p.Contains(TOP | LEFT) || p.Contains(RIGHT) || p.Contains(LEFT))) ||
+                //     (p.Contains(BOTTOM) && (p.Contains(BOTTOM | RIGHT) || p.Contains(BOTTOM | LEFT) || p.Contains(RIGHT) || p.Contains(LEFT))) ||
+                //     (p.Contains(RIGHT) && (p.Contains(RIGHT | TOP) || p.Contains(RIGHT | BOTTOM) || p.Contains(TOP) || p.Contains(BOTTOM))) ||
+                //     (p.Contains(LEFT) && (p.Contains(LEFT | TOP) || p.Contains(LEFT | BOTTOM) || p.Contains(TOP) || p.Contains(BOTTOM)))))) {
+                //     isInCamView = false;
+                //     return;
+                // }
+                isInCamView = false;
                 return;
             }
 
-            screenTris = ClipTriangle(test, outsidePointInds);
-            isInCamView = screenTris.Capacity != 0;
-            if (!isInCamView) {
-                screenTris = new(1) { test };
-            }
+            screenTris = ClipTriangle(test);
+            isInCamView = screenTris.Capacity > 0;
+            return;
         }
 
-        private readonly List<Triangle> ClipTriangle(Triangle tri, List<byte> outsidePointInds) {
-            static Vector2 Clip(Vector2 ls, Vector2 op, int w, int h) {
-                float slope = (op.Y - ls.Y) / (op.X - ls.X);
+        private readonly List<Triangle> ClipTriangle(Triangle tri) {
+            List<Triangle> clippedTris = new() { tri };
 
-                if (op.X < 0f) {
-                    op.X = 0f;
-                    op.Y = ls.Y + slope * (0f - ls.X);
-                } else if (op.X >= w) {
-                    op.X = w;
-                    op.Y = ls.Y + slope * (w - ls.X);
-                }
-
-                if (op.Y < 0f) {
-                    op.Y = 0f;
-                    op.X = ls.X + 1f / slope * (0f - ls.Y);
-                } else if (op.Y >= h) {
-                    op.Y = h;
-                    op.X = ls.X + 1f / slope * (h - ls.Y);
-                }
-
-                return op;
+            foreach (var plane in _planes) {
+                clippedTris = ClipTrisAgainstPlane(clippedTris, plane);
             }
 
-            static bool Intersect(Vector2 s1, Vector2 e1, Vector2 s2, Vector2 e2, out Vector2 intersection) {
-                float denom = (e2.Y - s2.Y) * (e1.X - s1.X) - (e2.X - s2.X) * (e1.Y - s1.Y);
+            return clippedTris;
+        }
 
-                if (denom == 0) {
-                    goto END;
+        private static List<Triangle> ClipTrisAgainstPlane(List<Triangle> tris, (Vector2 point, Vector2 dir) plane) {
+            List<Triangle> output = new();
+
+            foreach (var tri in tris) {
+                foreach (var clippedTri in ClipTriAgainstPlane(tri, plane)) {
+                    output.Add(clippedTri);
                 }
-
-                float ua = ((e2.X - s2.X) * (s1.Y - s2.Y) - (e2.Y - s2.Y) * (s1.X - s2.X)) / denom;
-                float ub = ((e1.X - s1.X) * (s1.Y - s2.Y) - (e1.Y - s1.Y) * (s1.X - s2.X)) / denom;
-
-                if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
-                    float intersectionX = s1.X + ua * (e1.X - s1.X);
-                    float intersectionY = s1.Y + ua * (e1.Y - s1.Y);
-                    intersection = new(intersectionX, intersectionY);
-                    return true;
-                }
-
-                END:
-                intersection = Vector2.Zero;
-                return false;
             }
 
-            const byte BOTTOM = 1, LEFT = 2, TOP = 4, RIGHT = 8;
+            return output;
+        }
 
-            Vector2[] verts2D = new Vector2[3];
-            for (byte i = 0; i < 3; i++) {
-                verts2D[i] = new(tri.Verts[i].X, tri.Verts[i].Y);
+        private static List<Triangle> ClipTriAgainstPlane(Triangle tri, (Vector2 point, Vector2 dir) plane) {
+            static Vector2 FindSplitVert(Vector2 p1, float d1, Vector2 p2, float d2) {
+                float t = d1 / (d1 - d2);
+                return p1 + t * (p2 - p1);
             }
 
-            List<Triangle> output;
-            Vector2 a, b, c, a_, b_, c_;
+            Vector2 a = tri.Verts[0].XY();
+            Vector2 b = tri.Verts[1].XY();
+            Vector2 c = tri.Verts[2].XY();
 
-            HashSet<byte> d = new(3);
-            for (byte i = 0; i < 3; i++) {
-                byte q = 0;
-
-                if (verts2D[i].X < 0f) {
-                    q |= LEFT;
-                } else if (verts2D[i].X >= TargetWidth) {
-                    q |= RIGHT;
-                }
-                if (verts2D[i].Y < 0f) {
-                    q |= BOTTOM;
-                } else if (verts2D[i].Y >= TargetHeight) {
-                    q |= TOP;
-                }
-
-                d.Add(q);
+            float nDotA = Vector2.Dot(plane.dir, a - plane.point);
+            float nDotB = Vector2.Dot(plane.dir, b - plane.point);
+            float nDotC = Vector2.Dot(plane.dir, c - plane.point);
+        
+            bool aInside = nDotA > 0f;
+            bool bInside = nDotB > 0f;
+            bool cInside = nDotC > 0f;
+        
+            if (aInside && bInside && cInside) {
+                return new(1) { tri };
             }
 
-            if (outsidePointInds.Count == 3) {
-                if (d.Count == 1) {
-                    return new(0);
-                }
-
-                if (d.Count == 2) {
-                    return new(2);
-                }
-
-                if (d.Count == 3) {
-                    return new(5);
-                }
-
-                return new(1);
+            if (!aInside && !bInside && !cInside) {
+                return new(0);
             }
 
-            // https://gabrielgambetta.com/computer-graphics-from-scratch/images/r14-clip-triangle1.png
-            if (outsidePointInds.Count == 2) {
-                a = verts2D.Where((v, i) => !outsidePointInds.Contains((byte)i)).First();
-                b = verts2D[outsidePointInds[0]];
-                c = verts2D[outsidePointInds[1]];
+            List<Triangle> output = new(2);
+            List<Vector2> insidePoints = new(4);
 
-                b_ = Clip(a, b, TargetWidth, TargetHeight);
-                c_ = Clip(a, c, TargetWidth, TargetHeight);
-
-                bool sameX = b_.X == c_.X, sameY = b_.Y == c_.Y;
-                if ((sameX && !sameY) || (!sameX && sameY)) {
-                    return new(1) { new(a, b_, c_) { Color = Red } };
-                }
-
-                output = new(2) { new(a, b_, c_) { Color = Red } };
-
-                if (d.Contains(BOTTOM | LEFT)) {
-                    output.Add(new(b_, Vector2.Zero, c_) { Color = Magenta });
-                } else if (d.Contains(BOTTOM | RIGHT)) {
-                    output.Add(new(c_, b_, new(TargetWidth, 0f)) { Color = Magenta });
-                } else if (d.Contains(TOP | LEFT)) {
-                    output.Add(new(b_, new(0f, TargetHeight), c_) { Color = Magenta });
-                } else if (d.Contains(TOP | RIGHT)) {
-                    output.Add(new(b_, c_, new(TargetWidth, TargetHeight)) { Color = Magenta });
-                } else if (d.Contains(TOP) && d.Contains(BOTTOM)) {
-                    if (Intersect(b, c, new(0f, TargetHeight), new(TargetHeight, TargetWidth), out Vector2 b__) &&
-                        Intersect(c, b, new(0f, 0f), new(0f, TargetWidth), out Vector2 c__)) {
-                        output.Add(new(b__, c_, c__) { Color = Rand() });
-                        output.Add(new(b__, b_, c_) { Color = Rand() });
-                    }
-                }
-
-                return output;
+            if (aInside) {
+                insidePoints.Add(a);
             }
 
-            // https://gabrielgambetta.com/computer-graphics-from-scratch/images/r14-clip-triangle2.png
-            var insidePoints = verts2D.Where((v, i) => !outsidePointInds.Contains((byte)i));
-            a = insidePoints.First();
-            b = insidePoints.Last();
-            c = verts2D[outsidePointInds[0]];
-
-            a_ = Clip(a, c, TargetWidth, TargetHeight);
-            b_ = Clip(b, c, TargetWidth, TargetHeight);
-
-            if (a_.X == b_.X || a_.Y == b_.Y) {
-                return new(2) { 
-                    new(a, b, a_) { Color = Blue },
-                    new(b, a_, b_) { Color = Green }
-                };
+            if (aInside != bInside) {
+                insidePoints.Add(FindSplitVert(a, nDotA, b, nDotB));
             }
 
-            output = new(3) { 
-                new(a, b, a_) { Color = Blue },
-                new(b, a_, b_) { Color = Green }
-            };
-
-            if (d.Contains(BOTTOM | LEFT)) {
-                output.Add(new(b_, a_, Vector2.Zero) { Color = Magenta });
-            } else if (d.Contains(BOTTOM | RIGHT)) {
-                output.Add(new(b_, a_, new(TargetWidth, 0f)) { Color = Magenta });
-            } else if (d.Contains(TOP | LEFT)) {
-                output.Add(new(a_, b_, new(0f, TargetHeight)) { Color = Magenta });
-            } else if (d.Contains(TOP | RIGHT)) {
-                output.Add(new(a_, b_, new(TargetWidth, TargetHeight)) { Color = Magenta });
+            if (bInside) {
+                insidePoints.Add(b);
             }
 
+            if (bInside != cInside) {
+                insidePoints.Add(FindSplitVert(b, nDotB, c, nDotC));
+            }
+
+            if (cInside) {
+                insidePoints.Add(c);
+            }
+
+            if (cInside != aInside) {
+                insidePoints.Add(FindSplitVert(c, nDotC, a, nDotA));
+            }
+
+            if (insidePoints.Count >= 3) {
+                output.Add(new(insidePoints[0], insidePoints[1], insidePoints[2]) { Color = tri.Color });
+            } 
+            if (insidePoints.Count == 4) {
+                output.Add(new(insidePoints[0], insidePoints[2], insidePoints[3]) { Color = tri.Color });
+            }
             return output;
         }
 
@@ -556,5 +519,9 @@ public static unsafe partial class FL {
                 (1f - normalCoords.Y / normalCoords.W) * 0.5f * TargetHeight
             );
         }
+    }
+
+    public static Vector2 XY(this Vector3 vec) {
+        return new(vec.X, vec.Y);
     }
 }
