@@ -1,43 +1,49 @@
-// using System.Text;
-// using System.Text.RegularExpressions;
+using System.Text;
+using System.Text.RegularExpressions;
 
-// string source = File.ReadAllText("Fraglib\\FL.cs");
-// StringBuilder docs = new("# Fraglib Documentation\n");
+var paths = Directory.GetFiles("Fraglib\\Structs").Append("Fraglib\\FL.cs").Reverse();
 
-// MatchCollection? comments = Regex.Matches(source, @"///.*\n");
+StringBuilder docs = new("# Fraglib Documentation\n");
 
-// foreach (Match comment in comments.Cast<Match>()) {
-//     string commentText = comment.Value.Trim();
+foreach (var sourcePath in paths) {
+    string source = File.ReadAllText(sourcePath);
 
-//     string region = Regex.Match(commentText, @"<region>(.*?)<\/region>").Groups[1].Value.Trim();
-//     if (!string.IsNullOrEmpty(region)) {
-//         docs.AppendLine($"## {region}");
-//     }
+    MatchCollection? comments = Regex.Matches(source, @"///.*\n");
 
-//     string name = Regex.Match(commentText, @"<name>(.*?)<\/name>").Groups[1].Value.Trim();
-//     if (!string.IsNullOrEmpty(name)) {
-//         docs.Append($"### {name}");
-//     }
+    foreach (Match comment in comments.Cast<Match>()) {
+        string commentText = comment.Value.Trim();
 
-//     string summary = Regex.Match(commentText, @"<summary>(.*?)<\/summary>").Groups[1].Value.Trim();
-//     if (!string.IsNullOrEmpty(summary)) {
-//         docs.AppendLine($"{summary} ");
-//     }
+        string region = Regex.Match(commentText, @"<region>(.*?)<\/region>").Groups[1].Value.Trim();
+        if (!string.IsNullOrEmpty(region)) {
+            docs.AppendLine($"## {region}");
+        }
 
-//     MatchCollection? parameters = Regex.Matches(commentText, @"<param name=""(.*?)"".*?>(.*?)<\/param>");
-//     foreach (Match parameter in parameters.Cast<Match>()) {
-//         string paramName = parameter.Groups[1].Value.Trim();
-//         string paramDescription = parameter.Groups[2].Value.Trim();
+        string name = Regex.Match(commentText, @"<name>(.*?)<\/name>").Groups[1].Value.Trim();
+        if (!string.IsNullOrEmpty(name)) {
+            docs.Append($"### {name}");
+        }
 
-//         docs.AppendLine($"- **{paramName}**: {paramDescription}");
-//     }
+        string summary = Regex.Match(commentText, @"<summary>(.*?)<\/summary>").Groups[1].Value.Trim();
+        if (!string.IsNullOrEmpty(summary)) {
+            docs.AppendLine($"{summary} ");
+        }
 
-//     string returns = Regex.Match(commentText, @"<returns>(.*?)<\/returns>").Groups[1].Value.Trim();
-//     if (!string.IsNullOrEmpty(returns)) {
-//         docs.AppendLine($" ({returns})");
-//     }
-// }
+        MatchCollection? parameters = Regex.Matches(commentText, @"<param name=""(.*?)"".*?>(.*?)<\/param>");
+        foreach (Match parameter in parameters.Cast<Match>()) {
+            string paramName = parameter.Groups[1].Value.Trim();
+            string paramDescription = parameter.Groups[2].Value.Trim();
 
-// File.WriteAllText("Documentation.md", docs.ToString());
+            docs.AppendLine($"- **{paramName}**: {paramDescription}");
+        }
 
-// Console.WriteLine("Completed.");
+        string returns = Regex.Match(commentText, @"<returns>(.*?)<\/returns>").Groups[1].Value.Trim();
+        if (!string.IsNullOrEmpty(returns)) {
+            docs.AppendLine($" ({returns})");
+        }
+    }
+
+}
+
+File.WriteAllText("Documentation.md", docs.ToString());
+
+Console.WriteLine("Completed.");
